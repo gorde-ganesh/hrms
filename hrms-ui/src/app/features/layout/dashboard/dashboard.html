@@ -1,0 +1,360 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="welcome-header">
+    <h1 class="text-4xl text-gray-900 font-bold relative z-10">
+      Welcome Back, {{ userInfo.name }}!
+    </h1>
+    <p class="text-gray-700 mt-2 relative z-10 flex items-center gap-2">
+      <i class="pi pi-calendar"></i>
+      {{ currentDate | date : 'fullDate' }}
+    </p>
+  </div>
+
+  <!-- Today's Status -->
+  <p-card class="bg-blue-50 border border-blue-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg text-gray-900">Today's Attendance</h3>
+        <div class="flex items-center gap-2 mt-2">
+          <i class="pi pi-clock"></i>
+          <span class="text-gray-700">
+            {{
+              todayStatus === 'PRESENT'
+                ? 'Checked in at ' + todayCheckInTime
+                : todayStatus
+            }}
+          </span>
+        </div>
+        <p class="text-sm text-gray-600 mt-1">
+          Working hours: {{ todayWorkHours }}
+        </p>
+      </div>
+      <p-button
+        [label]="
+          attendenceSummary?.today?.isCheckedIn ? 'Check Out' : 'Clock In'
+        "
+        icon="pi pi-clock"
+        (click)="clockInOut()"
+      >
+      </p-button>
+    </div>
+  </p-card>
+
+  <!-- Metrics Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- ADMIN VIEW -->
+    <ng-container *ngIf="userInfo.role === 'ADMIN'">
+      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Total Employees</p>
+            <p class="counter-number mt-2">
+              {{ dashboardStats?.totalEmployees || 0 }}
+            </p>
+          </div>
+          <div class="icon-badge">
+            <i class="pi pi-users text-white"></i>
+          </div>
+        </div>
+      </div>
+      <div class="metric-card gradient-green rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Total Departments</p>
+            <p class="counter-number mt-2">
+              {{ dashboardStats?.totalDepartments || 0 }}
+            </p>
+          </div>
+          <div class="icon-badge">
+            <i class="pi pi-building text-white"></i>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- HR VIEW -->
+    <ng-container *ngIf="userInfo.role === 'HR'">
+      <div class="metric-card gradient-orange rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Pending Leaves</p>
+            <p class="counter-number mt-2">
+              {{ dashboardStats?.pendingLeaves || 0 }}
+            </p>
+          </div>
+          <div class="icon-badge">
+            <i class="pi pi-exclamation-circle text-white"></i>
+          </div>
+        </div>
+      </div>
+      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Today's Attendance</p>
+            <p class="counter-number mt-2">
+              {{ dashboardStats?.todayAttendance || 0 }}
+            </p>
+          </div>
+          <div class="icon-badge">
+            <i class="pi pi-clock text-white"></i>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- MANAGER VIEW -->
+    <ng-container *ngIf="userInfo.role === 'MANAGER'">
+      <div class="metric-card gradient-orange rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Team Pending Leaves</p>
+            <p class="counter-number mt-2">
+              {{ dashboardStats?.teamLeaves || 0 }}
+            </p>
+          </div>
+          <div class="icon-badge">
+            <i class="pi pi-users text-white"></i>
+          </div>
+        </div>
+      </div>
+      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Team Attendance</p>
+            <p class="counter-number mt-2">
+              {{ dashboardStats?.teamAttendance || 0 }}
+            </p>
+          </div>
+          <div class="icon-badge">
+            <i class="pi pi-clock text-white"></i>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- EMPLOYEE VIEW (Default) -->
+    <ng-container *ngIf="userInfo.role === 'EMPLOYEE'">
+      <p-card>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Hours This Month</p>
+            <p class="text-2xl text-gray-900 mt-2">168</p>
+            <p class="text-sm text-gray-600 mt-1">8 hours today</p>
+          </div>
+          <div class="bg-blue-500 p-3 rounded-lg">
+            <i class="pi pi-clock text-white text-lg"></i>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Leave Balance</p>
+            <p class="text-2xl text-gray-900 mt-2">
+              {{ dashboardStats?.leaveBalance?.balance || 0 }} days
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              {{ dashboardStats?.leaveBalance?.used || 0 }} used this year
+            </p>
+          </div>
+          <div class="bg-green-500 p-3 rounded-lg">
+            <i class="pi pi-calendar text-white text-lg"></i>
+          </div>
+        </div>
+      </p-card>
+    </ng-container>
+
+    <!-- Common Cards (Salary/Performance) - Show for everyone or specific roles? -->
+    <!-- Keeping them for Employee/Manager for now -->
+    <ng-container *ngIf="['EMPLOYEE', 'MANAGER'].includes(userInfo.role)">
+      <p-card>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">This Month Salary</p>
+            <p class="text-2xl text-gray-900 mt-2">$4,500</p>
+            <p class="text-sm text-gray-600 mt-1">Processed on 1st</p>
+          </div>
+          <div class="bg-purple-500 p-3 rounded-lg">
+            <i class="pi pi-dollar text-white text-lg"></i>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Performance Score</p>
+            <p class="text-2xl text-gray-900 mt-2">92%</p>
+            <p class="text-sm text-gray-600 mt-1">+5% this quarter</p>
+          </div>
+          <div class="bg-orange-500 p-3 rounded-lg">
+            <i class="pi pi-chart-line text-white text-lg"></i>
+          </div>
+        </div>
+      </p-card>
+    </ng-container>
+  </div>
+
+  <!-- Recent Joiners (Admin Only) -->
+  <div *ngIf="userInfo.role === 'ADMIN'" class="grid grid-cols-1 gap-6">
+    <p-card header="Recent Joiners">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Name
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Email
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Designation
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Joined Date
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let employee of dashboardStats?.recentJoiners">
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+              >
+                {{ employee.user.name }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ employee.user.email }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ employee.designation?.title || 'N/A' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ employee.joiningDate | date }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Attendance + Upcoming Leaves -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Attendance Chart -->
+    <p-card class="lg:col-span-2">
+      <ng-template pTemplate="header">
+        <div>
+          <h4>Attendance History</h4>
+          <p class="text-gray-500 text-sm">Last 7 working days</p>
+        </div>
+      </ng-template>
+      <p-chart
+        type="bar"
+        height="250px"
+        [data]="attendanceData"
+        [options]="chartOptions"
+      ></p-chart>
+      <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-600">Average hours per day</span>
+          <span class="text-gray-900">8.2 hours</span>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Upcoming Leaves -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div>
+          <h4>Upcoming Leaves</h4>
+          <p class="text-gray-500 text-sm">Your scheduled time off</p>
+        </div>
+      </ng-template>
+      <div class="flex flex-col gap-3">
+        <div
+          *ngFor="let leave of upcomingLeaves"
+          class="p-3 border border-gray-200 rounded-lg"
+        >
+          <div class="flex items-start justify-between mb-2">
+            <p class="text-sm text-gray-900">{{ leave.title }}</p>
+            <p-tag [value]="leave.status" severity="success"></p-tag>
+          </div>
+          <p class="text-xs text-gray-600">{{ leave.date }}</p>
+          <p class="text-xs text-gray-500 mt-1">{{ leave.away }}</p>
+        </div>
+        <p-button label="Request Leave"></p-button>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Pending Tasks & Performance Goals -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Pending Tasks -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div>
+          <h4>Pending Tasks</h4>
+          <p class="text-gray-500 text-sm">Items requiring your attention</p>
+        </div>
+      </ng-template>
+
+      <div class="space-y-3">
+        <div
+          *ngFor="let task of pendingTasks"
+          class="flex justify-between p-3 border border-gray-200 rounded-lg"
+        >
+          <div>
+            <p class="text-sm text-gray-900">{{ task.title }}</p>
+            <p class="text-xs text-gray-600 mt-1">Due: {{ task.due }}</p>
+          </div>
+          <p-tag [value]="task.priority" [severity]="task.severity"></p-tag>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Performance Goals -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div>
+          <h4>Performance Goals</h4>
+          <p class="text-gray-500 text-sm">Q4 2025 objectives</p>
+        </div>
+      </ng-template>
+
+      <div *ngFor="let goal of performanceGoals" class="mb-4">
+        <div class="flex justify-between mb-2 text-sm">
+          <span>{{ goal.title }}</span>
+          <span>{{ goal.progressLabel }}</span>
+        </div>
+        <p-progressBar [value]="goal.progress"></p-progressBar>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <p-card>
+    <ng-template pTemplate="header">
+      <h4>Quick Actions</h4>
+    </ng-template>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button
+        *ngFor="let action of quickActions"
+        class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 flex flex-col items-start"
+      >
+        <i [class]="action.icon + ' h-6 w-6 mb-2 ' + action.color"></i>
+        <p class="text-gray-900">{{ action.label }}</p>
+      </button>
+    </div>
+  </p-card>
+</div>

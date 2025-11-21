@@ -1,0 +1,310 @@
+<div class="p-6 bg-gray-50 h-full flex flex-col">
+  <!-- Header -->
+  <div class="mb-4 flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-semibold text-gray-800">Messages</h2>
+      <p class="text-gray-500">Communicate with your team</p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        (click)="openChannelBrowser()"
+        class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+      >
+        <i class="pi pi-hashtag"></i> Browse Channels
+      </button>
+      <button
+        (click)="showUserList = !showUserList"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+      >
+        <i class="pi pi-plus"></i> New Chat
+      </button>
+    </div>
+  </div>
+
+  <!-- Chat Container -->
+  <div
+    class="flex flex-1 overflow-hidden bg-white rounded-2xl shadow border border-gray-200"
+  >
+    <!-- Sidebar -->
+    <div class="w-80 border-r border-gray-200 flex flex-col bg-gray-50">
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200 bg-white">
+        <button
+          class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+          [ngClass]="{
+            'border-blue-600 text-blue-600': activeTab === 0,
+            'border-transparent text-gray-500 hover:text-gray-700':
+              activeTab !== 0
+          }"
+          (click)="activeTab = 0"
+        >
+          DMs
+        </button>
+        <button
+          class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+          [ngClass]="{
+            'border-blue-600 text-blue-600': activeTab === 1,
+            'border-transparent text-gray-500 hover:text-gray-700':
+              activeTab !== 1
+          }"
+          (click)="activeTab = 1"
+        >
+          Groups
+        </button>
+        <button
+          class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+          [ngClass]="{
+            'border-blue-600 text-blue-600': activeTab === 2,
+            'border-transparent text-gray-500 hover:text-gray-700':
+              activeTab !== 2
+          }"
+          (click)="activeTab = 2"
+        >
+          Channels
+        </button>
+      </div>
+
+      <!-- Action Bar (Contextual) -->
+      <div
+        class="p-2 border-b border-gray-200 bg-white"
+        *ngIf="activeTab !== 0"
+      >
+        <button
+          *ngIf="activeTab === 1"
+          (click)="openCreateGroup()"
+          class="w-full py-2 px-3 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"
+        >
+          <i class="pi pi-users"></i> Create New Group
+        </button>
+        <button
+          *ngIf="activeTab === 2"
+          (click)="openCreateChannel()"
+          class="w-full py-2 px-3 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"
+        >
+          <i class="pi pi-hashtag"></i> Create New Channel
+        </button>
+      </div>
+
+      <!-- Conversation List -->
+      <div class="overflow-y-auto flex-1 divide-y divide-gray-200">
+        <div
+          *ngFor="let convo of filteredConversations"
+          (click)="openConversation(convo)"
+          class="flex items-center gap-3 p-3 hover:bg-blue-50 cursor-pointer transition"
+          [ngClass]="{ 'bg-blue-100': selectedChat?.id === convo.id }"
+        >
+          <div class="relative">
+            <p-avatar
+              [label]="getChatInitial(convo)"
+              shape="circle"
+              size="large"
+              [style]="{ 'background-color': '#BFDBFE', color: '#1D4ED8' }"
+            ></p-avatar>
+            <!-- Online Status Indicator (for DMs) -->
+            <span
+              *ngIf="!convo.isGroup && convo.channelType === 'DM'"
+              class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-green-500"
+            ></span>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between text-sm font-medium text-gray-800">
+              <span class="truncate">{{ getChatName(convo) }}</span>
+              <span class="text-gray-400 text-xs">2m</span>
+            </div>
+            <p class="truncate text-gray-500 text-sm">
+              <span
+                *ngIf="convo.huddleActive"
+                class="text-green-600 flex items-center gap-1"
+              >
+                <i class="pi pi-headphones text-xs"></i> Huddle Active
+              </span>
+              <span *ngIf="!convo.huddleActive">
+                {{ convo?.lastMessage || 'No messages yet' }}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Empty State for List -->
+        <div
+          *ngIf="filteredConversations.length === 0"
+          class="p-8 text-center text-gray-400 text-sm"
+        >
+          <i class="pi pi-comments text-2xl mb-2 block"></i>
+          No conversations found
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col" *ngIf="selectedChat; else emptyState">
+      <!-- Chat Header -->
+      <div
+        class="flex items-center justify-between border-b border-gray-200 p-4 bg-white"
+      >
+        <div class="flex items-center gap-3">
+          <p-avatar
+            [label]="getChatInitial(selectedChat)"
+            shape="circle"
+            size="large"
+            [style]="{ 'background-color': '#BFDBFE', color: '#1D4ED8' }"
+          ></p-avatar>
+          <div>
+            <h3
+              class="text-gray-800 font-medium text-sm flex items-center gap-2"
+            >
+              {{ getChatName(selectedChat) }}
+              <span
+                *ngIf="selectedChat.channelType === 'PUBLIC_CHANNEL'"
+                class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
+                >Public</span
+              >
+              <span
+                *ngIf="selectedChat.channelType === 'PRIVATE_CHANNEL'"
+                class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
+                >Private</span
+              >
+            </h3>
+            <p class="text-xs text-gray-500" *ngIf="selectedChat.description">
+              {{ selectedChat.description }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <!-- Huddle Button (for all conversation types) -->
+          <button
+            (click)="selectedChat.huddleActive ? joinHuddle() : startHuddle()"
+            class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition"
+            [ngClass]="{
+              'text-green-600 bg-green-50': selectedChat.huddleActive
+            }"
+            pTooltip="Huddle (Audio/Video)"
+          >
+            <i class="pi pi-headphones"></i>
+          </button>
+
+          <button
+            class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition"
+          >
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        <div
+          *ngFor="let msg of messages"
+          [ngClass]="{
+            'flex justify-end': isMyMessage(msg),
+            'flex justify-start': !isMyMessage(msg)
+          }"
+        >
+          <div class="flex flex-col max-w-[70%]">
+            <!-- Sender Name (Group/Channel only) -->
+            <span
+              *ngIf="
+                !isMyMessage(msg) &&
+                (selectedChat.isGroup || selectedChat.channelType !== 'DM')
+              "
+              class="text-xs text-gray-500 mb-1 ml-1"
+            >
+              {{ msg.sender?.name || 'Unknown' }}
+            </span>
+
+            <div
+              [ngClass]="{
+                'bg-blue-600 text-white': isMyMessage(msg),
+                'bg-white text-gray-800 border border-gray-200':
+                  !isMyMessage(msg)
+              }"
+              class="rounded-2xl p-3 shadow-sm break-words"
+            >
+              {{ msg.messageText }}
+            </div>
+            <span
+              class="text-[10px] text-gray-400 mt-1 px-1"
+              [ngClass]="{ 'text-right': isMyMessage(msg) }"
+            >
+              {{ msg.createdAt | date : 'shortTime' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div
+        class="border-t border-gray-200 p-3 bg-white flex items-center gap-3"
+      >
+        <button class="p-2 text-gray-400 hover:text-gray-600 transition">
+          <i class="pi pi-paperclip"></i>
+        </button>
+        <input
+          type="text"
+          [(ngModel)]="newMessage"
+          (keyup.enter)="sendMessage()"
+          placeholder="Type a message..."
+          class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          (click)="sendMessage()"
+          [disabled]="!newMessage.trim()"
+          class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <i class="pi pi-send"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div
+        class="flex flex-1 items-center justify-center flex-col text-gray-400 bg-gray-50"
+      >
+        <div
+          class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4"
+        >
+          <i class="pi pi-comments text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-600">No Chat Selected</h3>
+        <p class="text-sm">Select a conversation or start a new one</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Dialogs & Widgets -->
+  <app-create-group-dialog #createGroupDialog></app-create-group-dialog>
+  <app-create-channel-dialog #createChannelDialog></app-create-channel-dialog>
+  <app-channel-browser #channelBrowser></app-channel-browser>
+  <app-incoming-call-dialog></app-incoming-call-dialog>
+  <app-active-call></app-active-call>
+  <app-huddle-widget></app-huddle-widget>
+
+  <!-- User List Modal (Simple DM) -->
+  <p-dialog
+    header="Start a New Chat"
+    [(visible)]="showUserList"
+    [modal]="true"
+    [style]="{ width: '400px' }"
+  >
+    <div class="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
+      <div
+        *ngFor="let user of allUsers"
+        (click)="startNewChat(user.id)"
+        class="p-3 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center gap-3 transition"
+      >
+        <p-avatar
+          [label]="user.name.charAt(0)"
+          shape="circle"
+          [style]="{ 'background-color': '#BFDBFE', color: '#1D4ED8' }"
+        ></p-avatar>
+        <div class="flex-1">
+          <p class="text-gray-800 text-sm font-medium">{{ user.name }}</p>
+          <p class="text-gray-500 text-xs">{{ user.email }}</p>
+        </div>
+      </div>
+    </div>
+  </p-dialog>
+</div>

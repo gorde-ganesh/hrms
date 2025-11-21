@@ -1,0 +1,521 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl text-gray-900">Admin Panel</h1>
+      <p class="text-gray-600 mt-1">Manage users, roles, and permissions</p>
+    </div>
+  </div>
+
+  <p-tabs value="0">
+    <p-tablist>
+      <p-tab value="0">
+        <i class="pi pi-users mr-2"></i>
+        Users
+      </p-tab>
+      <p-tab value="1">
+        <i class="pi pi-shield mr-2"></i>
+        Roles
+      </p-tab>
+      <p-tab value="2">
+        <i class="pi pi-key mr-2"></i>
+        Permissions </p-tab
+      >kw
+      <p-tab value="3">
+        <i class="pi pi-building mr-2"></i>
+        Departments
+      </p-tab>
+      <p-tab value="4">
+        <i class="pi pi-briefcase mr-2"></i>
+        Designations
+      </p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+      <!-- ==================== Users Tab ==================== -->
+      <p-tabpanel value="0">
+        <p-table
+          [value]="users"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          class="p-datatable-sm"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Department</th>
+              <th>Designation</th>
+              <th>Current Role</th>
+              <th>Assign Role</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-user>
+            <tr>
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.department || 'N/A' }}</td>
+              <td>{{ user.designation || 'N/A' }}</td>
+              <td>
+                <p-tag
+                  [value]="user.roleName || user.role"
+                  [severity]="getRoleSeverity(user.role)"
+                />
+              </td>
+              <td>
+                <p-select
+                  [(ngModel)]="user.roleId"
+                  [options]="roles"
+                  optionLabel="name"
+                  optionValue="id"
+                  placeholder="Select Role"
+                  (onChange)="updateUserRole(user, user.roleId)"
+                  appendTo="body"
+                  class="w-full md:w-56"
+                />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6" class="text-center">No users found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <!-- ==================== Roles Tab ==================== -->
+      <p-tabpanel value="1">
+        <div class="mb-4 flex justify-end">
+          <p-button
+            label="Create New Role"
+            icon="pi pi-plus"
+            (click)="openCreateRoleDialog()"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <p-card *ngFor="let role of roles" class="h-full">
+            <ng-template #header>
+              <div class="p-4 pb-0">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                      {{ role.name }}
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-1">
+                      {{ role.description || 'No description' }}
+                    </p>
+                  </div>
+                  <p-tag
+                    *ngIf="role.isSystem"
+                    value="System"
+                    severity="secondary"
+                  />
+                </div>
+              </div>
+            </ng-template>
+
+            <div class="space-y-4">
+              <div>
+                <p class="text-xs text-gray-500 mb-2">
+                  <i class="pi pi-users mr-1"></i>
+                  {{ role.userCount || 0 }} users assigned
+                </p>
+              </div>
+
+              <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-2">
+                  Permissions ({{ role.permissions.length }})
+                </h4>
+                <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                  <p-tag
+                    *ngFor="let perm of role.permissions"
+                    [value]="perm.resource + ':' + perm.action"
+                    severity="info"
+                    styleClass="text-xs"
+                  />
+                  <span
+                    *ngIf="role.permissions.length === 0"
+                    class="text-gray-400 text-xs"
+                  >
+                    No permissions assigned
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #footer>
+              <div class="flex justify-end gap-2">
+                <p-button
+                  label="Edit"
+                  icon="pi pi-pencil"
+                  [text]="true"
+                  severity="info"
+                  (click)="openEditRoleDialog(role)"
+                />
+                <p-button
+                  *ngIf="!role.isSystem"
+                  label="Delete"
+                  icon="pi pi-trash"
+                  [text]="true"
+                  severity="danger"
+                  (click)="deleteRole(role)"
+                />
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+
+        <div
+          *ngIf="roles.length === 0 && !rolesLoading"
+          class="text-center py-12 text-gray-500"
+        >
+          <i class="pi pi-shield text-4xl mb-4"></i>
+          <p>No roles found. Create your first role to get started.</p>
+        </div>
+      </p-tabpanel>
+
+      <!-- ==================== Permissions Tab ==================== -->
+      <p-tabpanel value="2">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <p-card *ngFor="let resource of resources">
+            <ng-template #header>
+              <div class="p-4 pb-0">
+                <h3 class="text-lg font-semibold text-gray-900 capitalize">
+                  {{ resource }}
+                </h3>
+              </div>
+            </ng-template>
+
+            <div class="space-y-2">
+              <div
+                *ngFor="let perm of groupedPermissions[resource]"
+                class="flex items-center gap-2"
+              >
+                <i class="pi pi-check-circle text-green-600 mt-1"></i>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ perm.action }}
+                  </p>
+                  <p class="text-xs text-gray-600">{{ perm.description }}</p>
+                </div>
+              </div>
+            </div>
+          </p-card>
+        </div>
+
+        <div
+          *ngIf="resources.length === 0"
+          class="text-center py-12 text-gray-500"
+        >
+          <i class="pi pi-key text-4xl mb-4"></i>
+          <p>No permissions found.</p>
+        </div>
+      </p-tabpanel>
+
+      <!-- ==================== Departments Tab ==================== -->
+      <p-tabpanel value="3">
+        <div class="mb-4 flex justify-end">
+          <p-button
+            label="Add Department"
+            icon="pi pi-plus"
+            (click)="openCreateDepartmentDialog()"
+          />
+        </div>
+
+        <p-table
+          [value]="departments"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          class="p-datatable-sm"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th class="w-32 text-right">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-dept>
+            <tr>
+              <td class="font-medium">{{ dept.name }}</td>
+              <td>{{ dept.description || '-' }}</td>
+              <td class="text-right space-x-2">
+                <p-button
+                  icon="pi pi-pencil"
+                  [text]="true"
+                  severity="secondary"
+                  (click)="editDepartment(dept)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [text]="true"
+                  severity="danger"
+                  (click)="deleteDepartment(dept)"
+                />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="3" class="text-center">No departments found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <!-- ==================== Designations Tab ==================== -->
+      <p-tabpanel value="4">
+        <div class="mb-4 flex justify-end">
+          <p-button
+            label="Add Designation"
+            icon="pi pi-plus"
+            (click)="openCreateDesignationDialog()"
+          />
+        </div>
+
+        <p-table
+          [value]="designations"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          class="p-datatable-sm"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Name</th>
+              <th>Classification</th>
+              <th>Description</th>
+              <th class="w-32 text-right">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-desig>
+            <tr>
+              <td class="font-medium">{{ desig.name }}</td>
+              <td>{{ desig.classification || '-' }}</td>
+              <td>{{ desig.description || '-' }}</td>
+              <td class="text-right space-x-2">
+                <p-button
+                  icon="pi pi-pencil"
+                  [text]="true"
+                  severity="secondary"
+                  (click)="editDesignation(desig)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [text]="true"
+                  severity="danger"
+                  (click)="deleteDesignation(desig)"
+                />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="4" class="text-center">No designations found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>
+
+<!-- ==================== Department Dialog ==================== -->
+<p-dialog
+  [header]="editingDepartmentId ? 'Edit Department' : 'Add Department'"
+  [(visible)]="showDepartmentDialog"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+>
+  <form [formGroup]="departmentForm" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Name <span class="text-red-500">*</span>
+      </label>
+      <input
+        pInputText
+        formControlName="name"
+        class="w-full"
+        placeholder="Enter department name"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Description
+      </label>
+      <textarea
+        pTextarea
+        formControlName="description"
+        rows="3"
+        class="w-full"
+        placeholder="Enter description"
+      ></textarea>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      (click)="showDepartmentDialog = false"
+    />
+    <p-button
+      [label]="editingDepartmentId ? 'Update' : 'Create'"
+      icon="pi pi-check"
+      (click)="saveDepartment()"
+      [disabled]="departmentForm.invalid"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- ==================== Designation Dialog ==================== -->
+<p-dialog
+  [header]="editingDesignationId ? 'Edit Designation' : 'Add Designation'"
+  [(visible)]="showDesignationDialog"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+>
+  <form [formGroup]="designationForm" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Name <span class="text-red-500">*</span>
+      </label>
+      <input
+        pInputText
+        formControlName="name"
+        class="w-full"
+        placeholder="Enter designation name"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Classification
+      </label>
+      <input
+        pInputText
+        formControlName="classification"
+        class="w-full"
+        placeholder="Enter classification"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Description
+      </label>
+      <textarea
+        pTextarea
+        formControlName="description"
+        rows="3"
+        class="w-full"
+        placeholder="Enter description"
+      ></textarea>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      (click)="showDesignationDialog = false"
+    />
+    <p-button
+      [label]="editingDesignationId ? 'Update' : 'Create'"
+      icon="pi pi-check"
+      (click)="saveDesignation()"
+      [disabled]="designationForm.invalid"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- ==================== Role Create/Edit Dialog ==================== -->
+<p-dialog
+  [header]="editingRole ? 'Edit Role' : 'Create Role'"
+  [(visible)]="showRoleDialog"
+  [modal]="true"
+  [style]="{ width: '800px' }"
+  [maximizable]="true"
+>
+  <div class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Role Name <span class="text-red-500">*</span>
+      </label>
+      <input
+        pInputText
+        [(ngModel)]="roleName"
+        type="text"
+        class="w-full"
+        placeholder="Enter role name"
+        [disabled]="editingRole?.isSystem ?? false"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Description
+      </label>
+      <textarea
+        pTextarea
+        [(ngModel)]="roleDescription"
+        rows="3"
+        class="w-full"
+        placeholder="Enter role description"
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Permissions
+      </label>
+      <div
+        class="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div *ngFor="let resource of resources">
+            <h4
+              class="font-semibold text-gray-900 capitalize mb-3 flex items-center"
+            >
+              <i class="pi pi-folder mr-2 text-blue-600"></i>
+              {{ resource }}
+            </h4>
+            <div class="space-y-2 ml-6">
+              <div
+                *ngFor="let perm of groupedPermissions[resource]"
+                class="flex items-center"
+              >
+                <p-checkbox
+                  [binary]="true"
+                  [inputId]="perm.id"
+                  [ngModel]="isPermissionSelected(perm.id)"
+                  (ngModelChange)="togglePermission(perm.id)"
+                />
+                <label
+                  [for]="perm.id"
+                  class="ml-2 text-sm cursor-pointer"
+                  [title]="perm.description"
+                >
+                  {{ perm.action }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">
+        {{ selectedPermissions.size }} permission(s) selected
+      </p>
+    </div>
+  </div>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      (click)="closeRoleDialog()"
+    />
+    <p-button label="Save" icon="pi pi-check" (click)="saveRole()" />
+  </ng-template>
+</p-dialog>

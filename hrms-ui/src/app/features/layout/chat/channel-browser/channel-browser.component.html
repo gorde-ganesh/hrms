@@ -1,0 +1,49 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '600px', height: '500px' }"
+  header="Browse Channels"
+  (onHide)="onClose()"
+>
+  <div class="flex flex-col gap-3 h-full">
+    <input
+      pInputText
+      [(ngModel)]="searchQuery"
+      placeholder="Search channels..."
+      class="w-full"
+    />
+
+    <div class="flex-1 overflow-auto">
+      <div class="flex flex-col gap-2">
+        @for (channel of filteredChannels; track channel.id) {
+        <div class="channel-item p-3 border-round surface-border border-1">
+          <div class="flex justify-between align-items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-semibold"># {{ channel.name }}</span>
+                <p-badge [value]="channel._count?.members || 0" />
+              </div>
+              @if (channel.description) {
+              <p class="text-sm text-color-secondary m-0">
+                {{ channel.description }}
+              </p>
+              }
+            </div>
+            <p-button
+              [label]="isJoined(channel) ? 'Joined' : 'Join'"
+              [severity]="isJoined(channel) ? 'secondary' : 'primary'"
+              size="small"
+              (onClick)="joinChannel(channel)"
+              [disabled]="isJoined(channel)"
+            />
+          </div>
+        </div>
+        } @empty {
+        <div class="text-center text-color-secondary py-4">
+          No public channels found
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</p-dialog>

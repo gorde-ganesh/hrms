@@ -1,0 +1,67 @@
+.card-icons {
+  font-size: 2rem;
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+/* Dialog form styles */
+p-dialog form .p-calendar,
+p-dialog form .p-dropdown {
+  width: 100%;
+}
+
+/* Bulk action toolbar */
+.bulk-toolbar {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Filter panel */
+.filter-panel {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Table checkbox column */
+::ng-deep .p-datatable .p-datatable-thead > tr > th:first-child,
+::ng-deep .p-datatable .p-datatable-tbody > tr > td:first-child {
+  text-align: center;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-present {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-absent {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-half-day {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-leave {
+  background-color: #dbeafe;
+  color: #1e40af;
+}

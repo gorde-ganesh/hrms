@@ -1,0 +1,194 @@
+<div
+  class="w-full h-[100vh] p-6 flex flex-col lg:flex-row gap-6 overflow-hidden"
+>
+  <!-- Sidebar -->
+  <div
+    class="rounded-2xl p-5 sidebar-container dark:bg-surface-900 flex flex-col justify-between lg:w-80 w-full h-full shadow-medium border border-surface"
+  >
+    <!-- Menu -->
+    <p-panelmenu [model]="items" class="w-full">
+      <ng-template #item let-item>
+        <a
+          pRipple
+          class="flex items-center px-4 py-2 cursor-pointer group rounded-lg transition-colors duration-150"
+          (click)="navigate(item)"
+          [ngClass]="
+            activeRoute === item.route
+              ? 'text-primary-contrast bg-primary hover:bg-primary-emphasis'
+              : 'hover:bg-surface-100 dark:hover:bg-surface-800'
+          "
+        >
+          <i [class]="item.icon"></i>
+          <span class="ml-2 text-base truncate">{{ item.label }}</span>
+
+          <p-badge *ngIf="item.badge" class="ml-auto" [value]="item.badge" />
+          <span
+            *ngIf="item.shortcut"
+            class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs px-2 py-0.5"
+          >
+            {{ item.shortcut }}
+          </span>
+        </a>
+      </ng-template>
+    </p-panelmenu>
+
+    <!-- Footer: User Info + Logout -->
+    <div
+      class="pt-5 border-t border-surface-200 flex flex-col items-center w-full"
+    >
+      <div class="user-profile-section w-full mb-4">
+        <div class="flex items-center gap-4">
+          <div class="user-avatar">
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white shadow-soft relative"
+              style="
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+              "
+            >
+              <span class="relative z-10">{{ userDetails.initials }}</span>
+            </div>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <p
+              class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate"
+            >
+              {{ userDetails.name }}
+            </p>
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400 capitalize truncate"
+            >
+              {{ userDetails.role }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p-button
+        icon="pi pi-sign-out"
+        label="Logout"
+        (click)="onLogoutClick()"
+        styleClass="p-button-sm p-button-text p-button-danger w-full justify-center font-medium hover:bg-red-50 hover:text-red-600 transition-all duration-150"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Main Section -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Toolbar -->
+    <p-toolbar
+      [style]="{ 'border-radius': '1.5rem', padding: '1rem 1.5rem' }"
+      class="mb-4 shadow-soft modern-toolbar"
+    >
+      <ng-template #start>
+        <div class="flex items-center gap-2"></div>
+      </ng-template>
+
+      <ng-template #end>
+        <div class="flex items-center gap-4">
+          <app-notifictaion></app-notifictaion>
+          <p-avatar
+            image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
+            [style]="{ width: '32px', height: '32px' }"
+          />
+        </div>
+      </ng-template>
+    </p-toolbar>
+
+    <!-- Content -->
+    <div
+      class="flex-1 overflow-auto bg-surface-50 dark:bg-surface-900 border border-surface rounded-2xl p-6 shadow-soft content-area"
+    >
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+
+<p-dialog
+  header="Change Password"
+  [modal]="true"
+  [(visible)]="changePasswordDialog"
+  [style]="{ width: '30vw' }"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+>
+  <span class="p-text-secondary block mb-8">Update your information.</span>
+  <form
+    class="flex flex-col items-stretch justify-stretch gap-6"
+    [formGroup]="changePasswordForm"
+    (ngSubmit)="onChangePassword()"
+  >
+    <div>
+      <p-floatlabel variant="on">
+        <p-password
+          [toggleMask]="true"
+          formControlName="oldPassword"
+          inputId="on_pasword"
+          fluid
+        >
+        </p-password>
+        <label for="on_pasword">Old Password</label>
+      </p-floatlabel>
+      <!-- <ng-template [formError]="'oldPassword'" let-control>
+        @if(control.errors?.['required']) {
+        <p-message severity="error" size="small" variant="simple">
+          Password is required
+        </p-message>
+        }
+      </ng-template> -->
+    </div>
+    <div>
+      <p-floatlabel variant="on">
+        <p-password
+          [toggleMask]="true"
+          formControlName="newPassword"
+          inputId="on_pasword"
+          fluid
+          appendTo="body"
+        >
+          <ng-template #footer>
+            <p-divider />
+            <ul class="pl-2 my-0 leading-normal">
+              <li>At least one lowercase</li>
+              <li>At least one uppercase</li>
+              <li>At least one numeric</li>
+              <li>Minimum 8 characters</li>
+            </ul>
+          </ng-template>
+        </p-password>
+        <label for="on_pasword">New Password</label>
+      </p-floatlabel>
+      <!-- <ng-template [formError]="'newPassword'" let-control>
+        @if(control.errors?.['required']) {
+        <p-message severity="error" size="small" variant="simple">
+          Password is required
+        </p-message>
+        } @if(control.errors?.['passwordStrength']) {
+        <p-message severity="error" size="small" variant="simple">
+          Password must be at least 8 characters, include an uppercase letter,
+          number, and special character.
+        </p-message>
+        }
+      </ng-template> -->
+    </div>
+    <div>
+      <p-floatlabel variant="on">
+        <p-password
+          [toggleMask]="true"
+          formControlName="confirmPassword"
+          inputId="on_confirm_pasword"
+          fluid
+        />
+        <label for="on_confirm_pasword">Confirm Password</label>
+      </p-floatlabel>
+      <!-- <ng-template [formError]="'confirmPassword'" let-control>
+        @if(control.errors?.['passwordMismatch']) {
+        <p-message severity="error" size="small" variant="simple">
+          Passwords do not match.
+        </p-message>
+        }
+      </ng-template> -->
+    </div>
+
+    <button pButton type="submit">Change Password</button>
+  </form>
+</p-dialog>

@@ -1,0 +1,880 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "HRMS API",
+    "version": "1.1.2",
+    "description": "Complete HRMS API documentation covering Auth, Employee, Leave, Attendance, Payroll, Performance, Notifications, Reports, and User Profile."
+  },
+  "servers": [
+    { "url": "https://localhost:8080/api", "description": "Local server" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "UserRegistration": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "role": { "type": "string", "enum": ["ADMIN", "HR", "EMPLOYEE"] },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "state": { "type": "string" },
+          "country": { "type": "string" },
+          "zipCode": { "type": "string" },
+          "employeeCode": { "type": "string" },
+          "departmentId": { "type": "string", "format": "uuid" },
+          "designationId": { "type": "string", "format": "uuid" },
+          "joiningDate": { "type": "string", "format": "date" },
+          "salary": { "type": "number" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+          "managerId": { "type": "string", "format": "uuid", "nullable": true },
+          "dob": { "type": "string", "format": "date" },
+          "personalEmail": { "type": "string", "format": "email" },
+          "bloodGroup": { "type": "string" },
+          "emargencyContactPerson": { "type": "string" },
+          "emargencyContactNumber": { "type": "string" }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "role",
+          "phone",
+          "address",
+          "employeeCode",
+          "departmentId",
+          "designationId",
+          "joiningDate",
+          "salary",
+          "status",
+          "dob",
+          "personalEmail",
+          "bloodGroup",
+          "emargencyContactPerson",
+          "emargencyContactNumber"
+        ]
+      },
+      "UserLogin": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        },
+        "required": ["email", "password"]
+      },
+      "Employee": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string", "format": "uuid" },
+          "employeeCode": { "type": "string" },
+          "departmentId": { "type": "string", "format": "uuid" },
+          "designationId": { "type": "string", "format": "uuid" },
+          "joiningDate": { "type": "string", "format": "date" },
+          "salary": { "type": "number" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+          "managerId": { "type": "string", "format": "uuid", "nullable": true },
+          "dob": { "type": "string", "format": "date" },
+          "personalEmail": { "type": "string", "format": "email" },
+          "bloodGroup": { "type": "string" },
+          "emargencyContactPerson": { "type": "string" },
+          "emargencyContactNumber": { "type": "string" }
+        },
+        "required": [
+          "userId",
+          "employeeCode",
+          "departmentId",
+          "designationId",
+          "joiningDate",
+          "salary",
+          "status",
+          "dob",
+          "personalEmail",
+          "bloodGroup",
+          "emargencyContactPerson",
+          "emargencyContactNumber"
+        ]
+      },
+      "Leave": {
+        "type": "object",
+        "properties": {
+          "employeeId": { "type": "string", "format": "uuid" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" },
+          "reason": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "APPROVED", "REJECTED"]
+          },
+          "approvedById": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "managerApprovalId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "required": ["employeeId", "startDate", "endDate", "reason"]
+      },
+      "schemas": {
+        "Attendance": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "example": "att_1234" },
+            "employeeId": { "type": "string", "example": "emp_5678" },
+            "type": { "type": "string", "example": "in" },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2025-10-16T09:00:00Z"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2025-10-16T09:00:00Z"
+            }
+          }
+        }
+      },
+      "PayrollComponent": {
+        "type": "object",
+        "properties": {
+          "payrollId": { "type": "string", "format": "uuid" },
+          "componentTypeId": { "type": "string", "format": "uuid" },
+          "amount": { "type": "number" },
+          "percent": { "type": "number", "nullable": true }
+        },
+        "required": ["payrollId", "componentTypeId", "amount"]
+      },
+      "Payroll": {
+        "type": "object",
+        "properties": {
+          "employeeId": { "type": "string", "format": "uuid" },
+          "month": { "type": "integer" },
+          "year": { "type": "integer" },
+          "components": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PayrollComponent" }
+          },
+          "netSalary": { "type": "number" }
+        },
+        "required": ["employeeId", "month", "year"]
+      },
+      "Performance": {
+        "type": "object",
+        "properties": {
+          "employeeId": { "type": "string", "format": "uuid" },
+          "goals": { "type": "string" },
+          "rating": { "type": "integer" },
+          "comments": { "type": "string" },
+          "managerComments": { "type": "string" }
+        },
+        "required": ["employeeId", "goals"]
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "employeeIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" },
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": ["SYSTEM", "LEAVE", "PAYROLL", "PERFORMANCE"]
+          },
+          "message": { "type": "string" }
+        },
+        "required": ["type", "message"]
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" }
+        }
+      },
+      "Department": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+      "Designation": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "classification": { "type": "string" }
+        },
+        "required": ["name"]
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Employee" },
+    { "name": "Leave" },
+    { "name": "Attendance" },
+    { "name": "Payroll" },
+    { "name": "Performance" },
+    { "name": "Notifications" },
+    { "name": "Reports" },
+    { "name": "User Profile" },
+    { "name": "Departments" },
+    { "name": "Designations" }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register User & Employee",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserRegistration" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User & Employee Registered Successfully" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login User",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserLogin" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Login successful" } }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Generate Password Reset Token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Reset token generated" } }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Change Password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": { "type": "string", "format": "uuid" },
+                  "oldPassword": { "type": "string" },
+                  "token": { "type": "string" },
+                  "newPassword": { "type": "string" }
+                },
+                "required": ["newPassword"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password changed successfully" }
+        }
+      }
+    },
+    "/employees": {
+      "post": {
+        "tags": ["Employee"],
+        "summary": "Add Employee",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Employee" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Employee added successfully" } }
+      },
+      "get": {
+        "tags": ["Employee"],
+        "summary": "List Employees",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "departmentId",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          { "in": "query", "name": "status", "schema": { "type": "string" } },
+          { "in": "query", "name": "role", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Employees fetched" } }
+      }
+    },
+    "/employees/{id}": {
+      "get": {
+        "tags": ["Employee"],
+        "summary": "Get Employee Details",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Employee details" } }
+      },
+      "put": {
+        "tags": ["Employee"],
+        "summary": "Update Employee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Employee" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Employee updated" } }
+      },
+      "delete": {
+        "tags": ["Employee"],
+        "summary": "Delete Employee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Employee deleted" } }
+      }
+    },
+    "/leaves": {
+      "post": {
+        "tags": ["Leave"],
+        "summary": "Apply Leave",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Leave" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Leave applied" } }
+      },
+      "get": {
+        "tags": ["Leave"],
+        "summary": "List Leaves",
+        "parameters": [
+          { "in": "query", "name": "status", "schema": { "type": "string" } },
+          { "in": "query", "name": "month", "schema": { "type": "integer" } },
+          { "in": "query", "name": "year", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Leaves fetched" } }
+      }
+    },
+    "/leaves/{id}/status": {
+      "patch": {
+        "tags": ["Leave"],
+        "summary": "Approve/Reject Leave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string" },
+                  "approvedById": { "type": "string" }
+                },
+                "required": ["status", "approvedById"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Leave status updated" } }
+      }
+    },
+    "/api/attendance": {
+      "post": {
+        "tags": ["Attendance"],
+        "summary": "Clock In / Clock Out",
+        "description": "Record employee attendance entry.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "employeeId": { "type": "string", "example": "emp_1234" },
+                  "type": {
+                    "type": "string",
+                    "enum": ["in", "out"],
+                    "example": "in"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2025-10-16T09:00:00Z"
+                  }
+                },
+                "required": ["employeeId", "type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Attendance recorded successfully" },
+          "400": { "description": "Validation error" },
+          "404": { "description": "Employee not found" }
+        }
+      },
+      "get": {
+        "tags": ["Attendance"],
+        "summary": "Get Attendance List",
+        "description": "Fetch attendance records filtered by employeeId, month, and year.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Employee ID"
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "schema": { "type": "integer" },
+            "description": "Month (1-12)"
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "schema": { "type": "integer" },
+            "description": "Year (e.g., 2025)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendance fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Attendance"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attendance/{id}": {
+      "get": {
+        "tags": ["Attendance"],
+        "summary": "Get Attendance by Employee ID",
+        "description": "Retrieve all attendance records for a specific employee.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Employee ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendance records retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Attendance" }
+                }
+              }
+            }
+          },
+          "404": { "description": "Employee not found" }
+        }
+      }
+    },
+    "/payroll": {
+      "post": {
+        "tags": ["Payroll"],
+        "summary": "Generate Payroll",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Payroll" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Payroll generated" } }
+      },
+      "get": {
+        "tags": ["Payroll"],
+        "summary": "List Payroll",
+        "parameters": [
+          { "in": "query", "name": "month", "schema": { "type": "integer" } },
+          { "in": "query", "name": "year", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Payroll list" } }
+      }
+    },
+    "/performance": {
+      "post": {
+        "tags": ["Performance"],
+        "summary": "Add Appraisal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Performance" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Appraisal added" } }
+      }
+    },
+    "/performance/{id}": {
+      "put": {
+        "tags": ["Performance"],
+        "summary": "Update Appraisal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Performance" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Appraisal updated" } }
+      },
+      "get": {
+        "tags": ["Performance"],
+        "summary": "Get Employee Appraisal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Appraisal details" } }
+      }
+    },
+    "/notifications": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Send Notification",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Notification" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Notification sent" } }
+      },
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "List Notifications",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "employeeId",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Notifications list" } }
+      }
+    },
+    "/reports/leaves": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Leave Report",
+        "parameters": [
+          { "in": "query", "name": "month", "schema": { "type": "integer" } },
+          { "in": "query", "name": "year", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Leave report data" } }
+      }
+    },
+    "/reports/payroll": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Payroll Report",
+        "parameters": [
+          { "in": "query", "name": "month", "schema": { "type": "integer" } },
+          { "in": "query", "name": "year", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Payroll report data" } }
+      }
+    },
+    "/reports/attendance": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Attendance Report",
+        "parameters": [
+          { "in": "query", "name": "month", "schema": { "type": "integer" } },
+          { "in": "query", "name": "year", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Attendance report data" } }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "View Profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Profile data" } }
+      },
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Update Profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Profile" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Profile updated" } }
+      }
+    },
+    "/departments": {
+      "post": {
+        "tags": ["Departments"],
+        "summary": "Create Department",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Department" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Department created" } }
+      },
+      "get": {
+        "tags": ["Departments"],
+        "summary": "Get all Departments",
+        "responses": { "200": { "description": "List of departments" } }
+      }
+    },
+    "/departments/{id}": {
+      "get": {
+        "tags": ["Departments"],
+        "summary": "Get Department by ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Department details" } }
+      },
+      "put": {
+        "tags": ["Departments"],
+        "summary": "Update Department",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Department" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Department updated" } }
+      },
+      "delete": {
+        "tags": ["Departments"],
+        "summary": "Delete Department",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Department deleted" } }
+      }
+    },
+    "/designations": {
+      "post": {
+        "tags": ["Designations"],
+        "summary": "Create Designation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Designation" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Designation created" } }
+      },
+      "get": {
+        "tags": ["Designations"],
+        "summary": "Get all Designations",
+        "responses": { "200": { "description": "List of designations" } }
+      }
+    },
+    "/designations/{id}": {
+      "get": {
+        "tags": ["Designations"],
+        "summary": "Get Designation by ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Designation details" } }
+      },
+      "put": {
+        "tags": ["Designations"],
+        "summary": "Update Designation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Designation" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Designation updated" } }
+      },
+      "delete": {
+        "tags": ["Designations"],
+        "summary": "Delete Designation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Designation deleted" } }
+      }
+    }
+  }
+}

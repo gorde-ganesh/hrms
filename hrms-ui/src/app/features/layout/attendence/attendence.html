@@ -1,0 +1,492 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl text-gray-900">Attendance</h1>
+      <p class="text-gray-600 mt-1">Track and manage attendance records</p>
+    </div>
+    <p-button
+      label="Export Report"
+      icon="pi pi-download"
+      (click)="exportReport()"
+    />
+  </div>
+
+  <p-card class="bg-blue-50 border border-blue-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg text-gray-900">Today's Attendance</h3>
+        <div class="flex items-center gap-2 mt-2">
+          <i class="pi pi-clock"></i>
+          <span class="text-gray-700">
+            {{
+              todayStatus === 'PRESENT'
+                ? 'Checked in at ' + todayCheckInTime
+                : todayStatus
+            }}
+          </span>
+        </div>
+        <p class="text-sm text-gray-600 mt-1">
+          Working hours: {{ todayWorkHours }}
+        </p>
+      </div>
+      <p-button
+        [label]="
+          attendenceSummary?.today?.isCheckedIn ? 'Check Out' : 'Clock In'
+        "
+        icon="pi pi-clock"
+        (click)="clockInOut()"
+      >
+      </p-button>
+    </div>
+  </p-card>
+
+  <!-- Metrics Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Card 1 -->
+    <p-card>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">This Month</p>
+          <p class="text-2xl text-gray-900 mt-2">
+            {{ attendenceSummary.workingDays }}
+          </p>
+          <p class="text-sm text-gray-600 mt-1">Working days</p>
+        </div>
+        <i class="h-8 w-8 text-blue-600 pi pi-calendar card-icons"></i>
+      </div>
+    </p-card>
+
+    <!-- Card 2 -->
+    <p-card>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">Present</p>
+          <p class="text-2xl text-gray-900 mt-1">
+            {{ attendenceSummary?.presentDays }} days
+          </p>
+          <p class="text-sm text-green-600 mt-1">
+            {{
+              getPercentage(
+                attendenceSummary?.presentDays,
+                attendenceSummary?.workingDays
+              )
+            }}%
+          </p>
+        </div>
+        <span
+          class="h-8 w-8 text-green-600 pi pi-check-circle card-icons"
+        ></span>
+      </div>
+    </p-card>
+
+    <!-- Card 3 -->
+    <p-card>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">Absent</p>
+          <p class="text-2xl text-gray-900 mt-1">
+            {{ attendenceSummary?.absentDays }} days
+          </p>
+          <p class="text-sm text-red-600 mt-1">
+            {{
+              getPercentage(
+                attendenceSummary?.absentDays,
+                attendenceSummary?.workingDays
+              )
+            }}%
+          </p>
+        </div>
+        <span class="h-8 w-8 text-red-600 pi pi-times-circle card-icons"></span>
+      </div>
+    </p-card>
+
+    <!-- Card 4 -->
+    <p-card>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">Avg Hours/Day</p>
+          <p class="text-2xl text-gray-900 mt-1">
+            {{ attendenceSummary?.avgHours }}h
+          </p>
+          <p class="text-sm text-gray-600 mt-1">Target: 8h</p>
+        </div>
+        <span class="h-8 w-8 text-purple-600 pi pi-clock card-icons"></span>
+      </div>
+    </p-card>
+  </div>
+
+  <p-tabs value="0">
+    <p-tablist>
+      <p-tab value="0">My Attendence</p-tab>
+      <p-tab value="1" *ngIf="showTeamTab">Team Attendence</p-tab>
+      <p-tab [value]="showTeamTab ? '2' : '1'" *ngIf="showAllEmployeesTab"
+        >All Employees</p-tab
+      >
+    </p-tablist>
+    <p-tabpanels>
+      <!-- My Attendance Tab -->
+      <p-tabpanel value="0">
+        <p-table
+          [value]="myAttendence"
+          [paginator]="true"
+          [rows]="myAttendenceParams.top"
+          editMode="row"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="pageChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="myAttendenceRecords"
+          [first]="myAttendenceParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        >
+          <ng-template #caption>
+            <div class="flex justify-end gap-4">
+              <p-iconfield iconPosition="left" class="ml-auto">
+                <p-inputicon>
+                  <i class="pi pi-search"></i>
+                </p-inputicon>
+                <input
+                  pInputText
+                  type="text"
+                  [formControl]="searchControl"
+                  placeholder="Search keyword"
+                />
+              </p-iconfield>
+              <p-button
+                label="Clear"
+                [outlined]="true"
+                icon="pi pi-filter-slash"
+                (click)="clearFilter()"
+              />
+            </div>
+          </ng-template>
+          <ng-template #header>
+            <tr>
+              <th>Date</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Total Hours</th>
+              <th>Status</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-attendance>
+            <tr>
+              <td>{{ attendance.attendanceDate | date : 'mediumDate' }}</td>
+              <td>{{ attendance.checkIn | date : 'shortTime' }}</td>
+              <td>{{ attendance.checkOut | date : 'shortTime' }}</td>
+              <td>{{ attendance.totalHours || '-' }}</td>
+              <td>{{ attendance.status }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="5">No attendence found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <!-- Team Attendance Tab (Manager) -->
+      <p-tabpanel value="1" *ngIf="showTeamTab">
+        <p-table
+          [value]="teamAttendence"
+          [paginator]="true"
+          [rows]="teamAttendenceParams.top"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="teamPageChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="teamAttendenceRecords"
+          [first]="teamAttendenceParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        >
+          <ng-template #caption>
+            <div class="flex justify-end gap-4">
+              <p-iconfield iconPosition="left" class="ml-auto">
+                <p-inputicon>
+                  <i class="pi pi-search"></i>
+                </p-inputicon>
+                <input
+                  pInputText
+                  type="text"
+                  [formControl]="teamSearchControl"
+                  placeholder="Search employee"
+                />
+              </p-iconfield>
+              <p-button
+                label="Clear"
+                [outlined]="true"
+                icon="pi pi-filter-slash"
+                (click)="clearTeamFilter()"
+              />
+            </div>
+          </ng-template>
+          <ng-template #header>
+            <tr>
+              <th>Employee</th>
+              <th>Department</th>
+              <th>Date</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Total Hours</th>
+              <th>Status</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-attendance>
+            <tr>
+              <td>{{ attendance.employee?.user?.name }}</td>
+              <td>{{ attendance.employee?.department?.name || 'N/A' }}</td>
+              <td>{{ attendance.attendanceDate | date : 'mediumDate' }}</td>
+              <td>{{ attendance.checkIn | date : 'shortTime' }}</td>
+              <td>{{ attendance.checkOut | date : 'shortTime' }}</td>
+              <td>{{ attendance.totalHours || '-' }}</td>
+              <td>{{ attendance.status }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="7">No team attendance found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <!-- All Employees Tab (HR/Admin) -->
+      <p-tabpanel [value]="showTeamTab ? '2' : '1'" *ngIf="showAllEmployeesTab">
+        <div class="mb-4 flex gap-4 items-end justify-end">
+          <p-button
+            label="Bulk Mark Attendance"
+            icon="pi pi-users"
+            (click)="openBulkDialog()"
+            [disabled]="selectedEmployees.length === 0"
+          />
+        </div>
+
+        <p-table
+          [value]="allAttendence"
+          [paginator]="true"
+          [rows]="allAttendenceParams.top"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="allPageChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="allAttendenceRecords"
+          [first]="allAttendenceParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+          [(selection)]="selectedEmployees"
+        >
+          <ng-template #caption>
+            <div class="flex gap-4 justify-end">
+              <p-float-label class="w-full md:w-50" variant="on">
+                <p-select
+                  [options]="departments"
+                  [(ngModel)]="selectedDepartment"
+                  optionLabel="name"
+                  class="w-full"
+                  [showClear]="true"
+                  appendTo="body"
+                />
+                <label>Department</label>
+              </p-float-label>
+              <p-float-label class="w-full md:w-50" variant="on">
+                <p-select
+                  [options]="designations"
+                  [(ngModel)]="selectedDesignation"
+                  optionLabel="name"
+                  class="w-full"
+                  [showClear]="true"
+                  appendTo="body"
+                />
+                <label>Designation</label>
+              </p-float-label>
+              <p-iconfield iconPosition="left">
+                <p-inputicon>
+                  <i class="pi pi-search"></i>
+                </p-inputicon>
+                <input
+                  pInputText
+                  type="text"
+                  [formControl]="allSearchControl"
+                  placeholder="Search employee"
+                />
+              </p-iconfield>
+              <p-button
+                label="Apply"
+                [outlined]="true"
+                icon="pi pi-check"
+                (click)="loadAllAttendence()"
+              />
+              <p-button
+                label="Clear"
+                [outlined]="true"
+                icon="pi pi-filter-slash"
+                (click)="clearAllFilter()"
+              />
+            </div>
+          </ng-template>
+          <ng-template #header>
+            <tr>
+              <th style="width: 4rem">
+                <p-tableHeaderCheckbox />
+              </th>
+              <th>Employee</th>
+              <th>Department</th>
+              <th>Date</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Total Hours</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-attendance>
+            <tr>
+              <td>
+                <p-tableCheckbox [value]="attendance" />
+              </td>
+              <td>{{ attendance.employee?.user?.name }}</td>
+              <td>{{ attendance.employee?.department?.name || 'N/A' }}</td>
+              <td>{{ attendance.attendanceDate | date : 'mediumDate' }}</td>
+              <td>{{ attendance.checkIn | date : 'shortTime' }}</td>
+              <td>{{ attendance.checkOut | date : 'shortTime' }}</td>
+              <td>{{ attendance.totalHours || '-' }}</td>
+              <td>{{ attendance.status }}</td>
+              <td>
+                <p-button
+                  icon="pi pi-pencil"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="info"
+                  (click)="openEditDialog(attendance)"
+                />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="9">No attendance records found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>
+
+<!-- Edit Attendance Dialog -->
+<p-dialog
+  header="Edit Attendance"
+  [(visible)]="showEditDialog"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+>
+  <form [formGroup]="editForm" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+      <p-datepicker
+        formControlName="attendanceDate"
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        class="w-full"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+      <p-select
+        formControlName="status"
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select Status"
+        appendTo="body"
+        class="w-full"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2"
+        >Check In</label
+      >
+      <p-datepicker
+        formControlName="checkIn"
+        [showIcon]="true"
+        [showTime]="true"
+        [timeOnly]="false"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        class="w-full"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2"
+        >Check Out</label
+      >
+      <p-datepicker
+        formControlName="checkOut"
+        [showIcon]="true"
+        [showTime]="true"
+        [timeOnly]="false"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        class="w-full"
+      />
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      (click)="showEditDialog = false"
+    />
+    <p-button label="Save" (click)="saveAttendance()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Bulk Mark Attendance Dialog -->
+<p-dialog
+  header="Bulk Mark Attendance"
+  [(visible)]="showBulkDialog"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+>
+  <div class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+      <p-datepicker
+        [(ngModel)]="bulkDate"
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+      <p-select
+        [(ngModel)]="bulkStatus"
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select Status"
+        styleClass="w-full"
+      />
+    </div>
+
+    <p class="text-sm text-gray-600">
+      Selected {{ selectedEmployees.length }} employee(s)
+    </p>
+  </div>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      (click)="showBulkDialog = false"
+    />
+    <p-button label="Mark Attendance" (click)="saveBulkAttendance()" />
+  </ng-template>
+</p-dialog>

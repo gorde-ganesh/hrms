@@ -1,0 +1,50 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  header="Create Channel"
+  (onHide)="onCancel()"
+>
+  <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-2">
+      <label for="channelName">Channel Name</label>
+      <input
+        pInputText
+        id="channelName"
+        [(ngModel)]="channelName"
+        placeholder="e.g., general, announcements"
+      />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="description">Description</label>
+      <textarea
+        class="p-inputtext w-full"
+        id="description"
+        [(ngModel)]="description"
+        placeholder="What's this channel about?"
+        rows="3"
+      ></textarea>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <p-checkbox [(ngModel)]="isPublic" [binary]="true" inputId="isPublic" />
+      <label for="isPublic">{{
+        isPublic ? 'Public Channel' : 'Private Channel'
+      }}</label>
+    </div>
+
+    <small class="text-color-secondary">
+      {{
+        isPublic
+          ? 'Anyone can join this channel'
+          : 'Only invited members can join'
+      }}
+    </small>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" (onClick)="onCancel()" />
+    <p-button label="Create" (onClick)="onCreate()" [disabled]="!channelName" />
+  </ng-template>
+</p-dialog>

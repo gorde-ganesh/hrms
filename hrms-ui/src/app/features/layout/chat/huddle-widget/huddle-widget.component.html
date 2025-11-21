@@ -1,0 +1,158 @@
+@if (activeHuddle) {
+<!-- Overlay backdrop -->
+<div class="huddle-overlay" (click)="isExpanded && toggleExpand()"></div>
+
+<div
+  class="huddle-widget surface-card shadow-4 border-round flex flex-column"
+  [class.expanded]="isExpanded"
+  [class.minimized]="!isExpanded"
+>
+  <!-- Header -->
+  <div
+    class="huddle-header flex items-center justify-between p-3 border-bottom-1 surface-border"
+  >
+    <div class="flex items-center gap-2">
+      <i class="pi pi-volume-up text-primary text-xl"></i>
+      <span class="font-bold text-lg">{{ activeHuddle.name || 'Huddle' }}</span>
+      <p-badge [value]="participants.length" severity="success" />
+    </div>
+    <div class="flex gap-1">
+      <p-button
+        [icon]="isExpanded ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        severity="secondary"
+        (onClick)="toggleExpand()"
+        pTooltip="{{ isExpanded ? 'Minimize' : 'Expand' }}"
+      />
+      <p-button
+        icon="pi pi-times"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        severity="secondary"
+        (onClick)="leaveHuddle()"
+        pTooltip="Leave Huddle"
+      />
+    </div>
+  </div>
+
+  <!-- Content (Grid) -->
+  <div class="huddle-content flex-grow-1 overflow-y-auto p-3">
+    <div class="participants-grid">
+      <!-- Local User -->
+      <div class="participant-card surface-ground border-round overflow-hidden">
+        @if (isVideoEnabled && localStream) {
+        <video
+          #localVideo
+          [srcObject]="localStream"
+          autoplay
+          muted
+          playsinline
+          class="video-element"
+        ></video>
+        } @else {
+        <div
+          class="avatar-placeholder flex items-center justify-center h-full w-full"
+        >
+          <p-avatar
+            [label]="getInitial('You')"
+            size="xlarge"
+            shape="circle"
+            [style]="{
+              'background-color': '#2196F3',
+              color: '#fff',
+              margin: 'auto'
+            }"
+          />
+        </div>
+        }
+        <div class="participant-label">
+          <span>You</span>
+          @if (isMuted) {
+          <i class="pi pi-microphone-slash text-red-500 ml-2"></i>
+          } @else {
+          <i class="pi pi-microphone text-green-500 ml-2"></i>
+          }
+        </div>
+      </div>
+
+      <!-- Remote Participants -->
+      @for (participant of participants; track participant.userId) { @if
+      (participant.userId !== currentUserId) {
+      <div class="participant-card surface-ground border-round overflow-hidden">
+        @if (remoteStreams.get(participant.userId) &&
+        hasVideoTrack(remoteStreams.get(participant.userId)!)) {
+        <video
+          [srcObject]="remoteStreams.get(participant.userId)"
+          autoplay
+          playsinline
+          class="video-element"
+        ></video>
+        } @else {
+        <div
+          class="avatar-placeholder flex items-center justify-center h-full w-full"
+        >
+          <p-avatar
+            [label]="getInitial(participant.user?.name)"
+            size="xlarge"
+            shape="circle"
+            [style]="{
+              'background-color': '#4CAF50',
+              color: '#fff',
+              margin: 'auto'
+            }"
+          />
+        </div>
+        }
+        <div class="participant-label">
+          <span>{{ participant.user?.name || 'Unknown' }}</span>
+          <!-- We might need a way to know if remote user is muted, for now just show name -->
+        </div>
+        @if (participant.isSpeaking) {
+        <div class="speaking-indicator"></div>
+        } @else {
+        <i class="pi pi-microphone-slash text-red-500 ml-2"></i>
+        }
+      </div>
+      } }
+    </div>
+  </div>
+
+  <!-- Footer (Controls) -->
+  <div
+    class="huddle-footer p-3 border-top-1 surface-border flex justify-center gap-3"
+  >
+    <button
+      pButton
+      [rounded]="true"
+      [outlined]="!isMuted"
+      [severity]="isMuted ? 'danger' : 'success'"
+      [icon]="isMuted ? 'pi pi-microphone-slash' : 'pi pi-microphone'"
+      (click)="toggleMute()"
+      pTooltip="{{ isMuted ? 'Unmute' : 'Mute' }}"
+    ></button>
+
+    <button
+      pButton
+      [rounded]="true"
+      [outlined]="!isVideoEnabled"
+      [severity]="isVideoEnabled ? 'success' : 'danger'"
+      [icon]="isVideoEnabled ? 'pi pi-video' : 'pi pi-video-slash'"
+      (click)="toggleVideo()"
+      pTooltip="{{ isVideoEnabled ? 'Turn off video' : 'Turn on video' }}"
+    ></button>
+
+    <button
+      pButton
+      [rounded]="true"
+      severity="danger"
+      icon="pi pi-phone"
+      class="leave-btn"
+      (click)="leaveHuddle()"
+      pTooltip="Leave Huddle"
+    ></button>
+  </div>
+</div>
+}

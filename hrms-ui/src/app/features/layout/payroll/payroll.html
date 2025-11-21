@@ -1,0 +1,412 @@
+<div class="space-y-6">
+  <p-tabs [value]="tabIndex">
+    <p-tablist>
+      <p-tab value="0">List</p-tab>
+      @if(hasPermission('generate')) {
+      <p-tab value="1">Components</p-tab>
+      <p-tab value="2">Generate Payroll</p-tab>
+      }
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="0">
+        <p-table
+          [value]="payrolls"
+          [paginator]="true"
+          [rows]="apiParams.top"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="pageChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="totalRecords"
+          [first]="apiParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        >
+          <ng-template #caption> </ng-template>
+          <ng-template #header>
+            <tr>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-pay let-ri="rowIndex">
+            <tr>
+              <td>{{ pay.date | date : 'MMM y' }}</td>
+              <td>
+                <p-button
+                  type="button"
+                  icon="pi pi-download"
+                  (click)="onPayrollDownload(pay)"
+                  [rounded]="true"
+                  [text]="true"
+                ></p-button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6">No payrolls found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+      <p-tabpanel value="1">
+        <p-toolbar class="mb-6">
+          <ng-template #start> </ng-template>
+
+          <ng-template #end>
+            <p-button
+              label="New"
+              icon="pi pi-plus"
+              class="mr-2"
+              (onClick)="addNew()"
+            />
+          </ng-template>
+        </p-toolbar>
+        <p-table
+          [value]="payrollComponentsAll"
+          [paginator]="true"
+          [rows]="payrollComponentsApiParams.top"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="pageComponentChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="payrollComponentsTotalRecords"
+          [first]="payrollComponentsApiParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-component>
+            <tr>
+              <td>{{ component.name }}</td>
+              <td>
+                {{ component.type }}
+              </td>
+              <td>
+                <p-tag
+                  [severity]="component.isActive | status"
+                  [value]="component.isActive ? 'Active' : 'Inactive'"
+                  [rounded]="true"
+                />
+              </td>
+              <td>
+                <div class="flex items-center justify-start gap-2">
+                  <p-button
+                    type="button"
+                    icon="pi pi-pencil"
+                    severity="warn"
+                    (click)="onComponentEdit(component)"
+                    [rounded]="true"
+                    [text]="true"
+                  ></p-button>
+                  <p-button
+                    type="button"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    (click)="onComponentDelete($event, component)"
+                    [rounded]="true"
+                    [text]="true"
+                  ></p-button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6">No components found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+
+      <!-- Generate Payroll Tab -->
+      <p-tabpanel value="2">
+        <p-toast />
+        <div class="space-y-6">
+          <p-card>
+            <ng-template #header>
+              <div class="p-4">
+                <h3 class="text-xl font-semibold text-gray-900">
+                  Generate Payroll
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">
+                  Create payroll for an employee
+                </p>
+              </div>
+            </ng-template>
+
+            <form [formGroup]="generatePayrollForm" class="space-y-6">
+              <!-- Employee Selection -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Employee *</label
+                >
+                <p-select
+                  formControlName="employee"
+                  [options]="employees"
+                  optionLabel="user.name"
+                  placeholder="Select Employee"
+                  [filter]="true"
+                  filterBy="user.name,employeeCode"
+                  [showClear]="true"
+                  styleClass="w-full"
+                  (onChange)="onEmployeeChange()"
+                  appendTo="body"
+                >
+                  <ng-template #item let-employee>
+                    <div class="flex items-center gap-2">
+                      <div>
+                        <div class="font-medium">{{ employee.user?.name }}</div>
+                        <div class="text-sm text-gray-600">
+                          {{ employee.employeeCode }} -
+                          {{ employee.department?.name }}
+                        </div>
+                      </div>
+                    </div>
+                  </ng-template>
+                </p-select>
+                @if(generatePayrollForm.get('employee')?.touched &&
+                generatePayrollForm.get('employee')?.invalid) {
+                <small class="text-red-500">Employee is required</small>
+                }
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Month Selection -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Month *</label
+                  >
+                  <p-datepicker
+                    formControlName="month"
+                    view="month"
+                    dateFormat="MM yy"
+                    [showIcon]="true"
+                    styleClass="w-full"
+                  />
+                  @if(generatePayrollForm.get('month')?.touched &&
+                  generatePayrollForm.get('month')?.invalid) {
+                  <small class="text-red-500">Month is required</small>
+                  }
+                </div>
+
+                <!-- Year Selection -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Year *</label
+                  >
+                  <p-datepicker
+                    formControlName="year"
+                    view="year"
+                    dateFormat="yy"
+                    [showIcon]="true"
+                    styleClass="w-full"
+                  />
+                  @if(generatePayrollForm.get('year')?.touched &&
+                  generatePayrollForm.get('year')?.invalid) {
+                  <small class="text-red-500">Year is required</small>
+                  }
+                </div>
+              </div>
+
+              <!-- Employee Salary Info -->
+              @if(monthlySalary > 0) {
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-sm text-gray-600">Monthly Salary (CTC/12)</p>
+                    <p class="text-2xl font-semibold text-gray-900">
+                      ₹{{ monthlySalary.toFixed(2) }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              }
+
+              <!-- Payroll Components -->
+              @if(calculatedComponents.length > 0) {
+              <div>
+                <h4 class="text-lg font-medium text-gray-900 mb-4">
+                  Payroll Components
+                </h4>
+                <p-table
+                  [value]="calculatedComponents"
+                  [tableStyle]="{ 'min-width': '50rem' }"
+                >
+                  <ng-template #header>
+                    <tr>
+                      <th>Component Name</th>
+                      <th>Type</th>
+                      <th class="text-right">Amount (₹)</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template #body let-component>
+                    <tr>
+                      <td>{{ component.name }}</td>
+                      <td>
+                        <p-tag
+                          [severity]="
+                            component.type === 'ALLOWANCE'
+                              ? 'success'
+                              : 'danger'
+                          "
+                          [value]="component.type"
+                          [rounded]="true"
+                        />
+                      </td>
+                      <td class="text-right">
+                        <span
+                          [class]="
+                            component.type === 'ALLOWANCE'
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          "
+                        >
+                          {{ component.type === 'ALLOWANCE' ? '+' : '-' }}
+                          {{ component.amount.toFixed(2) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+
+              <!-- Net Salary -->
+              <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-sm text-gray-600">Net Salary</p>
+                    <p class="text-3xl font-bold text-green-700">
+                      ₹{{ netSalary.toFixed(2) }}
+                    </p>
+                  </div>
+                  <i class="pi pi-money-bill text-4xl text-green-600"></i>
+                </div>
+              </div>
+              }
+
+              <!-- Generate Button -->
+              <div class="flex justify-end gap-4">
+                <p-button
+                  label="Reset"
+                  icon="pi pi-refresh"
+                  severity="secondary"
+                  [outlined]="true"
+                  (click)="resetPayrollForm()"
+                />
+                <p-button
+                  label="Generate Payroll"
+                  icon="pi pi-check"
+                  (click)="generatePayroll()"
+                  [disabled]="
+                    !generatePayrollForm.valid ||
+                    calculatedComponents.length === 0
+                  "
+                />
+              </div>
+            </form>
+          </p-card>
+        </div>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>
+
+<p-dialog
+  [(visible)]="componentDialog"
+  [style]="{ 'min-width': '450px' }"
+  header="Add Component"
+  [modal]="true"
+>
+  <ng-template #content>
+    <form [formGroup]="addComponentForm" class="flex flex-col gap-6">
+      <div>
+        <label for="name" class="block font-bold mb-3">Name</label>
+        <input
+          type="text"
+          [invalid]="
+            addComponentForm.get('name')?.touched &&
+            addComponentForm.get('name')?.invalid
+          "
+          pInputText
+          id="name"
+          formControlName="name"
+          autofocus
+          fluid
+        />
+        @if( addComponentForm.get('name')?.touched &&
+        addComponentForm.get('name')?.invalid) {
+        <small class="text-red-500">Name is required.</small>
+        }
+      </div>
+
+      <div>
+        <label for="inventoryStatus" class="block font-bold mb-3">Type</label>
+        <p-select
+          [invalid]="
+            addComponentForm.get('type')?.touched &&
+            addComponentForm.get('type')?.invalid
+          "
+          formControlName="type"
+          inputId="inventoryStatus"
+          [options]="options?.['PAYROLL_COMPONENT_TYPES']"
+          optionLabel="display_text"
+          optionValue="value"
+          placeholder="Select a Type"
+          fluid
+        />
+        @if( addComponentForm.get('type')?.touched &&
+        addComponentForm.get('type')?.invalid) {
+        <small class="text-red-500">Type is required.</small>
+        }
+      </div>
+
+      <div>
+        <label for="inventoryStatus" class="block font-bold mb-3"
+          >Percent</label
+        >
+        <input
+          type="text"
+          [invalid]="
+            addComponentForm.get('percent')?.touched &&
+            addComponentForm.get('percent')?.invalid
+          "
+          pInputText
+          id="name"
+          formControlName="percent"
+          autofocus
+          fluid
+        />
+        @if( addComponentForm.get('percent')?.touched &&
+        addComponentForm.get('percent')?.invalid) {
+        <small class="text-red-500">Percent is required.</small>
+        }
+      </div>
+
+      <div>
+        <label for="description" class="block font-bold mb-3"
+          >Description</label
+        >
+        <textarea
+          id="description"
+          pTextarea
+          formControlName="description"
+          rows="3"
+          cols="20"
+          fluid
+        ></textarea>
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+    <p-button label="Save" icon="pi pi-check" (click)="saveComponent()" />
+  </ng-template>
+</p-dialog>

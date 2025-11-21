@@ -1,0 +1,104 @@
+.pi {
+  font-size: 1.3rem;
+}
+
+:host::ng-deep.p-panelmenu-panel {
+  border: none;
+  background-color: inherit;
+}
+
+/* ===== Sidebar Enhancements ===== */
+.sidebar-container {
+  background: linear-gradient(
+    180deg,
+    var(--p-surface-50) 0%,
+    var(--p-surface-100) 100%
+  );
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Menu Item Styles */
+.menu-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: var(--p-primary-500);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.menu-item.active::before {
+  transform: scaleY(1);
+}
+
+.menu-item:hover {
+  background: var(--p-surface-100);
+}
+
+/* User Profile Section */
+.user-profile-section {
+  background: linear-gradient(
+    135deg,
+    var(--p-surface-0) 0%,
+    var(--p-surface-50) 100%
+  );
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.user-profile-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Avatar Styles */
+.user-avatar {
+  position: relative;
+  display: inline-block;
+}
+
+.user-avatar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Toolbar Enhancements */
+.modern-toolbar {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Content Area */
+.content-area {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Card Icons */
+.card-icons {
+  font-size: 2rem;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.card-icons:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}

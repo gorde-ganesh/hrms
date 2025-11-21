@@ -1,0 +1,398 @@
+<div class="space-y-6">
+  <div class="flex items-start gap-2 justify-between">
+    <div>
+      <div class="text-2xl leading-8 text-color font-medium">Leaves</div>
+      <div class="mt-1 leading-6 text-muted-color">
+        The analysis list here shows all leaves
+      </div>
+    </div>
+    @if(hasPermission('apply')) {
+    <p-button
+      label="Apply Leave"
+      icon="pi pi-calendar-minus"
+      (click)="onApplyLeave()"
+    ></p-button>
+    }
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for(balance of leaveBalances; track balance.id) {
+    <p-card>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-gray-900">{{ balance.leaveType }}</h3>
+        <i class="pi pi-calendar h-5 w-5 text-blue-600"></i>
+      </div>
+      <div class="space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Total</span
+          ><span class="text-gray-900">{{ balance.totalLeaves }} days</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Used</span
+          ><span class="text-gray-900">{{ balance.usedLeaves }} days</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-900">Remaining</span
+          ><span class="text-xl text-blue-600"
+            >{{ balance.totalLeaves - balance.usedLeaves }} days</span
+          >
+        </div>
+      </div>
+    </p-card>
+    }
+  </div>
+
+  <p-tabs value="0">
+    <p-tablist>
+      <p-tab value="0">My Leaves</p-tab>
+      @if(hasPermission('teams_leave')) {
+      <p-tab value="1">Team Leaves</p-tab>
+      }
+      <p-tab value="2">Calendar</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="0">
+        <p-table
+          [value]="leaves"
+          [paginator]="true"
+          [rows]="apiParams.top"
+          editMode="row"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="pageChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="totalRecords"
+          [first]="apiParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        >
+          <ng-template #caption>
+            <div class="flex justify-end gap-4">
+              <p-iconfield iconPosition="left" class="ml-auto">
+                <p-inputicon>
+                  <i class="pi pi-search"></i>
+                </p-inputicon>
+                <input
+                  pInputText
+                  type="text"
+                  [formControl]="searchControl"
+                  placeholder="Search keyword"
+                />
+              </p-iconfield>
+              <p-button
+                label="Clear"
+                [outlined]="true"
+                icon="pi pi-filter-slash"
+                (click)="clearFilter()"
+              />
+            </div>
+          </ng-template>
+          <ng-template #header>
+            <tr>
+              <th>Applied on</th>
+              <th>Leave Type</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th>Reason</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-leave let-editing="editing" let-ri="rowIndex">
+            <tr [pEditableRow]="leave">
+              <td>{{ leave.createdAt | date }}</td>
+              <td>{{ leave.leaveType }}</td>
+              <td>{{ leave.startDate | date }}</td>
+              <td>{{ leave.endDate | date }}</td>
+              <td>
+                <p-cellEditor>
+                  <ng-template #input>
+                    <p-select
+                      [options]="statuses"
+                      appendTo="body"
+                      optionLabel="display_text"
+                      optionValue="value"
+                      [(ngModel)]="leave.status"
+                      [style]="{ width: '100%' }"
+                    />
+                  </ng-template>
+                  <ng-template #output>
+                    <p-tag
+                      [severity]="leave.status | status"
+                      [value]="leave.status"
+                      [rounded]="true"
+                    />
+                  </ng-template>
+                </p-cellEditor>
+              </td>
+              <td>
+                {{ leave.reason }}
+              </td>
+              <td>
+                @if(!editing && hasPermission('EDIT_TEAM_LEAVES')) {
+                <p-button
+                  type="button"
+                  pInitEditableRow
+                  icon="pi pi-pencil"
+                  (click)="onRowEditInit(leave)"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="warn"
+                ></p-button>
+                } @else if(editing) {
+                <p-button
+                  type="button"
+                  pSaveEditableRow
+                  icon="pi pi-check"
+                  (click)="onRowEditSave(leave)"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="success"
+                ></p-button>
+                <p-button
+                  type="button"
+                  pCancelEditableRow
+                  icon="pi pi-times"
+                  (click)="onRowEditCancel(leave, ri)"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                ></p-button>
+                }
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6">No leaves found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+      <p-tabpanel value="1">
+        <p-table
+          [value]="teamLeaves"
+          [paginator]="true"
+          [rows]="apiParams.top"
+          editMode="row"
+          dataKey="id"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          (onPage)="pageChange($event)"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [totalRecords]="teamTotalRecords"
+          [first]="apiParams.pageno"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        >
+          <ng-template #caption>
+            <div class="flex justify-end gap-4">
+              <p-iconfield iconPosition="left" class="ml-auto">
+                <p-inputicon>
+                  <i class="pi pi-search"></i>
+                </p-inputicon>
+                <input
+                  pInputText
+                  type="text"
+                  [formControl]="searchControl"
+                  placeholder="Search keyword"
+                />
+              </p-iconfield>
+              <p-button
+                label="Clear"
+                [outlined]="true"
+                icon="pi pi-filter-slash"
+                (click)="clearFilter()"
+              />
+            </div>
+          </ng-template>
+          <ng-template #header>
+            <tr>
+              <th>Employee Name</th>
+              <th>Applied on</th>
+              <th>Leave Type</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th>Reason</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-leave let-editing="editing" let-ri="rowIndex">
+            <tr [pEditableRow]="leave">
+              <td>{{ leave.employee.user.name }}</td>
+              <td>{{ leave.createdAt | date }}</td>
+              <td>{{ leave.leaveType }}</td>
+              <td>{{ leave.startDate | date }}</td>
+              <td>{{ leave.endDate | date }}</td>
+              <td>
+                <p-cellEditor>
+                  <ng-template #input>
+                    <p-select
+                      [options]="statuses"
+                      appendTo="body"
+                      optionLabel="display_text"
+                      optionValue="value"
+                      [(ngModel)]="leave.status"
+                      [style]="{ width: '100%' }"
+                    />
+                  </ng-template>
+                  <ng-template #output>
+                    <p-tag
+                      [severity]="leave.status | status"
+                      [value]="leave.status"
+                      [rounded]="true"
+                    />
+                  </ng-template>
+                </p-cellEditor>
+              </td>
+              <td>
+                {{ leave.reason }}
+              </td>
+              <td>
+                @if(!editing && hasPermission('approve') && leave.status ===
+                'PENDING') {
+                <p-button
+                  type="button"
+                  pInitEditableRow
+                  icon="pi pi-pencil"
+                  (click)="onRowEditInit(leave)"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="warn"
+                ></p-button>
+                } @else if(editing) {
+                <p-button
+                  type="button"
+                  pSaveEditableRow
+                  icon="pi pi-check"
+                  (click)="onRowEditSave(leave)"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="success"
+                ></p-button>
+                <p-button
+                  type="button"
+                  pCancelEditableRow
+                  icon="pi pi-times"
+                  (click)="onRowEditCancel(leave, ri)"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                ></p-button>
+                }
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6">No leaves found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-tabpanel>
+      <p-tabpanel value="2">
+        <full-calendar [options]="calendarOptions"></full-calendar>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>
+
+<p-dialog
+  header="Apply Leave"
+  [modal]="true"
+  [(visible)]="applyLeaveDialog"
+  [style]="{ width: '30vw' }"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+>
+  <form
+    [formGroup]="applyLeaveForm"
+    (ngSubmit)="onAddLeave()"
+    class="py-4 flex flex-col gap-4"
+  >
+    <div class="w-full">
+      <p-floatlabel class="w-full md:w-full" variant="on">
+        <p-select
+          [options]="leaveTypes"
+          optionLabel="display_text"
+          optionValue="value"
+          formControlName="leaveType"
+          [style]="{ width: '100%' }"
+          appendTo="body"
+        />
+        <label for="">Leave Type</label>
+      </p-floatlabel>
+      @if(applyLeaveForm.controls['leaveType'].invalid &&
+      applyLeaveForm.controls['leaveType'].touched) {
+      <p-message severity="error" size="small" variant="simple">
+        @if (applyLeaveForm.controls['leaveType'].hasError('required')) { Leave
+        Type is Required. }
+      </p-message>
+      }
+    </div>
+    <div class="w-full">
+      <p-floatlabel class="w-full md:w-full" variant="on">
+        <p-datepicker
+          fluid
+          [invalid]="
+            applyLeaveForm.controls['date'].invalid &&
+            applyLeaveForm.controls['date'].touched
+          "
+          [disabledDates]="leaveDates"
+          [minDate]="minDate"
+          selectionMode="range"
+          class="w-full"
+          dateFormat="dd/mm/yy"
+          formControlName="date"
+          appendTo="body"
+        >
+          <ng-template #date let-date>
+            <span
+              [ngClass]="{
+                'leave-day': isLeaveDate(date.day, date.month, date.year)
+              }"
+            >
+              {{ date.day }}
+            </span>
+          </ng-template>
+        </p-datepicker>
+        <label for="">Date</label>
+      </p-floatlabel>
+      @if(applyLeaveForm.controls['date'].invalid &&
+      applyLeaveForm.controls['date'].touched) {
+      <p-message severity="error" size="small" variant="simple">
+        @if (applyLeaveForm.controls['date'].hasError('required')) { Date is
+        Required. }
+      </p-message>
+      }
+    </div>
+    <div class="w-full">
+      <p-floatlabel class="w-full md:w-full" variant="on">
+        <textarea
+          [invalid]="
+            applyLeaveForm.controls['reason'].invalid &&
+            applyLeaveForm.controls['reason'].touched
+          "
+          fluid
+          pTextarea
+          id="over_label"
+          formControlName="reason"
+          rows="5"
+          cols="30"
+          style="resize: none"
+          class="h-full"
+        ></textarea>
+        <label for="">Reason</label>
+      </p-floatlabel>
+      @if(applyLeaveForm.controls['reason'].invalid &&
+      applyLeaveForm.controls['reason'].touched) {
+      <p-message severity="error" size="small" variant="simple">
+        @if (applyLeaveForm.controls['reason'].hasError('required')) { Reason is
+        Required. }
+      </p-message>
+      }
+    </div>
+    <div class="flex justify-end gap-4">
+      <p-button label="Cancel" variant="text" type="button" severity="danger" />
+      <p-button label="Save" type="submit" [raised]="true" />
+    </div>
+  </form>
+</p-dialog>

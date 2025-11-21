@@ -1,0 +1,368 @@
+<div class="login-container">
+  <p-card
+    [style]="{ 'max-width': '480px', width: '100%' }"
+    styleClass="shadow-2xl border-0 overflow-hidden"
+  >
+    <ng-template #header>
+      <div
+        class="relative px-8 pt-8 pb-6 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 dark:from-primary-600 dark:via-primary-700 dark:to-primary-800 overflow-hidden"
+      >
+        <!-- Decorative background elements -->
+        <div
+          class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"
+        ></div>
+        <div
+          class="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24 blur-2xl"
+        ></div>
+
+        <div class="relative z-10">
+          <div class="flex items-center justify-center mb-4">
+            <div
+              class="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-white/20"
+            >
+              <i class="pi pi-building text-4xl text-white"></i>
+            </div>
+          </div>
+          <h1 class="text-3xl font-bold text-center text-white mb-2">
+            {{
+              isForwordPassword
+                ? tempToken
+                  ? 'Reset Password'
+                  : 'Forgot Password'
+                : 'Welcome Back'
+            }}
+          </h1>
+          <p class="text-center text-white/80 text-sm">
+            {{
+            isForwordPassword
+              ? tempToken
+                ? 'Enter your new password below'
+                : `We'll send you a reset link`
+              : 'Sign in to continue to your account'
+            }}
+          </p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Login Form -->
+    @if(!isForwordPassword) {
+    <form
+      class="flex flex-col gap-6 p-8"
+      [formGroup]="loginForm"
+      (ngSubmit)="onSubmit()"
+    >
+      <div class="flex flex-col gap-2">
+        <label
+          for="email_input"
+          class="text-surface-900 dark:text-surface-0 font-semibold text-sm flex items-center gap-2"
+        >
+          <i class="pi pi-envelope text-surface-500"></i>
+          Email Address
+        </label>
+        <input
+          pInputText
+          id="email_input"
+          formControlName="username"
+          autocomplete="email"
+          placeholder="your.email@company.com"
+          class="w-full transition-all duration-200 focus:shadow-lg"
+        />
+        <ng-template [formError]="'username'" let-control>
+          @if(control.errors?.['required']) {
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Email is required
+          </small>
+          } @if(control.errors?.['email']) {
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Please enter a valid email
+          </small>
+          }
+        </ng-template>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label
+          for="password_input"
+          class="text-surface-900 dark:text-surface-0 font-semibold text-sm flex items-center gap-2"
+        >
+          <i class="pi pi-lock text-surface-500"></i>
+          Password
+        </label>
+        <p-password
+          [toggleMask]="true"
+          formControlName="password"
+          inputId="password_input"
+          placeholder="Enter your password"
+          [feedback]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full transition-all duration-200 focus:shadow-lg"
+        />
+        <ng-template [formError]="'password'" let-control>
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Password is required
+          </small>
+        </ng-template>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <p-checkbox
+            formControlName="remember"
+            [binary]="true"
+            inputId="remember_checkbox"
+          ></p-checkbox>
+          <label
+            for="remember_checkbox"
+            class="text-surface-700 dark:text-surface-300 text-sm cursor-pointer hover:text-surface-900 dark:hover:text-surface-100 transition-colors"
+          >
+            Remember me
+          </label>
+        </div>
+
+        <a
+          class="text-primary hover:text-primary-700 dark:hover:text-primary-400 cursor-pointer text-sm font-semibold transition-all hover:underline"
+          (click)="onForgotPasswordClick()"
+        >
+          Forgot Password?
+        </a>
+      </div>
+
+      @if(error) {
+      <div
+        class="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg animate-fadein"
+      >
+        <div class="flex items-start gap-3">
+          <i
+            class="pi pi-times-circle text-red-600 dark:text-red-400 text-lg mt-0.5"
+          ></i>
+          <span class="text-red-700 dark:text-red-300 text-sm font-medium">{{
+            error
+          }}</span>
+        </div>
+      </div>
+      }
+
+      <button
+        pButton
+        type="submit"
+        label="Sign In"
+        icon="pi pi-sign-in"
+        iconPos="right"
+        [disabled]="!loginForm.valid || isLoading"
+        [loading]="isLoading"
+        class="w-full h-12 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+        styleClass="w-full justify-center"
+      ></button>
+    </form>
+    }
+
+    <!-- Forgot Password Form -->
+    @else if(isForwordPassword && !tempToken) {
+    <form
+      class="flex flex-col gap-6 p-8"
+      [formGroup]="forgotPasswordForm"
+      (ngSubmit)="onForgotPassword()"
+    >
+      <div class="flex flex-col gap-2">
+        <label
+          for="forgot_email"
+          class="text-surface-900 dark:text-surface-0 font-semibold text-sm flex items-center gap-2"
+        >
+          <i class="pi pi-envelope text-surface-500"></i>
+          Email Address
+        </label>
+        <input
+          pInputText
+          id="forgot_email"
+          formControlName="username"
+          autocomplete="email"
+          placeholder="your.email@company.com"
+          class="w-full transition-all duration-200 focus:shadow-lg"
+        />
+        <ng-template [formError]="'username'" let-control>
+          @if(control.errors?.['required']) {
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Email is required
+          </small>
+          } @if(control.errors?.['email']) {
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Please enter a valid email
+          </small>
+          }
+        </ng-template>
+      </div>
+
+      <div
+        class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-primary rounded-lg"
+      >
+        <div class="flex gap-3">
+          <i class="pi pi-info-circle text-primary text-lg mt-0.5"></i>
+          <span class="text-blue-700 dark:text-blue-300 text-sm">
+            A password reset link will be sent to your registered email address.
+            Please check your inbox and spam folder.
+          </span>
+        </div>
+      </div>
+
+      @if(error) {
+      <div
+        class="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg animate-fadein"
+      >
+        <div class="flex items-start gap-3">
+          <i
+            class="pi pi-times-circle text-red-600 dark:text-red-400 text-lg mt-0.5"
+          ></i>
+          <span class="text-red-700 dark:text-red-300 text-sm font-medium">{{
+            error
+          }}</span>
+        </div>
+      </div>
+      }
+
+      <div class="flex gap-3">
+        <button
+          pButton
+          type="button"
+          label="Back to Login"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          [outlined]="true"
+          (click)="isForwordPassword = !isForwordPassword"
+          class="flex-1 h-12 font-semibold transition-all duration-200 hover:-translate-y-0.5"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          label="Send Reset Link"
+          icon="pi pi-send"
+          iconPos="right"
+          [disabled]="!forgotPasswordForm.valid || isLoading"
+          [loading]="isLoading"
+          class="flex-1 h-12 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+        ></button>
+      </div>
+    </form>
+    }
+
+    <!-- Change Password Form -->
+    @else if(isForwordPassword && tempToken) {
+    <form
+      class="flex flex-col gap-6 p-8"
+      [formGroup]="changePasswordForm"
+      (ngSubmit)="onChangePassword()"
+    >
+      <div class="flex flex-col gap-2">
+        <label
+          for="new_password"
+          class="text-surface-900 dark:text-surface-0 font-semibold text-sm flex items-center gap-2"
+        >
+          <i class="pi pi-lock text-surface-500"></i>
+          New Password
+        </label>
+        <p-password
+          [toggleMask]="true"
+          formControlName="newPassword"
+          inputId="new_password"
+          placeholder="Create a strong password"
+          styleClass="w-full"
+          inputStyleClass="w-full transition-all duration-200 focus:shadow-lg"
+        >
+          <ng-template #footer>
+            <p-divider />
+            <div class="px-3 pb-2">
+              <p
+                class="font-bold text-surface-900 dark:text-surface-0 mb-3 text-sm flex items-center gap-2"
+              >
+                <i class="pi pi-shield text-primary"></i>
+                Password Requirements:
+              </p>
+              <ul
+                class="pl-5 my-0 space-y-2 text-sm text-surface-600 dark:text-surface-400"
+              >
+                <li class="flex items-center gap-2">
+                  <i class="pi pi-check-circle text-green-500 text-xs"></i>
+                  At least one lowercase letter
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="pi pi-check-circle text-green-500 text-xs"></i>
+                  At least one uppercase letter
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="pi pi-check-circle text-green-500 text-xs"></i>
+                  At least one number
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="pi pi-check-circle text-green-500 text-xs"></i>
+                  Minimum 8 characters
+                </li>
+              </ul>
+            </div>
+          </ng-template>
+        </p-password>
+        <ng-template [formError]="'newPassword'" let-control>
+          @if(control.errors?.['passwordStrength']) {
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Password does not meet
+            requirements
+          </small>
+          }
+        </ng-template>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label
+          for="confirm_password"
+          class="text-surface-900 dark:text-surface-0 font-semibold text-sm flex items-center gap-2"
+        >
+          <i class="pi pi-lock text-surface-500"></i>
+          Confirm Password
+        </label>
+        <p-password
+          [toggleMask]="true"
+          [feedback]="false"
+          formControlName="confirmPassword"
+          inputId="confirm_password"
+          placeholder="Re-enter your password"
+          styleClass="w-full"
+          inputStyleClass="w-full transition-all duration-200 focus:shadow-lg"
+        />
+        <ng-template [formError]="'confirmPassword'" let-control>
+          @if(control.errors?.['passwordMismatch']) {
+          <small class="text-red-500 flex items-center gap-1 animate-fadein">
+            <i class="pi pi-exclamation-circle"></i>Passwords do not match
+          </small>
+          }
+        </ng-template>
+      </div>
+
+      @if(error) {
+      <div
+        class="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg animate-fadein"
+      >
+        <div class="flex items-start gap-3">
+          <i
+            class="pi pi-times-circle text-red-600 dark:text-red-400 text-lg mt-0.5"
+          ></i>
+          <span class="text-red-700 dark:text-red-300 text-sm font-medium">{{
+            error
+          }}</span>
+        </div>
+      </div>
+      }
+
+      <button
+        pButton
+        type="submit"
+        label="Reset Password"
+        icon="pi pi-check"
+        iconPos="right"
+        [disabled]="!changePasswordForm.valid || isLoading"
+        [loading]="isLoading"
+        class="w-full h-12 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+        styleClass="w-full justify-center"
+      ></button>
+    </form>
+    }
+  </p-card>
+</div>

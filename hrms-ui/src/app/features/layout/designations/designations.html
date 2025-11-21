@@ -1,0 +1,156 @@
+<div class="space-y-6">
+  <div class="flex flex-wrap gap-3 items-start justify-between">
+    <div>
+      <div class="text-2xl leading-8 text-color font-semibold">
+        Designations
+      </div>
+      <div class="mt-1 leading-6 text-muted-color">
+        Manage organization-wide roles and classifications.
+      </div>
+    </div>
+    <p-button
+      label="Add Designation"
+      icon="pi pi-plus"
+      size="large"
+      (onClick)="openCreateDialog()"
+    ></p-button>
+  </div>
+
+  <div
+    class="bg-card text-card-foreground rounded-xl border border-surface p-6 shadow-sm"
+  >
+    <div class="flex flex-wrap gap-4 justify-between mb-4">
+      <div class="text-sm text-muted-color self-center">
+        {{ totalRecords }} records
+      </div>
+      <p-iconfield iconPosition="left">
+        <p-inputicon>
+          <i class="pi pi-search"></i>
+        </p-inputicon>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search"
+          (input)="applyGlobalFilter($event)"
+        />
+      </p-iconfield>
+    </div>
+
+    <p-table
+      #dt
+      [value]="designations"
+      [tableStyle]="{ 'min-width': '50rem' }"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+      [lazy]="true"
+      (onLazyLoad)="loadDesignations($event)"
+      [totalRecords]="totalRecords"
+      emptyMessage="No designations found"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Name</th>
+          <th>Classification</th>
+          <th>Description</th>
+          <th class="w-32 text-right">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td class="font-medium">{{ row.name }}</td>
+          <td>{{ row.classification || '-' }}</td>
+          <td class="max-w-xl whitespace-pre-line">
+            {{ row.description || '-' }}
+          </td>
+          <td class="text-right space-x-2">
+            <p-button
+              icon="pi pi-pencil"
+              rounded="true"
+              severity="secondary"
+              [text]="true"
+              (onClick)="editDesignation(row)"
+            ></p-button>
+            <p-button
+              icon="pi pi-trash"
+              rounded="true"
+              severity="danger"
+              [text]="true"
+              (onClick)="confirmDelete($event, row)"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [style]="{ width: '32rem' }"
+  [draggable]="false"
+  (onHide)="designationForm.reset()"
+>
+  <ng-template pTemplate="header">
+    {{ isEditMode ? 'Update Designation' : 'Add Designation' }}
+  </ng-template>
+
+  <form
+    [formGroup]="designationForm"
+    class="flex flex-col gap-4"
+    (ngSubmit)="saveDesignation()"
+  >
+    <p-floatlabel class="w-full" variant="on">
+      <input
+        pInputText
+        formControlName="name"
+        id="designation-name"
+        class="w-full"
+        autocomplete="off"
+      />
+      <label for="designation-name">Name</label>
+      <ng-template [formError]="'name'"></ng-template>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full" variant="on">
+      <input
+        pInputText
+        formControlName="classification"
+        id="designation-classification"
+        class="w-full"
+        autocomplete="off"
+      />
+      <label for="designation-classification">Classification</label>
+      <ng-template [formError]="'classification'"></ng-template>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full" variant="on">
+      <textarea
+        pTextarea
+        class="w-full"
+        rows="3"
+        formControlName="description"
+        id="designation-description"
+      ></textarea>
+      <label for="designation-description">Description</label>
+      <ng-template [formError]="'description'"></ng-template>
+    </p-floatlabel>
+
+    <div class="flex justify-end gap-3 mt-2">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (onClick)="dialogVisible = false"
+      ></p-button>
+      <p-button
+        type="submit"
+        [label]="isEditMode ? 'Update' : 'Create'"
+        [disabled]="designationForm.invalid"
+      ></p-button>
+    </div>
+  </form>
+</p-dialog>

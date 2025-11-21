@@ -1,0 +1,35 @@
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   ../ims-ui/.gitignore
+	modified:   ../ims-ui/README.md
+	modified:   ../ims-ui/angular.json
+	modified:   ../ims-ui/package-lock.json
+	modified:   ../ims-ui/package.json
+	modified:   ../ims-ui/src/app/app.component.html
+	modified:   ../ims-ui/src/app/app.component.ts
+	modified:   ../ims-ui/src/app/app.config.ts
+	modified:   ../ims-ui/src/app/app.routes.ts
+	modified:   ../ims-ui/src/index.html
+	modified:   ../ims-ui/src/main.ts
+	modified:   ../ims-ui/src/styles.css
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../backend/
+	./
+	../ims-ui/.prettierrc.json
+	../ims-ui/LICENSE
+	../ims-ui/bun.lockb
+	../ims-ui/src/app/core/
+	../ims-ui/src/app/features/
+	../ims-ui/src/app/layout/
+	../ims-ui/src/app/shared/
+	../ims-ui/src/app/themes/
+	../ims-ui/src/assets/
+	../ims-ui/src/custom-theme.scss
+	../ims-ui/src/environments/
+	../petstore/
+
+no changes added to commit (use "git add" and/or "git commit -a")

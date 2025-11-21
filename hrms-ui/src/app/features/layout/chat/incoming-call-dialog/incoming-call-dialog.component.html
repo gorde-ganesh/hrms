@@ -1,0 +1,49 @@
+@if (incomingCall) {
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '400px' }"
+  [header]="
+    'Incoming ' +
+    (incomingCall.callType === 'video' ? 'Video' : 'Audio') +
+    ' Call'
+  "
+>
+  <div class="flex flex-col items-center gap-4 py-4">
+    <p-avatar
+      [label]="getInitial(incomingCall.callerName)"
+      size="xlarge"
+      shape="circle"
+      [style]="{ 'background-color': '#4CAF50', color: '#fff' }"
+    />
+
+    <div class="text-center">
+      <h3 class="m-0 mb-2">{{ incomingCall.callerName || 'Unknown' }}</h3>
+      <p class="text-color-secondary m-0">
+        {{
+          incomingCall.callType === 'video'
+            ? 'wants to video call you'
+            : 'is calling you'
+        }}
+      </p>
+    </div>
+
+    <div class="flex gap-3 w-full">
+      <p-button
+        label="Decline"
+        severity="danger"
+        [outlined]="true"
+        class="flex-1"
+        (onClick)="decline()"
+      />
+      <p-button
+        label="Accept"
+        severity="success"
+        class="flex-1"
+        (onClick)="accept()"
+      />
+    </div>
+  </div>
+</p-dialog>
+}

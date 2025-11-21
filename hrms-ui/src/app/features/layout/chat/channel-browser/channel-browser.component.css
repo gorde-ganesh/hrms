@@ -1,0 +1,6 @@
+.channel-item {
+  transition: background-color 0.2s;
+}
+.channel-item:hover {
+  background-color: var(--surface-hover);
+}

@@ -1,0 +1,440 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////
+
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+  MANAGER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+  PROBATION
+}
+
+enum NotificationType {
+  SYSTEM
+  LEAVE
+  PAYROLL
+  PERFORMANCE
+}
+
+enum ComponentType {
+  ALLOWANCE
+  DEDUCTION
+}
+
+enum ChannelType {
+  DM
+  GROUP
+  PUBLIC_CHANNEL
+  PRIVATE_CHANNEL
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  PERSONAL
+  CASUAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+}
+
+//////////////////////////////////////////
+// USER MODEL
+//////////////////////////////////////////
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  phone         String
+  address       String
+  state         String
+  city          String
+  country       String
+  zipCode       String
+  role          Role
+  roleId        String?
+  userRole      UserRole? @relation(fields: [roleId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  resetToken    String?
+  resetTokenExp DateTime?
+
+  employee       Employee?
+  payrolls       Payroll[]      @relation("UserPayrolls")
+  performance    Performance[]
+  notifications  Notification[]
+  leavesApproved Leave[]        @relation("LeaveApprovedBy")
+  leavesManaged  Leave[]        @relation("LeaveManagerApproval")
+
+  messagesSent         Message[]            @relation("SentMessages")
+  conversations        ConversationMember[]
+  callsMade            CallLog[]            @relation("Caller")
+  callsReceived        CallLog[]            @relation("Receiver")
+  conversationsCreated Conversation[]       @relation("CreatedBy")
+  // Optional soft delete fields
+  // isDeleted      Boolean         @default(false)
+  // deletedAt      DateTime?
+}
+
+//////////////////////////////////////////
+// RBAC MODELS
+//////////////////////////////////////////
+
+model UserRole {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  resource    String
+  action      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         UserRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+//////////////////////////////////////////
+// DEPARTMENT MODEL
+//////////////////////////////////////////
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees Employee[]
+}
+
+//////////////////////////////////////////
+// DESIGNATION MODEL
+//////////////////////////////////////////
+
+model Designation {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  description    String?
+  classification String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employees Employee[]
+}
+
+//////////////////////////////////////////
+// EMPLOYEE MODEL
+//////////////////////////////////////////
+
+model Employee {
+  id           String @id @default(uuid())
+  employeeCode String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String @unique
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  designationId String?
+  designation   Designation? @relation(fields: [designationId], references: [id])
+
+  joiningDate            DateTime?
+  salary                 Float?
+  dob                    DateTime
+  personalEmail          String
+  bloodGroup             String
+  emergencyContactPerson String
+  emergencyContactNumber String
+  status                 EmployeeStatus
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  managerId    String?
+  manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
+  subordinates Employee[] @relation("EmployeeManager")
+
+  leaves        Leave[]
+  attendance    Attendance[]
+  payrolls      Payroll[]
+  performance   Performance[]
+  notifications Notification[]
+  leaveBalance  LeaveBalance[]
+
+  // Optional soft delete fields
+  // isDeleted              Boolean     @default(false)
+  // deletedAt              DateTime?
+
+  @@index([departmentId])
+  @@index([managerId])
+}
+
+//////////////////////////////////////////
+// LEAVE MODEL
+//////////////////////////////////////////
+
+model Leave {
+  id         String      @id @default(uuid())
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  leaveType  LeaveType   @default(ANNUAL)
+  status     LeaveStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  approvedById String?
+  approvedBy   User?   @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
+
+  managerApprovalId String?
+  managerApproval   User?   @relation("LeaveManagerApproval", fields: [managerApprovalId], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+//////////////////////////////////////////
+// LEAVE BALANCE MODEL
+//////////////////////////////////////////
+
+model LeaveBalance {
+  id          String    @id @default(uuid())
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId  String
+  year        Int
+  leaveType   LeaveType @default(ANNUAL)
+  totalLeaves Int       @default(21)
+  usedLeaves  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([employeeId, year, leaveType])
+}
+
+//////////////////////////////////////////
+// ATTENDANCE MODEL
+//////////////////////////////////////////
+
+model Attendance {
+  id         String   @id @default(uuid())
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+
+  attendanceDate DateTime? // <-- temporarily optional
+  checkIn        DateTime?
+  checkOut       DateTime?
+  totalHours     Float?
+  status         AttendanceStatus? @default(PRESENT) // optional for migration
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime? // <-- temporarily optional
+
+  @@index([employeeId, attendanceDate])
+}
+
+//////////////////////////////////////////
+// PAYROLL MODEL (HEADER)
+//////////////////////////////////////////
+
+model Payroll {
+  id         String   @id @default(uuid())
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  user       User?    @relation("UserPayrolls", fields: [userId], references: [id])
+  userId     String?
+
+  month     Int
+  year      Int
+  netSalary Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  components PayrollComponent[]
+
+  @@unique([employeeId, month, year])
+  @@index([year, month])
+}
+
+//////////////////////////////////////////
+// PAYROLL COMPONENT TYPE
+//////////////////////////////////////////
+
+model PayrollComponentType {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String?
+  type        ComponentType
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  percent     Float?
+
+  components PayrollComponent[]
+}
+
+//////////////////////////////////////////
+// PAYROLL COMPONENT
+//////////////////////////////////////////
+
+model PayrollComponent {
+  id              String               @id @default(uuid())
+  payroll         Payroll              @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  payrollId       String
+  componentType   PayrollComponentType @relation(fields: [componentTypeId], references: [id])
+  componentTypeId String
+  amount          Float                @default(0)
+
+  @@unique([payrollId, componentTypeId])
+}
+
+//////////////////////////////////////////
+// PERFORMANCE MODEL
+//////////////////////////////////////////
+
+model Performance {
+  id              String   @id @default(uuid())
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId      String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  goals           String
+  rating          Int?
+  comments        String?
+  managerComments String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+//////////////////////////////////////////
+// NOTIFICATION MODEL
+//////////////////////////////////////////
+
+model Notification {
+  id         String           @id @default(uuid())
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  type       NotificationType
+  message    String
+  readStatus Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([employeeId])
+  @@index([userId])
+}
+
+model Conversation {
+  id           String      @id @default(uuid())
+  isGroup      Boolean     @default(false)
+  name         String? // group/channel name
+  description  String? // channel description
+  channelType  ChannelType @default(DM)
+  isPublic     Boolean     @default(false) // For channels
+  isHuddle     Boolean     @default(false)
+  huddleActive Boolean     @default(false)
+  createdById  String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relations
+  createdBy User?                @relation("CreatedBy", fields: [createdById], references: [id])
+  members   ConversationMember[]
+  messages  Message[]
+}
+
+model ConversationMember {
+  id             String    @id @default(uuid())
+  userId         String
+  conversationId String
+  role           String?   @default("member")
+  lastReadAt     DateTime? @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  messageText    String?
+  messageType    String   @default("text") // text, image, file, system
+  fileUrl        String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+}
+
+model CallLog {
+  id         String    @id @default(uuid())
+  callerId   String
+  receiverId String
+  callType   String    @default("video") // audio or video
+  status     String    @default("missed") // ongoing, ended, missed
+  startTime  DateTime  @default(now())
+  endTime    DateTime?
+
+  caller   User @relation("Caller", fields: [callerId], references: [id])
+  receiver User @relation("Receiver", fields: [receiverId], references: [id])
+}

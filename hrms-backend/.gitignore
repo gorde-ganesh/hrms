@@ -1,0 +1,26 @@
+node_modules
+# Keep environment variables out of version control
+.env
+.env.local
+.env.*.local
+
+# Generated files
+/generated/prisma
+/generated
+
+# Logs
+logs/
+*.log
+
+# SSL Certificates
+cert/
+*.pem
+*.key
+*.crt
+
+# Build outputs
+dist/
+build/
+
+# Testing
+coverage/

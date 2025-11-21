@@ -1,0 +1,50 @@
+// src/utils/permissions.ts
+export const rolePermissions: Record<string, Record<string, string[]>> = {
+  ADMIN: {
+    dashboard: ['view'],
+    chat: ['view'],
+    attendence: ['view', 'add', 'edit'],
+    employees: ['view', 'add', 'edit'],
+    departments: ['view', 'add', 'edit'],
+    designations: ['view', 'add', 'edit'],
+    payroll: ['view', 'generate', 'edit'],
+    leaves: ['view', 'approve', 'reject'],
+    performance: ['view', 'add', 'edit'],
+    notifications: ['view', 'send'],
+    reports: ['view'],
+  },
+  HR: {
+    dashboard: ['view'],
+    chat: ['view'],
+    attendence: ['view', 'add', 'edit'],
+    employees: ['view', 'add', 'edit'],
+    departments: ['view', 'add', 'edit'],
+    designations: ['view', 'add', 'edit'],
+    payroll: ['view', 'generate'],
+    leaves: ['view', 'approve', 'reject'],
+    performance: ['view', 'add', 'edit'],
+    notifications: ['view', 'send'],
+    reports: ['view'],
+  },
+  EMPLOYEE: {
+    dashboard: ['view'],
+    chat: ['view'],
+    attendence: ['view', 'add', 'edit'],
+    payroll: ['view'],
+    leaves: ['view', 'apply'],
+    performance: ['view'],
+    notifications: ['view'],
+    reports: ['view'],
+  },
+  MANAGER: {
+    dashboard: ['view'],
+    chat: ['view'],
+    attendence: ['view', 'add', 'edit'],
+    employees: ['view'], // can view subordinates
+    payroll: ['view'],
+    leaves: ['view', 'teams_leave', 'approve', 'reject'],
+    performance: ['view', 'add', 'edit'], // can add/edit subordinates
+    notifications: ['view', 'send'],
+    reports: ['view'],
+  },
+};

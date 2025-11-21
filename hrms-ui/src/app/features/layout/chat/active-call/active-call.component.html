@@ -1,0 +1,73 @@
+@if (activeCall) {
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="false"
+  [maximizable]="true"
+  [style]="{ width: '800px', height: '600px' }"
+  header="Active Call"
+>
+  <div class="call-container h-full flex flex-col">
+    <!-- Video Streams -->
+    <div class="flex-1 relative bg-gray-900">
+      <!-- Remote Video -->
+      <video
+        #remoteVideo
+        autoplay
+        playsinline
+        class="w-full h-full object-cover"
+      ></video>
+
+      <!-- Local Video (Picture-in-Picture) -->
+      @if (isVideoEnabled) {
+      <div class="local-video-container">
+        <video
+          #localVideo
+          autoplay
+          playsinline
+          muted
+          class="w-full h-full object-cover"
+        ></video>
+      </div>
+      }
+
+      <!-- Call Info Overlay -->
+      <div class="call-info">
+        <h3 class="text-white m-0">
+          {{ activeCall.callerName || 'Unknown' }}
+        </h3>
+        <p class="text-white-alpha-70 m-0">{{ callDuration }}</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="call-controls flex justify-center items-center gap-3 p-4">
+      @if (activeCall.callType === 'video') {
+      <p-button
+        [icon]="isVideoEnabled ? 'pi pi-video' : 'pi pi-video-slash'"
+        [severity]="isVideoEnabled ? 'secondary' : 'danger'"
+        [rounded]="true"
+        size="large"
+        (onClick)="toggleVideo()"
+      />
+      }
+
+      <p-button
+        [icon]="isAudioEnabled ? 'pi pi-microphone' : 'pi pi-microphone-slash'"
+        [severity]="isAudioEnabled ? 'secondary' : 'danger'"
+        [rounded]="true"
+        size="large"
+        (onClick)="toggleAudio()"
+      />
+
+      <p-button
+        icon="pi pi-phone"
+        severity="danger"
+        [rounded]="true"
+        size="large"
+        (onClick)="endCall()"
+      />
+    </div>
+  </div>
+</p-dialog>
+}

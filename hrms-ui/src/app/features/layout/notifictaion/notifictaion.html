@@ -1,0 +1,45 @@
+<div class="notification-bell" (click)="visible = true">
+  <p-overlaybadge
+    [value]="unreadCount > 0 ? unreadCount.toString() : ''"
+    severity="danger"
+  >
+    <i class="pi pi-bell"></i>
+  </p-overlaybadge>
+</div>
+
+<p-drawer
+  [(visible)]="visible"
+  header="Notifications"
+  position="right"
+  styleClass="!w-full md:!w-80 lg:!w-[30rem]"
+>
+  <ul class="notification-list">
+    <li
+      *ngFor="let notification of notifications"
+      class="notification-item"
+      [class.unread]="!notification.read"
+      (click)="markRead(notification)"
+    >
+      <div class="notification-header">
+        <div
+          class="notification-icon"
+          [ngClass]="getNotificationIconClass(notification.type)"
+        >
+          <i [class]="getNotificationIcon(notification.type)"></i>
+        </div>
+        <div class="flex-1">
+          <div class="notification-type">{{ notification.type }}</div>
+        </div>
+      </div>
+      <div class="notification-message">{{ notification.message }}</div>
+      <div class="notification-time">
+        {{ notification.createdAt | date : 'short' }}
+      </div>
+    </li>
+  </ul>
+
+  <div *ngIf="notifications.length === 0" class="empty-notifications">
+    <i class="pi pi-bell-slash"></i>
+    <p>No notifications yet</p>
+  </div>
+</p-drawer>

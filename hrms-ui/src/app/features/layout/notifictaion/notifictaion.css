@@ -1,0 +1,183 @@
+/* ===== Notification Bell ===== */
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  background: var(--p-surface-100);
+}
+
+.notification-bell:hover {
+  background: var(--p-primary-100);
+  transform: scale(1.1);
+}
+
+.notification-bell i {
+  font-size: 1.25rem;
+  color: var(--p-text-color);
+}
+
+/* ===== Notification List ===== */
+.notification-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notification-item {
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.notification-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--p-primary-500);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.notification-item:hover {
+  background: var(--p-surface-50);
+  border-color: var(--p-primary-300);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.notification-item:hover::before {
+  transform: scaleX(1);
+}
+
+.notification-item.unread {
+  background: var(--p-primary-50);
+  border-color: var(--p-primary-200);
+}
+
+.notification-item.unread::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  background: var(--p-primary-500);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ===== Notification Content ===== */
+.notification-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.notification-icon.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.notification-icon.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.notification-icon.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.notification-icon.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.notification-type {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--p-text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.notification-message {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  text-align: right;
+}
+
+/* ===== Empty State ===== */
+.empty-notifications {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--p-text-muted-color);
+}
+
+.empty-notifications i {
+  font-size: 4rem;
+  color: var(--p-surface-300);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.empty-notifications p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ===== Drawer Header ===== */
+:host ::ng-deep .p-drawer-header {
+  background: linear-gradient(
+    135deg,
+    var(--p-primary-500) 0%,
+    var(--p-primary-600) 100%
+  );
+  color: white;
+  padding: 20px;
+}
+
+:host ::ng-deep .p-drawer-header .p-drawer-title {
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+:host ::ng-deep .p-drawer-header-icons button {
+  color: white !important;
+}
+
+:host ::ng-deep .p-drawer-content {
+  padding: 16px;
+  background: var(--p-surface-50);
+}

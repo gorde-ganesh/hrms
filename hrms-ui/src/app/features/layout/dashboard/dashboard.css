@@ -1,0 +1,190 @@
+.card-icons {
+  font-size: 1.5rem;
+}
+
+.p-card {
+  padding: 20px;
+}
+
+/* ===== Dashboard Metric Cards ===== */
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  transform: translate(30%, -30%);
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.metric-card.gradient-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.metric-card.gradient-green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.metric-card.gradient-orange {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.metric-card.gradient-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+}
+
+/* Animated Counter */
+.counter-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  animation: countUp 0.8s ease-out;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Icon Badge */
+.icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover .icon-badge {
+  transform: rotate(10deg) scale(1.1);
+}
+
+/* Chart Container */
+.chart-container {
+  background: var(--p-surface-0);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Quick Action Cards */
+.quick-action-card {
+  position: relative;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid var(--p-surface-200);
+  background: var(--p-surface-0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.quick-action-card:hover {
+  border-color: var(--p-primary-500);
+  background: var(--p-primary-50);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-card i {
+  transition: all 0.3s ease;
+}
+
+.quick-action-card:hover i {
+  transform: scale(1.2);
+  color: var(--p-primary-600);
+}
+
+/* Welcome Section */
+.welcome-header {
+  background: linear-gradient(
+    135deg,
+    var(--p-primary-50) 0%,
+    var(--p-primary-100) 100%
+  );
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-indicator.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-indicator.absent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-indicator.on-leave {
+  background: #fef3c7;
+  color: #92400e;
+}
+.p-card {
+  padding: 20px;
+}

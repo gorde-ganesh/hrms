@@ -1,0 +1,556 @@
+{
+  "info": {
+    "name": "HRMS API",
+    "_postman_id": "hrms-api-collection",
+    "description": "Postman collection for HRMS API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Temp@1234\",\n  \"role\": \"EMPLOYEE\",\n  \"phone\": \"1234567890\",\n  \"address\": \"123 Street\",\n  \"state\": \"State\",\n  \"city\": \"City\",\n  \"country\": \"Country\",\n  \"zipCode\": \"123456\",\n  \"employeeCode\": \"EMP001\",\n  \"departmentId\": \"uuid-dept\",\n  \"designationId\": \"uuid-desig\",\n  \"joiningDate\": \"2025-10-15\",\n  \"salary\": 50000,\n  \"status\": \"ACTIVE\",\n  \"managerId\": null,\n  \"dob\": \"1990-01-01\",\n  \"personalEmail\": \"john.personal@example.com\",\n  \"bloodGroup\": \"O+\",\n  \"emargencyContactPerson\": \"Jane Doe\",\n  \"emargencyContactNumber\": \"0987654321\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/auth/register",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Temp@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/auth/login",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/auth/forgot-password",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"uuid-user\",\n  \"oldPassword\": \"Temp@1234\",\n  \"newPassword\": \"NewPass@123\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/auth/change-password",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "auth", "change-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Add Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"uuid-user\",\n  \"employeeCode\": \"EMP001\",\n  \"departmentId\": \"uuid-dept\",\n  \"designationId\": \"uuid-desig\",\n  \"joiningDate\": \"2025-10-15\",\n  \"salary\": 50000,\n  \"status\": \"ACTIVE\",\n  \"managerId\": null,\n  \"dob\": \"1990-01-01\",\n  \"personalEmail\": \"john.personal@example.com\",\n  \"bloodGroup\": \"O+\",\n  \"emargencyContactPerson\": \"Jane Doe\",\n  \"emargencyContactNumber\": \"0987654321\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/employees",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "employees"]
+            }
+          }
+        },
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/employees",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "employees"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leaves",
+      "item": [
+        {
+          "name": "Apply Leave",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"uuid-emp\",\n  \"startDate\": \"2025-11-01\",\n  \"endDate\": \"2025-11-05\",\n  \"reason\": \"Vacation\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/leaves",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "leaves"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Clock In/Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"type\": \"in\",\n  \"timestamp\": \"2025-10-16T09:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/attendance",
+              "host": ["{{host}}"],
+              "path": ["api", "attendance"]
+            }
+          }
+        },
+        {
+          "name": "Get Attendance List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{host}}/api/attendance?employeeId={{employeeId}}&month=10&year=2025",
+              "host": ["{{host}}"],
+              "path": ["api", "attendance"],
+              "query": [
+                { "key": "employeeId", "value": "{{employeeId}}" },
+                { "key": "month", "value": "10" },
+                { "key": "year", "value": "2025" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Attendance by Employee ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{host}}/api/attendance/{{id}}",
+              "host": ["{{host}}"],
+              "path": ["api", "attendance", "{{id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payroll",
+      "item": [
+        {
+          "name": "Generate Payroll",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"uuid-emp\",\n  \"month\": 10,\n  \"year\": 2025,\n  \"components\": [\n    {\"payrollId\":\"uuid-payroll\",\"componentTypeId\":\"uuid-comp\",\"amount\":5000}\n  ],\n  \"netSalary\": 55000\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/payroll",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "payroll"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "Add Appraisal",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\":\"uuid-emp\",\n  \"goals\":\"Complete project\",\n  \"rating\":5,\n  \"comments\":\"Excellent work\",\n  \"managerComments\":\"Good performance\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/performance",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "performance"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Send Notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeIds\": [\"uuid-emp1\",\"uuid-emp2\"],\n  \"type\":\"SYSTEM\",\n  \"message\":\"System maintenance at 5 PM\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/notifications",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "notifications"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get User Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/users/{{id}}",
+          "host": ["{{host}}"],
+          "path": ["api", "users", "{{id}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update User Details",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+91-9876543210\",\n  \"address\": \"123 Street\"\n}"
+        },
+        "url": {
+          "raw": "{{host}}/api/users/{{id}}",
+          "host": ["{{host}}"],
+          "path": ["api", "users", "{{id}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"IT\",\n  \"description\": \"Information Technology Department\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{host}}/api/departments",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "departments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/departments",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "departments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Department by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/departments/<DEPARTMENT_ID>",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "departments", "<DEPARTMENT_ID>"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"IT Updated\",\n  \"description\": \"Updated description\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{host}}/api/departments/<DEPARTMENT_ID>",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "departments", "<DEPARTMENT_ID>"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Department",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/departments/<DEPARTMENT_ID>",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "departments", "<DEPARTMENT_ID>"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Designations",
+      "item": [
+        {
+          "name": "Create Designation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Software Engineer\",\n  \"description\": \"Writes code\",\n  \"classification\": \"Technical\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{host}}/api/designations",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "designations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Designations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/designations",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "designations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Designation by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/designations/<DESIGNATION_ID>",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "designations", "<DESIGNATION_ID>"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Designation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Senior Software Engineer\",\n  \"description\": \"Updated description\",\n  \"classification\": \"Technical\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{host}}/api/designations/<DESIGNATION_ID>",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "designations", "<DESIGNATION_ID>"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Designation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TOKEN>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/designations/<DESIGNATION_ID>",
+
+              "host": ["{{host}}"],
+
+              "path": ["api", "designations", "<DESIGNATION_ID>"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

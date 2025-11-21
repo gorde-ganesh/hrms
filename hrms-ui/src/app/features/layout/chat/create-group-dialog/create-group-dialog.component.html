@@ -1,0 +1,42 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  header="Create Group"
+  (onHide)="onCancel()"
+>
+  <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-2">
+      <label for="groupName">Group Name</label>
+      <input
+        pInputText
+        id="groupName"
+        [(ngModel)]="groupName"
+        placeholder="Enter group name"
+      />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="members">Select Members</label>
+      <p-multiSelect
+        [options]="allUsers"
+        [(ngModel)]="selectedMembers"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select members"
+        [filter]="true"
+        [showClear]="true"
+        appendTo="body"
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" (onClick)="onCancel()" />
+    <p-button
+      label="Create"
+      (onClick)="onCreate()"
+      [disabled]="!groupName || selectedMembers.length === 0"
+    />
+  </ng-template>
+</p-dialog>
