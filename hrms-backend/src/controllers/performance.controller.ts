@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { sendNotification } from '../utils/notification';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const addAppraisal = async (req: Request, res: Response) => {
   const { employeeId, goals, rating, comments, managerComments } = req.body;

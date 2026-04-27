@@ -1,12 +1,11 @@
 import { Department } from './../../generated/prisma/index.d';
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import PDFDocument from 'pdfkit';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { sendNotification } from '../utils/notification';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 // ----------------- Generate Payroll -----------------
 export const generatePayroll = async (req: Request, res: Response) => {

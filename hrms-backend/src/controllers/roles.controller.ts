@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 // Get all roles
 export const getRoles = async (req: Request, res: Response) => {

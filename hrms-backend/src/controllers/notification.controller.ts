@@ -1,11 +1,10 @@
 // controllers/notifications.ts
 
-import { PrismaClient } from '../../generated/prisma';
 import { Request, Response } from 'express';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const sendNotification = async (req: Request, res: Response) => {
   const { employeeId, type, message } = req.body;

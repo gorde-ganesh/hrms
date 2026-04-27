@@ -1,4 +1,4 @@
-import { PrismaClient, User } from '../../generated/prisma/client';
+import { User } from '../../generated/prisma/client';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -8,8 +8,8 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { rolePermissions } from '../utils/permission.utils';
 import { successResponse } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const registerUser = async (req: Request, res: Response) => {
   const {

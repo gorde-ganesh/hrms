@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,9 +7,9 @@ import {
   createdResponse,
   errorResponse,
 } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 
-const prisma = new PrismaClient();
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({

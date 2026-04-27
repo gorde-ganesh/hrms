@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../../generated/prisma';
 import { ApiResponse } from '../model/response.model';
 import { ERROR_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
@@ -13,7 +12,10 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_KEY || 'your_secret_key';
+const JWT_SECRET = process.env.JWT_KEY;
+if (!JWT_SECRET) {
+  throw new Error('JWT_KEY environment variable is required but not set');
+}
 
 export const authenticate = async (
   req: Request,

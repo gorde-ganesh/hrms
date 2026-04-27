@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 // ----------------- Get Payroll Components for Employee -----------------
 export const getPayrollComponents = async (req: Request, res: Response) => {

@@ -1,12 +1,11 @@
 import {
   Notification,
   NotificationType,
-  PrismaClient,
   Role,
 } from '../../generated/prisma';
 import { io, onlineUsers } from '../../main';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const sendNotification = async (options: {
   employeeIds?: string[];

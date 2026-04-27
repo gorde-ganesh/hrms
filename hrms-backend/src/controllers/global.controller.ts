@@ -3,14 +3,13 @@ import { ApiResponse } from '../model/response.model';
 import {
   Employee,
   PayrollComponentType,
-  PrismaClient,
-} from '../../generated/prisma';
+  } from '../../generated/prisma';
+import { prisma } from '../lib/prisma';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { HttpError } from '../utils/http-error';
 import { stat } from 'fs';
 import { successResponse } from '../utils/response-helper';
 
-const prisma = new PrismaClient();
 
 export const getMasterData = async (req: Request, res: Response) => {
   const roles = [

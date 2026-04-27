@@ -1,4 +1,4 @@
-import { PrismaClient, LeaveType } from '../../generated/prisma';
+import { LeaveType } from '../../generated/prisma';
 import { Request, Response } from 'express';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
@@ -8,6 +8,7 @@ import {
   updateUsedLeaves,
   checkSufficientBalance,
 } from './leave-balance.controller';
+import { prisma } from '../lib/prisma';
 import { successResponse } from '../utils/response-helper';
 let ioInstance: any;
 let onlineUsersRef: Record<number, string> = {};
@@ -20,7 +21,6 @@ export const initNotificationService = (
   onlineUsersRef = onlineUsers;
 };
 
-const prisma = new PrismaClient();
 
 // ----------------- Helper Functions -----------------
 
