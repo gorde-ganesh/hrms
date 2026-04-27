@@ -8,6 +8,7 @@ import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { rolePermissions } from '../utils/permission.utils';
 import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { sendPasswordReset } from '../services/mail.service';
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -578,14 +579,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
     data: { resetToken, resetTokenExp },
   });
 
-  // TODO: send token via email
-  // For now, just return
+  await sendPasswordReset(email, resetToken);
+
   return successResponse(
     res,
-    {
-      temp_token: resetToken,
-    },
-    'Reset token generated',
+    null,
+    'Password reset link sent to your email',
     SUCCESS_CODES.PASSWORD_RESET_TOKEN_CREATED,
     200
   );
