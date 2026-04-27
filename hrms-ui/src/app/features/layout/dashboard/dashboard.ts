@@ -87,7 +87,7 @@ export class Dashboard {
     console.log('UserInfo:', this.userInfo);
     this.initChartOptions();
     this.loadUpcomingLeaves();
-    // this.loadPerformanceGoals();
+    this.loadPerformanceGoals();
     this.loadPendingTasks();
     this.loadQuickActions();
     this.loadDashboardStats();
@@ -161,15 +161,23 @@ export class Dashboard {
     }));
   }
 
-  // loadPerformanceGoals() {
-  //   this.dashboardService.getPerformanceGoals().subscribe((res) => {
-  //     this.performanceGoals = res.map((goal: any, i: number) => ({
-  //       title: goal.goal || `Goal ${i + 1}`,
-  //       progress: goal.rating ? Math.min(goal.rating * 10, 100) : 0,
-  //       progressLabel: `${goal.rating ? goal.rating * 10 : 0}%`,
-  //     }));
-  //   });
-  // }
+  async loadPerformanceGoals() {
+    if (!this.userInfo?.employeeId) return;
+    try {
+      const records: any = await this.serverApi.get(
+        `/api/performance/${this.userInfo.employeeId}`
+      );
+      if (records?.data?.length) {
+        this.performanceGoals = records.data.slice(0, 3).map((r: any, i: number) => ({
+          title: r.goals?.split('\n')[0]?.substring(0, 40) || `Goal ${i + 1}`,
+          progress: r.rating ? Math.min(r.rating * 10, 100) : 0,
+          progressLabel: r.rating ? `${r.rating}/10` : 'Pending',
+        }));
+      }
+    } catch {
+      // keep default placeholder goals on error
+    }
+  }
 
   // Placeholder tasks and quick actions for now
   loadPendingTasks() {

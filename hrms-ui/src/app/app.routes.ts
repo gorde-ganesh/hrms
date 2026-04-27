@@ -49,6 +49,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'department',
+        loadComponent: () =>
+          import('./features/layout/department/department').then(
+            (m) => m.Department
+          ),
+      },
+      {
+        path: 'designations',
+        loadComponent: () =>
+          import('./features/layout/designations/designations').then(
+            (m) => m.Designations
+          ),
+      },
+      {
         path: 'chat',
         loadComponent: () =>
           import('./features/layout/chat/chat').then((m) => m.Chat),

@@ -4,6 +4,8 @@ import {
   addAppraisal,
   updateAppraisal,
   getEmployeePerformance,
+  getAllPerformance,
+  getTeamPerformance,
 } from '../controllers/performance.controller';
 import { Role } from '../../generated/prisma/client';
 
@@ -13,19 +15,36 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess([Role.HR, Role.ADMIN, Role.MANAGER]),
     addAppraisal
-  ); // Add appraisal (HR/Admin)
+  );
+
   app.put(
     '/api/performance/:id',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN, Role.MANAGER]),
     updateAppraisal
-  ); // Update appraisal (HR/Admin)
+  );
+
+  // Must come before /:employeeId to avoid route shadowing
+  app.get(
+    '/api/performance/all',
+    authenticate,
+    roleAccess([Role.HR, Role.ADMIN]),
+    getAllPerformance
+  );
+
+  app.get(
+    '/api/performance/team',
+    authenticate,
+    roleAccess([Role.MANAGER]),
+    getTeamPerformance
+  );
+
   app.get(
     '/api/performance/:employeeId',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN, Role.EMPLOYEE, Role.MANAGER]),
     getEmployeePerformance
-  ); // Get appraisal
+  );
 }
 
 export default registerRouters;

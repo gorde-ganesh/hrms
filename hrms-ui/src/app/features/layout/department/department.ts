@@ -17,6 +17,7 @@ import { ApiService } from '../../../services/api-interface.service';
 import { FormErrorDirective } from '../../../directives/form-error.directive';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { ConfirmPopup } from 'primeng/confirmpopup';
 
 interface DepartmentDto {
   id: string;
@@ -41,6 +42,7 @@ interface DepartmentDto {
     FormErrorDirective,
     IconFieldModule,
     InputIconModule,
+    ConfirmPopup,
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './department.html',

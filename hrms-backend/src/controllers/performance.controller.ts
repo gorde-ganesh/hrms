@@ -1,4 +1,3 @@
-// controllers/performance.ts
 import { Request, Response } from 'express';
 import { PrismaClient } from '../../generated/prisma';
 import { HttpError } from '../utils/http-error';
@@ -8,7 +7,7 @@ import { sendNotification } from '../utils/notification';
 const prisma = new PrismaClient();
 
 export const addAppraisal = async (req: Request, res: Response) => {
-  const { employeeId, goals, rating, comments } = req.body;
+  const { employeeId, goals, rating, comments, managerComments } = req.body;
 
   if (!employeeId || !goals) {
     throw new HttpError(
@@ -18,14 +17,11 @@ export const addAppraisal = async (req: Request, res: Response) => {
     );
   }
 
-  // Verify employee exists
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
     include: {
       user: true,
-      manager: {
-        include: { user: true }, // so you can access manager.user.id, manager.user.name, etc.
-      },
+      manager: { include: { user: true } },
     },
   });
 
@@ -36,14 +32,14 @@ export const addAppraisal = async (req: Request, res: Response) => {
   const performance = await prisma.performance.create({
     data: {
       employeeId: employee.id,
-      userId: employee.user.id, // the user creating the appraisal
+      userId: employee.user.id,
       goals,
       rating,
       comments,
+      managerComments,
     },
   });
 
-  // Optional: notify employee about new appraisal
   await sendNotification({
     employeeIds: [employeeId],
     managerId: employee.manager?.id,
@@ -61,24 +57,23 @@ export const addAppraisal = async (req: Request, res: Response) => {
 
 export const updateAppraisal = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { rating, comments } = req.body;
+  const { rating, comments, managerComments } = req.body;
 
-  if (!rating && !comments) {
+  if (!rating && !comments && !managerComments) {
     throw new HttpError(
       400,
-      'At least rating or comments must be provided',
+      'At least one of rating, comments, or managerComments must be provided',
       ERROR_CODES.VALIDATION_ERROR
     );
   }
 
-  // Fetch appraisal with employee and manager relation
   const appraisal = await prisma.performance.findUnique({
-    where: { id: id },
+    where: { id },
     include: {
       employee: {
         include: {
           user: true,
-          manager: { include: { user: true } }, // Include manager relation
+          manager: { include: { user: true } },
         },
       },
     },
@@ -88,16 +83,18 @@ export const updateAppraisal = async (req: Request, res: Response) => {
     throw new HttpError(404, 'Appraisal not found', ERROR_CODES.NOT_FOUND);
   }
 
-  // Update appraisal
   const updatedAppraisal = await prisma.performance.update({
-    where: { id: id },
-    data: { rating, comments },
+    where: { id },
+    data: {
+      ...(rating !== undefined && { rating }),
+      ...(comments !== undefined && { comments }),
+      ...(managerComments !== undefined && { managerComments }),
+    },
   });
 
-  // Send notification to employee + manager + HR/Admin
   await sendNotification({
-    employeeIds: [appraisal.employee.id], // Employee
-    managerId: appraisal.employee.manager?.user.id, // Manager (optional)
+    employeeIds: [appraisal.employee.id],
+    managerId: appraisal.employee.manager?.user.id,
     type: 'PERFORMANCE',
     message: `Your appraisal has been updated. Rating: ${rating ?? 'N/A'}`,
   });
@@ -106,36 +103,100 @@ export const updateAppraisal = async (req: Request, res: Response) => {
     message: 'Appraisal updated successfully',
     data: updatedAppraisal,
     statusCode: 200,
+    code: SUCCESS_CODES.SUCCESS,
   });
 };
+
 export const getEmployeePerformance = async (req: Request, res: Response) => {
   const { employeeId } = req.params;
-  const currentUser = req.user; // assuming you have auth middleware
+  const currentUser = req.user;
 
   if (!employeeId) {
-    throw new HttpError(
-      400,
-      'Employee ID required',
-      ERROR_CODES.VALIDATION_ERROR
-    );
+    throw new HttpError(400, 'Employee ID required', ERROR_CODES.VALIDATION_ERROR);
   }
 
-  // Employees can only see their own data
   if (
     currentUser.role === 'EMPLOYEE' &&
-    currentUser.employeeId !== Number(employeeId)
+    currentUser.employeeId !== employeeId
   ) {
     throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
   }
 
   const performance = await prisma.performance.findMany({
-    where: { employeeId: employeeId },
+    where: { employeeId },
     orderBy: { createdAt: 'desc' },
+    include: {
+      employee: { include: { user: { select: { name: true } } } },
+    },
   });
 
   return res.status(200).json({
     message: 'Performance data fetched successfully',
     data: performance,
+    statusCode: 200,
+    code: SUCCESS_CODES.SUCCESS,
+  });
+};
+
+export const getAllPerformance = async (req: Request, res: Response) => {
+  const page = parseInt(req.query['page'] as string) || 1;
+  const limit = parseInt(req.query['limit'] as string) || 20;
+  const skip = (page - 1) * limit;
+
+  const [records, total] = await Promise.all([
+    prisma.performance.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        employee: {
+          include: {
+            user: { select: { name: true, email: true } },
+            designation: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    prisma.performance.count(),
+  ]);
+
+  return res.status(200).json({
+    message: 'All performance records fetched',
+    data: records,
+    totalRecords: total,
+    page,
+    limit,
+    statusCode: 200,
+    code: SUCCESS_CODES.SUCCESS,
+  });
+};
+
+export const getTeamPerformance = async (req: Request, res: Response) => {
+  const currentUser = req.user;
+
+  const teamMembers = await prisma.employee.findMany({
+    where: { managerId: currentUser.employeeId },
+    select: { id: true },
+  });
+
+  const teamIds = teamMembers.map((e) => e.id);
+
+  const records = await prisma.performance.findMany({
+    where: { employeeId: { in: teamIds } },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      employee: {
+        include: {
+          user: { select: { name: true, email: true } },
+          designation: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  return res.status(200).json({
+    message: 'Team performance fetched successfully',
+    data: records,
     statusCode: 200,
     code: SUCCESS_CODES.SUCCESS,
   });
