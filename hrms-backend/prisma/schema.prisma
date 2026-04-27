@@ -90,8 +90,10 @@ model User {
   userRole      UserRole? @relation(fields: [roleId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  resetToken    String?
-  resetTokenExp DateTime?
+  resetToken      String?
+  resetTokenExp   DateTime?
+  refreshToken    String?
+  refreshTokenExp DateTime?
 
   employee       Employee?
   payrolls       Payroll[]      @relation("UserPayrolls")

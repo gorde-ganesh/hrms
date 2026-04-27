@@ -1,4 +1,3 @@
-import { User } from '../../generated/prisma/client';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -9,6 +8,24 @@ import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { rolePermissions } from '../utils/permission.utils';
 import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+
+const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function setAuthCookies(res: Response, accessToken: string, rawRefreshToken: string) {
+  res.cookie('authToken', accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 1000,
+  });
+  res.cookie('refreshToken', rawRefreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: REFRESH_TOKEN_TTL_MS,
+    path: '/api/auth/refresh',
+  });
+}
 
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -390,12 +407,21 @@ export const loginUser = async (req: Request, res: Response) => {
     permissions = rolePermissions[user.role];
   }
 
-  res.cookie('authToken', token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 1000,
+  const rawRefreshToken = crypto.randomBytes(40).toString('hex');
+  const hashedRefreshToken = crypto
+    .createHash('sha256')
+    .update(rawRefreshToken)
+    .digest('hex');
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      refreshToken: hashedRefreshToken,
+      refreshTokenExp: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    },
   });
+
+  setAuthCookies(res, token, rawRefreshToken);
 
   return successResponse(
     res,
@@ -415,6 +441,54 @@ export const loginUser = async (req: Request, res: Response) => {
     SUCCESS_CODES.USER_LOGGED_IN,
     200
   );
+};
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  const rawRefreshToken = (req as any).cookies?.refreshToken;
+  if (!rawRefreshToken) {
+    throw new HttpError(401, 'Refresh token missing', ERROR_CODES.UNAUTHORIZED);
+  }
+
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(rawRefreshToken)
+    .digest('hex');
+
+  const user = await prisma.user.findFirst({
+    where: {
+      refreshToken: hashedToken,
+      refreshTokenExp: { gte: new Date() },
+    },
+  });
+
+  if (!user) {
+    throw new HttpError(401, 'Invalid or expired refresh token', ERROR_CODES.UNAUTHORIZED);
+  }
+
+  const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
+
+  const newAccessToken = jwt.sign(
+    { id: user.id, email: user.email, role: user.role, employeeId: employee?.id },
+    process.env.JWT_KEY as string,
+    { expiresIn: '1h' }
+  );
+
+  const newRawRefreshToken = crypto.randomBytes(40).toString('hex');
+  const newHashedRefreshToken = crypto
+    .createHash('sha256')
+    .update(newRawRefreshToken)
+    .digest('hex');
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      refreshToken: newHashedRefreshToken,
+      refreshTokenExp: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    },
+  });
+
+  setAuthCookies(res, newAccessToken, newRawRefreshToken);
+  return successResponse(res, null, 'Token refreshed', SUCCESS_CODES.USER_LOGGED_IN, 200);
 };
 
 export const getCurrentUser = async (req: Request, res: Response) => {
@@ -466,8 +540,16 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   );
 };
 
-export const logoutUser = (_req: Request, res: Response) => {
+export const logoutUser = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (userId) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null, refreshTokenExp: null },
+    });
+  }
   res.clearCookie('authToken', { httpOnly: true, secure: true, sameSite: 'strict' });
+  res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'strict', path: '/api/auth/refresh' });
   return successResponse(res, null, 'Logged out successfully', SUCCESS_CODES.USER_LOGGED_IN, 200);
 };
 

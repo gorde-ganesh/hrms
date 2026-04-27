@@ -7,6 +7,7 @@ import {
   forgotPassword,
   getCurrentUser,
   logoutUser,
+  refreshAccessToken,
 } from '../controllers/auth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 
@@ -30,6 +31,7 @@ function registerRouters(app: express.Application) {
   app.use('/api', globalLimiter);
   app.post('/api/auth/register', authLimiter, registerUser);
   app.post('/api/auth/login', authLimiter, loginUser);
+  app.post('/api/auth/refresh', refreshAccessToken);
   app.post('/api/auth/logout', authenticate, logoutUser);
   app.get('/api/auth/me', authenticate, getCurrentUser);
   app.post('/api/auth/forgot-password', authLimiter, forgotPassword);
