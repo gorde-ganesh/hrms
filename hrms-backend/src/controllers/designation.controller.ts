@@ -1,10 +1,9 @@
-import { PrismaClient } from '../../generated/prisma/client';
 import { Request, Response } from 'express';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse, createdResponse } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 const findDesignationByName = async (name: string, excludeId?: string) => {
   return prisma.designation.findFirst({

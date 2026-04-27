@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import { SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const getPermissions = async (req: Request, res: Response) => {
   const permissions = await prisma.permission.findMany({

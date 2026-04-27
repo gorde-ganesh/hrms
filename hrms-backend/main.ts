@@ -31,9 +31,15 @@ const loadHttpsCertificates = () => {
 const httpsOptions = loadHttpsCertificates();
 const server: Server = https.createServer(httpsOptions, app);
 
+// ----------------- Allowed Origins (env-driven) -----------------
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:4200')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 // ----------------- Socket.IO -----------------
 const io = new SocketIOServer(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }, // Adjust in production
+  cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'], credentials: true },
 });
 
 // Track online users and their rooms
@@ -231,17 +237,7 @@ export { io, onlineUsers };
 // ----------------- Middlewares -----------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: [
-      'http://192.168.1.70:4200',
-      'http://172.20.192.1:4200',
-      'http://localhost:4200',
-      'http://localhost:51818',
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Request Logger Middleware

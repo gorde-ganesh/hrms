@@ -1,10 +1,9 @@
-import { PrismaClient } from '../../generated/prisma/client';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { Request, Response } from 'express';
 import dayjs from 'dayjs';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 // GET /api/dashboard/summary?month=10&year=2025
 

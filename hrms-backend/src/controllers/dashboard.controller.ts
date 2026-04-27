@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma/client';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   const user = (req as any).user;

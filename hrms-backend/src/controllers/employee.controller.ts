@@ -1,4 +1,4 @@
-import { PrismaClient, EmployeeStatus, Prisma } from '../../generated/prisma';
+import { EmployeeStatus, Prisma } from '../../generated/prisma';
 import { Request, Response } from 'express';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
@@ -7,8 +7,8 @@ import {
   createdResponse,
   noContentResponse,
 } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 const ensureUniqueEmployeeCode = async (
   employeeCode?: string,

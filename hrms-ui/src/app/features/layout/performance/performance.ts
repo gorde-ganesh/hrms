@@ -74,7 +74,7 @@ export class Performance implements OnInit {
     return 'Outstanding';
   }
 
-  get ratingLabelSeverity(): string {
+  get ratingLabelSeverity(): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | null | undefined {
     const r = this.latestRating;
     if (r === null) return 'secondary';
     if (r <= 3) return 'danger';

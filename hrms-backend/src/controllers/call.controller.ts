@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
 import { errorResponse, successResponse } from '../utils/response-helper';
 import { SUCCESS_CODES, ERROR_CODES } from '../utils/response-codes';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export const startCall = async (req: Request, res: Response) => {
   const { callerId, receiverId, callType } = req.body;
