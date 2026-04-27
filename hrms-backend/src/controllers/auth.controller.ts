@@ -390,10 +390,16 @@ export const loginUser = async (req: Request, res: Response) => {
     permissions = rolePermissions[user.role];
   }
 
+  res.cookie('authToken', token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 1000,
+  });
+
   return successResponse(
     res,
     {
-      token,
       user_details: {
         id: user.id,
         name: user.name,
@@ -409,6 +415,60 @@ export const loginUser = async (req: Request, res: Response) => {
     SUCCESS_CODES.USER_LOGGED_IN,
     200
   );
+};
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      userRole: {
+        include: { permissions: { include: { permission: true } } },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new HttpError(404, 'User not found', ERROR_CODES.USER_NOT_FOUND);
+  }
+
+  const employee = await prisma.employee.findFirst({
+    where: { userId: user.id },
+  });
+
+  let permissions: any = {};
+  if (user.userRole) {
+    permissions = user.userRole.permissions.reduce((acc: any, rp) => {
+      const { resource, action } = rp.permission;
+      if (!acc[resource]) acc[resource] = [];
+      acc[resource].push(action);
+      return acc;
+    }, {});
+  } else {
+    permissions = rolePermissions[user.role];
+  }
+
+  return successResponse(
+    res,
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      roleId: user.roleId,
+      roleName: user.userRole?.name,
+      employeeId: employee?.id,
+      permissions,
+    },
+    'User fetched successfully',
+    SUCCESS_CODES.USER_LOGGED_IN,
+    200
+  );
+};
+
+export const logoutUser = (_req: Request, res: Response) => {
+  res.clearCookie('authToken', { httpOnly: true, secure: true, sameSite: 'strict' });
+  return successResponse(res, null, 'Logged out successfully', SUCCESS_CODES.USER_LOGGED_IN, 200);
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {

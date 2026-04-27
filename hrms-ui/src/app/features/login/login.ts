@@ -108,14 +108,12 @@ export class Login {
       }
 
       const login: {
-        token: string;
         user_details: { email: string; name: string };
       } = await this.serverApi.post('/api/auth/login', {
         email: username,
         password,
       });
 
-      sessionStorage.setItem('authToken', login.token);
       sessionStorage.setItem('userInfo', JSON.stringify(login.user_details));
 
       this.messageService.add({

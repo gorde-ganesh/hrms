@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { SpinnerService } from './spinner.service';
 import { environment } from '../../environment/environment';
 
@@ -23,12 +23,7 @@ export class ApiService {
   ) {}
 
   private getHeaders(): HttpHeaders {
-    const token = sessionStorage.getItem('authToken');
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-    return headers;
+    return new HttpHeaders({ 'Content-Type': 'application/json' });
   }
 
   async get<T>(url: string, params?: any, spinner: boolean = true): Promise<T> {

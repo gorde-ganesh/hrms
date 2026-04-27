@@ -195,9 +195,13 @@ export class Layout implements OnInit {
     this.router.navigate([item.route]);
   }
 
-  onLogoutClick() {
-    sessionStorage.clear();
-    this.router.navigate(['/login']);
+  async onLogoutClick() {
+    try {
+      await this.serverApi.post('/api/auth/logout', {}, false);
+    } finally {
+      sessionStorage.clear();
+      this.router.navigate(['/login']);
+    }
   }
 
   onChangePasswordClick() {

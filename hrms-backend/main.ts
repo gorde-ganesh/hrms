@@ -4,6 +4,7 @@ import cors from 'cors';
 import https, { Server } from 'https';
 import fs from 'fs';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './src/middlewares/error-handler.middleware';
 import { Server as SocketIOServer } from 'socket.io';
@@ -237,6 +238,7 @@ export { io, onlineUsers };
 // ----------------- Middlewares -----------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
