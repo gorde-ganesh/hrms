@@ -152,10 +152,10 @@
           <div>
             <p class="text-sm text-gray-600">Leave Balance</p>
             <p class="text-2xl text-gray-900 mt-2">
-              {{ dashboardStats?.leaveBalance?.balance || 0 }} days
+              {{ (dashboardStats?.leaveBalance?.totalLeaves - dashboardStats?.leaveBalance?.usedLeaves) || 0 }} days
             </p>
             <p class="text-sm text-gray-600 mt-1">
-              {{ dashboardStats?.leaveBalance?.used || 0 }} used this year
+              {{ dashboardStats?.leaveBalance?.usedLeaves || 0 }} used this year
             </p>
           </div>
           <div class="bg-green-500 p-3 rounded-lg">
@@ -236,7 +236,7 @@
                 {{ employee.user.email }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ employee.designation?.title || 'N/A' }}
+                {{ employee.designation?.name || 'N/A' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ employee.joiningDate | date }}

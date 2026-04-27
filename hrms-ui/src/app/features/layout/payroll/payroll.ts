@@ -3,7 +3,6 @@ import { ApiService } from '../../../services/api-interface.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import {
-  FormArray,
   FormBuilder,
   FormGroup,
   FormsModule,
@@ -21,6 +20,7 @@ import { DialogModule } from 'primeng/dialog';
 import { TextareaModule } from 'primeng/textarea';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmPopup } from 'primeng/confirmpopup';
 import { TagModule } from 'primeng/tag';
 import { StatusPipe } from '../../../pipes/status.pipe';
 import { ToastModule } from 'primeng/toast';
@@ -48,8 +48,9 @@ import { CardModule } from 'primeng/card';
     StatusPipe,
     ToastModule,
     CardModule,
+    ConfirmPopup,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './payroll.html',
   styleUrl: './payroll.css',
 })
@@ -58,7 +59,6 @@ export class Payroll {
   payrollComponents: any[] = [];
   selectedEmployee: any = null;
   netSalary: number = 0;
-  payrollForm!: FormGroup;
 
   payrolls: any[] = [];
   apiParams = { pageno: 0, top: 10 };
@@ -125,10 +125,6 @@ export class Payroll {
     } catch (error) {
       console.error('Error loading employees:', error);
     }
-  }
-
-  get components(): FormArray {
-    return this.payrollForm.get('components') as FormArray;
   }
 
   async loadPayrolls() {
