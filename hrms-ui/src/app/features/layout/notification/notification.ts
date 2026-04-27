@@ -6,12 +6,12 @@ import { DrawerModule } from 'primeng/drawer';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 
 @Component({
-  selector: 'app-notifictaion',
+  selector: 'app-notification',
   imports: [CommonModule, ButtonModule, DrawerModule, OverlayBadgeModule],
-  templateUrl: './notifictaion.html',
-  styleUrl: './notifictaion.css',
+  templateUrl: './notification.html',
+  styleUrl: './notification.css',
 })
-export class Notifictaion {
+export class Notification {
   notifications: any[] = [];
   unreadCount = 0;
   visible: boolean = false;
