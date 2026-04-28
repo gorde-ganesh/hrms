@@ -48,19 +48,16 @@ export const sendNotification = async (options: {
     }
   }
 
-  // HR/Admin notifications
+  // HR/Admin notifications — single query with employee joined
   const hrUsers = await prisma.user.findMany({
     where: { role: { in: [Role.HR] } },
+    include: { employee: { select: { id: true } } },
   });
 
   for (const hr of hrUsers) {
-    const hrEmployee = await prisma.employee.findUnique({
-      where: { userId: hr.id },
-    });
-
-    if (hrEmployee) {
+    if (hr.employee) {
       notificationsData.push({
-        employeeId: hrEmployee.id,
+        employeeId: hr.employee.id,
         userId: hr.id,
         type,
         message,

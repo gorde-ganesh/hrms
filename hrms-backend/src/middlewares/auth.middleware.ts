@@ -23,9 +23,13 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
+    const cookieToken = (req as any).cookies?.authToken;
     const authHeader = req.headers.authorization;
+    const bearerToken =
+      authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const token = cookieToken || bearerToken;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return successResponse(
         res,
         null,
@@ -34,8 +38,6 @@ export const authenticate = async (
         401
       );
     }
-
-    const token = authHeader.split(' ')[1];
 
     const decoded = jwt.verify(token, JWT_SECRET) as {
       id: number;

@@ -5,8 +5,11 @@ import {
   getDepartmentById,
   updateDepartment,
   deleteDepartment,
+  restoreDepartment,
 } from '../controllers/department.controller';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate';
+import { CreateDepartmentSchema, UpdateDepartmentSchema } from '../schemas/department.schema';
 import { Role } from '../../generated/prisma/client';
 
 function registerRouters(app: express.Application) {
@@ -14,6 +17,7 @@ function registerRouters(app: express.Application) {
     '/api/departments',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
+    validate(CreateDepartmentSchema),
     createDepartment
   );
   app.get(
@@ -32,6 +36,7 @@ function registerRouters(app: express.Application) {
     '/api/departments/:id',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
+    validate(UpdateDepartmentSchema),
     updateDepartment
   );
   app.delete(
@@ -39,6 +44,12 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
     deleteDepartment
+  );
+  app.put(
+    '/api/departments/:id/restore',
+    authenticate,
+    roleAccess([Role.ADMIN]),
+    restoreDepartment
   );
 }
 

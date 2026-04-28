@@ -1,6 +1,7 @@
 import {
   addEmployee,
   deleteEmployee,
+  restoreEmployee,
   fetchLastEmployeeCode,
   getEmployee,
   getEmployees,
@@ -29,6 +30,12 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
     deleteEmployee
+  );
+  app.put(
+    '/api/employees/:id/restore',
+    authenticate,
+    roleAccess([Role.ADMIN]),
+    restoreEmployee
   );
   app.get(
     '/api/employees/summary',

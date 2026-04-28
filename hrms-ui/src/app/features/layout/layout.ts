@@ -28,7 +28,7 @@ import { ValidationService } from '../../services/validation.service';
 import { ApiService } from '../../services/api-interface.service';
 import { filter, Observable } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { Notifictaion } from './notifictaion/notifictaion';
+import { Notification } from './notification/notification';
 import { ToolbarModule } from 'primeng/toolbar';
 
 @Component({
@@ -53,7 +53,7 @@ import { ToolbarModule } from 'primeng/toolbar';
     ProgressBarModule,
     FloatLabel,
     PasswordModule,
-    Notifictaion,
+    Notification,
     ToolbarModule,
   ],
   templateUrl: './layout.html',
@@ -195,9 +195,13 @@ export class Layout implements OnInit {
     this.router.navigate([item.route]);
   }
 
-  onLogoutClick() {
-    sessionStorage.clear();
-    this.router.navigate(['/login']);
+  async onLogoutClick() {
+    try {
+      await this.serverApi.post('/api/auth/logout', {}, false);
+    } finally {
+      sessionStorage.clear();
+      this.router.navigate(['/login']);
+    }
   }
 
   onChangePasswordClick() {

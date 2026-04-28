@@ -48,86 +48,107 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-white/80 font-medium">Total Employees</p>
-            <p class="counter-number mt-2">
-              {{ dashboardStats?.totalEmployees || 0 }}
-            </p>
+            <p class="counter-number mt-2">{{ dashboardStats?.totalEmployees || 0 }}</p>
           </div>
-          <div class="icon-badge">
-            <i class="pi pi-users text-white"></i>
-          </div>
+          <div class="icon-badge"><i class="pi pi-users text-white"></i></div>
         </div>
       </div>
       <div class="metric-card gradient-green rounded-2xl p-6 shadow-medium">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-white/80 font-medium">Total Departments</p>
-            <p class="counter-number mt-2">
-              {{ dashboardStats?.totalDepartments || 0 }}
-            </p>
+            <p class="counter-number mt-2">{{ dashboardStats?.totalDepartments || 0 }}</p>
           </div>
-          <div class="icon-badge">
-            <i class="pi pi-building text-white"></i>
+          <div class="icon-badge"><i class="pi pi-building text-white"></i></div>
+        </div>
+      </div>
+      <div class="metric-card gradient-orange rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Pending Leaves</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.pendingLeaves || 0 }}</p>
           </div>
+          <div class="icon-badge"><i class="pi pi-exclamation-circle text-white"></i></div>
+        </div>
+      </div>
+      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Present Today</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.todayAttendance || 0 }}</p>
+          </div>
+          <div class="icon-badge"><i class="pi pi-clock text-white"></i></div>
         </div>
       </div>
     </ng-container>
 
     <!-- HR VIEW -->
     <ng-container *ngIf="userInfo.role === 'HR'">
+      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Total Employees</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.totalEmployees || 0 }}</p>
+          </div>
+          <div class="icon-badge"><i class="pi pi-users text-white"></i></div>
+        </div>
+      </div>
       <div class="metric-card gradient-orange rounded-2xl p-6 shadow-medium">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-white/80 font-medium">Pending Leaves</p>
-            <p class="counter-number mt-2">
-              {{ dashboardStats?.pendingLeaves || 0 }}
-            </p>
+            <p class="counter-number mt-2">{{ dashboardStats?.pendingLeaves || 0 }}</p>
           </div>
-          <div class="icon-badge">
-            <i class="pi pi-exclamation-circle text-white"></i>
+          <div class="icon-badge"><i class="pi pi-exclamation-circle text-white"></i></div>
+        </div>
+      </div>
+      <div class="metric-card gradient-green rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Today's Attendance</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.todayAttendance || 0 }}</p>
           </div>
+          <div class="icon-badge"><i class="pi pi-clock text-white"></i></div>
         </div>
       </div>
       <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-white/80 font-medium">Today's Attendance</p>
-            <p class="counter-number mt-2">
-              {{ dashboardStats?.todayAttendance || 0 }}
-            </p>
+            <p class="text-sm text-white/80 font-medium">Pending Payrolls</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.pendingPayrolls || 0 }}</p>
           </div>
-          <div class="icon-badge">
-            <i class="pi pi-clock text-white"></i>
-          </div>
+          <div class="icon-badge"><i class="pi pi-dollar text-white"></i></div>
         </div>
       </div>
     </ng-container>
 
     <!-- MANAGER VIEW -->
     <ng-container *ngIf="userInfo.role === 'MANAGER'">
+      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white/80 font-medium">Team Size</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.teamSize || 0 }}</p>
+          </div>
+          <div class="icon-badge"><i class="pi pi-users text-white"></i></div>
+        </div>
+      </div>
       <div class="metric-card gradient-orange rounded-2xl p-6 shadow-medium">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-white/80 font-medium">Team Pending Leaves</p>
-            <p class="counter-number mt-2">
-              {{ dashboardStats?.teamLeaves || 0 }}
-            </p>
+            <p class="counter-number mt-2">{{ dashboardStats?.teamLeaves || 0 }}</p>
           </div>
-          <div class="icon-badge">
-            <i class="pi pi-users text-white"></i>
-          </div>
+          <div class="icon-badge"><i class="pi pi-exclamation-circle text-white"></i></div>
         </div>
       </div>
-      <div class="metric-card gradient-blue rounded-2xl p-6 shadow-medium">
+      <div class="metric-card gradient-green rounded-2xl p-6 shadow-medium">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-white/80 font-medium">Team Attendance</p>
-            <p class="counter-number mt-2">
-              {{ dashboardStats?.teamAttendance || 0 }}
-            </p>
+            <p class="text-sm text-white/80 font-medium">Team Attendance Today</p>
+            <p class="counter-number mt-2">{{ dashboardStats?.teamAttendance || 0 }}</p>
           </div>
-          <div class="icon-badge">
-            <i class="pi pi-clock text-white"></i>
-          </div>
+          <div class="icon-badge"><i class="pi pi-clock text-white"></i></div>
         </div>
       </div>
     </ng-container>

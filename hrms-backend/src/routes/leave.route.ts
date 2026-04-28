@@ -1,5 +1,7 @@
 import express from 'express';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate';
+import { CreateLeaveSchema, UpdateLeaveStatusSchema } from '../schemas/leave.schema';
 import { Role } from '../../generated/prisma';
 import {
   applyLeave,
@@ -14,12 +16,14 @@ function registerRouters(app: express.Application) {
     '/api/leaves',
     authenticate,
     roleAccess([Role.EMPLOYEE, Role.HR, Role.MANAGER]),
+    validate(CreateLeaveSchema),
     applyLeave
   );
   app.patch(
     '/api/leaves/:id/status',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN, Role.EMPLOYEE, Role.MANAGER]),
+    validate(UpdateLeaveStatusSchema),
     updateLeaveStatus
   );
   app.get(

@@ -3,29 +3,25 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { cachedQuery, invalidateCache } from '../lib/cache';
 
 
 // Get all roles
 export const getRoles = async (req: Request, res: Response) => {
-  const roles = await prisma.userRole.findMany({
-    include: {
-      permissions: {
-        include: {
-          permission: true,
-        },
+  const roles = await cachedQuery('roles:all', () =>
+    prisma.userRole.findMany({
+      include: {
+        permissions: { include: { permission: true } },
+        _count: { select: { users: true } },
       },
-      _count: {
-        select: { users: true },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+      orderBy: { createdAt: 'desc' },
+    })
+  );
 
-  // Transform response to flatten permissions
   const formattedRoles = roles.map((role) => ({
     ...role,
-    permissions: role.permissions.map((rp) => rp.permission),
-    userCount: role._count.users,
+    permissions: role.permissions.map((rp: any) => rp.permission),
+    userCount: (role as any)._count.users,
   }));
 
   return successResponse(
@@ -116,6 +112,8 @@ export const createRole = async (req: Request, res: Response) => {
     return newRole;
   });
 
+  invalidateCache('roles:all');
+
   return successResponse(
     res,
     role,
@@ -170,6 +168,8 @@ export const updateRole = async (req: Request, res: Response) => {
     return updated;
   });
 
+  invalidateCache('roles:all');
+
   return successResponse(
     res,
     updatedRole,
@@ -213,6 +213,8 @@ export const deleteRole = async (req: Request, res: Response) => {
   }
 
   await prisma.userRole.delete({ where: { id } });
+
+  invalidateCache('roles:all');
 
   return successResponse(
     res,

@@ -1,14 +1,24 @@
-import { User } from '../../generated/prisma/client';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import { ApiResponse } from '../model/response.model';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
-import { rolePermissions } from '../utils/permission.utils';
 import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { sendPasswordReset } from '../services/mail.service';
+import { authService } from '../services/auth.service';
+
+const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function setAuthCookies(res: Response, accessToken: string, rawRefreshToken: string) {
+  res.cookie('authToken', accessToken, {
+    httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60 * 60 * 1000,
+  });
+  res.cookie('refreshToken', rawRefreshToken, {
+    httpOnly: true, secure: true, sameSite: 'strict',
+    maxAge: REFRESH_TOKEN_TTL_MS, path: '/api/auth/refresh',
+  });
+}
 
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -299,116 +309,29 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  const result = await authService.login(email, password);
+  setAuthCookies(res, result.accessToken, result.rawRefreshToken);
+  return successResponse(res, { user_details: result.userDetails }, 'Successfully logged in', SUCCESS_CODES.USER_LOGGED_IN, 200);
+};
 
-  if (!email || !password) {
-    throw new HttpError(
-      404,
-      'Email and password are required',
-      ERROR_CODES.VALIDATION_ERROR
-    );
-  }
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  const raw = (req as any).cookies?.refreshToken;
+  if (!raw) throw new HttpError(401, 'Refresh token missing', ERROR_CODES.UNAUTHORIZED);
+  const result = await authService.refresh(raw);
+  setAuthCookies(res, result.newAccessToken, result.newRawRefreshToken);
+  return successResponse(res, null, 'Token refreshed', SUCCESS_CODES.USER_LOGGED_IN, 200);
+};
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: {
-      userRole: {
-        include: {
-          permissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
-      },
-    },
-  });
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const data = await authService.getCurrentUser(req.user.id);
+  return successResponse(res, data, 'User fetched successfully', SUCCESS_CODES.USER_LOGGED_IN, 200);
+};
 
-  if (!user) {
-    throw new HttpError(
-      400,
-      'Invalid credentials',
-      ERROR_CODES.INVALID_CREDENTIALS
-    );
-  }
-
-  const employee = await prisma.employee.findFirst({
-    where: { userId: user.id },
-    include: { user: true },
-  });
-
-  if (!employee) {
-    throw new HttpError(
-      400,
-      'Invalid credentials',
-      ERROR_CODES.INVALID_CREDENTIALS
-    );
-  }
-
-  // Check employee status
-  if (employee.status === 'TERMINATED' || employee.status === 'INACTIVE') {
-    throw new HttpError(
-      403,
-      `Account is ${employee.status.toLowerCase()}. Please contact HR.`,
-      ERROR_CODES.INVALID_CREDENTIALS
-    );
-  }
-
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    throw new HttpError(
-      400,
-      'Invalid credentials',
-      ERROR_CODES.INVALID_CREDENTIALS
-    );
-  }
-
-  const token = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      employeeId: employee.id,
-    },
-    process.env.JWT_KEY as string,
-    { expiresIn: '1h' }
-  );
-
-  let permissions: any = {};
-
-  if (user.userRole) {
-    // Transform DB permissions to the expected format: { resource: [actions] }
-    permissions = user.userRole.permissions.reduce((acc: any, rp) => {
-      const { resource, action } = rp.permission;
-      if (!acc[resource]) {
-        acc[resource] = [];
-      }
-      acc[resource].push(action);
-      return acc;
-    }, {});
-  } else {
-    // Fallback to static permissions
-    permissions = rolePermissions[user.role];
-  }
-
-  return successResponse(
-    res,
-    {
-      token,
-      user_details: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        roleId: user.roleId,
-        roleName: user.userRole?.name,
-        employeeId: employee.id,
-        permissions,
-      },
-    },
-    'Successfully logged in',
-    SUCCESS_CODES.USER_LOGGED_IN,
-    200
-  );
+export const logoutUser = async (req: Request, res: Response) => {
+  if (req.user?.id) await authService.logout(req.user.id);
+  res.clearCookie('authToken', { httpOnly: true, secure: true, sameSite: 'strict' });
+  res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'strict', path: '/api/auth/refresh' });
+  return successResponse(res, null, 'Logged out successfully', SUCCESS_CODES.USER_LOGGED_IN, 200);
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {
@@ -436,120 +359,18 @@ export const forgotPassword = async (req: Request, res: Response) => {
     data: { resetToken, resetTokenExp },
   });
 
-  // TODO: send token via email
-  // For now, just return
+  await sendPasswordReset(email, resetToken);
+
   return successResponse(
     res,
-    {
-      temp_token: resetToken,
-    },
-    'Reset token generated',
+    null,
+    'Password reset link sent to your email',
     SUCCESS_CODES.PASSWORD_RESET_TOKEN_CREATED,
     200
   );
 };
 
-// Step 2: Change Password
-
 export const changePassword = async (req: Request, res: Response) => {
-  const { userId, oldPassword, token, newPassword } = req.body;
-
-  if (!newPassword) {
-    throw new HttpError(
-      404,
-      'New Password Required',
-      ERROR_CODES.NEW_PASSWORD_REQUIRED
-    );
-  }
-
-  // Validate password strength
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-  if (!passwordRegex.test(newPassword)) {
-    throw new HttpError(
-      400,
-      'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, and one number',
-      ERROR_CODES.VALIDATION_ERROR
-    );
-  }
-
-  let user: any;
-
-  if (token) {
-    // Token-based password reset
-    user = await prisma.user.findFirst({
-      where: {
-        resetToken: token,
-        resetTokenExp: { gte: new Date() },
-      },
-    });
-
-    if (!user) {
-      throw new HttpError(
-        400,
-        'Invalid or expired token',
-        ERROR_CODES.VALIDATION_ERROR
-      );
-    }
-
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-    if (isSamePassword) {
-      throw new HttpError(
-        400,
-        'New password cannot be same as old password',
-        ERROR_CODES.VALIDATION_ERROR
-      );
-    }
-  } else if (userId && oldPassword) {
-    // Old-password-based change
-    user = await prisma.user.findUnique({ where: { id: userId } });
-
-    if (!user) {
-      throw new HttpError(404, 'User not found', ERROR_CODES.USER_NOT_FOUND);
-    }
-
-    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-    if (!isPasswordValid) {
-      throw new HttpError(
-        400,
-        'Old password is incorrect',
-        ERROR_CODES.VALIDATION_ERROR
-      );
-    }
-
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-    if (isSamePassword) {
-      throw new HttpError(
-        400,
-        'New password cannot be same as old password',
-        ERROR_CODES.VALIDATION_ERROR
-      );
-    }
-  } else {
-    throw new HttpError(
-      400,
-      'Provide token or old password with userId',
-      ERROR_CODES.VALIDATION_ERROR
-    );
-  }
-
-  // Hash new password
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-  // Update user
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      password: hashedPassword,
-      resetToken: token ? null : undefined,
-      resetTokenExp: token ? null : undefined,
-    },
-  });
-
-  return successResponse(
-    res,
-    null,
-    'Password changed successfully',
-    SUCCESS_CODES.PASSWORD_CHANGED,
-    200
-  );
+  await authService.changePassword(req.body);
+  return successResponse(res, null, 'Password changed successfully', SUCCESS_CODES.PASSWORD_CHANGED, 200);
 };
