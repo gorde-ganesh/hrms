@@ -93,6 +93,8 @@ export const getUserConversations = async (req: Request, res: Response) => {
 export const getMessages = async (req: Request, res: Response) => {
   try {
     const { conversationId } = req.params;
+    const { cursor, take = '50' } = req.query as { cursor?: string; take?: string };
+    const limit = Math.min(Number(take), 100);
 
     if (!conversationId) {
       return errorResponse(
@@ -106,20 +108,20 @@ export const getMessages = async (req: Request, res: Response) => {
     const messages = await prisma.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
+      take: limit,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         sender: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          select: { id: true, name: true, email: true },
         },
       },
     });
 
+    const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null;
+
     return successResponse(
       res,
-      messages,
+      { messages, nextCursor },
       'Messages fetched successfully',
       SUCCESS_CODES.SUCCESS
     );
@@ -162,7 +164,7 @@ export const sendMessage = async (req: Request, res: Response) => {
       );
     }
 
-    await prisma.message.create({
+    const newMessage = await prisma.message.create({
       data: {
         messageText,
         messageType: messageType || 'text',
@@ -173,26 +175,16 @@ export const sendMessage = async (req: Request, res: Response) => {
           connect: { id: senderId },
         },
       },
-    });
-
-    // Fetch all messages for the conversation
-    const allMessages = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: 'asc' },
       include: {
         sender: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          select: { id: true, name: true, email: true },
         },
       },
     });
 
     return createdResponse(
       res,
-      allMessages,
+      newMessage,
       'Message sent successfully',
       SUCCESS_CODES.SUCCESS
     );
