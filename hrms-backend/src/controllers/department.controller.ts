@@ -7,6 +7,7 @@ import {
   errorResponse,
 } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { cachedQuery, invalidateCache } from '../lib/cache';
 
 
 const findDepartmentByName = async (name: string, excludeId?: string) => {
@@ -36,11 +37,10 @@ export const createDepartment = async (req: Request, res: Response) => {
   }
 
   const department = await prisma.department.create({
-    data: {
-      name: name.trim(),
-      description,
-    },
+    data: { name: name.trim(), description },
   });
+
+  invalidateCache('departments:page=1:limit=10');
 
   return createdResponse(
     res,
@@ -55,15 +55,16 @@ export const getAllDepartments = async (req: Request, res: Response) => {
   const pageNumber = parseInt(page as string, 10);
   const pageSize = parseInt(limit as string, 10);
   const skip = (pageNumber - 1) * pageSize;
+  const cacheKey = `departments:page=${pageNumber}:limit=${pageSize}`;
 
-  const [departments, totalRecords] = await Promise.all([
-    prisma.department.findMany({
-      skip,
-      take: pageSize,
-      orderBy: { name: 'asc' },
-    }),
-    prisma.department.count(),
-  ]);
+  const result = await cachedQuery(cacheKey, () =>
+    Promise.all([
+      prisma.department.findMany({ skip, take: pageSize, orderBy: { name: 'asc' } }),
+      prisma.department.count(),
+    ])
+  );
+
+  const [departments, totalRecords] = result as [any[], number];
 
   return successResponse(
     res,
@@ -133,6 +134,8 @@ export const updateDepartment = async (req: Request, res: Response) => {
     data: { name: name.trim(), description },
   });
 
+  invalidateCache('departments:page=1:limit=10');
+
   return successResponse(
     res,
     department,
@@ -148,9 +151,9 @@ export const deleteDepartment = async (req: Request, res: Response) => {
     throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
   }
 
-  await prisma.department.delete({
-    where: { id },
-  });
+  await prisma.department.delete({ where: { id } });
+
+  invalidateCache('departments:page=1:limit=10');
 
   return successResponse(
     res,

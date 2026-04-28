@@ -3,6 +3,7 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse, createdResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { cachedQuery, invalidateCache } from '../lib/cache';
 
 
 const findDesignationByName = async (name: string, excludeId?: string) => {
@@ -32,12 +33,10 @@ export const createDesignation = async (req: Request, res: Response) => {
   }
 
   const designation = await prisma.designation.create({
-    data: {
-      name: name.trim(),
-      description,
-      classification,
-    },
+    data: { name: name.trim(), description, classification },
   });
+
+  invalidateCache('designations:page=1:limit=10');
 
   return createdResponse(
     res,
@@ -52,15 +51,16 @@ export const getAllDesignations = async (req: Request, res: Response) => {
   const pageNumber = parseInt(page as string, 10);
   const pageSize = parseInt(limit as string, 10);
   const skip = (pageNumber - 1) * pageSize;
+  const cacheKey = `designations:page=${pageNumber}:limit=${pageSize}`;
 
-  const [designations, totalRecords] = await Promise.all([
-    prisma.designation.findMany({
-      skip,
-      take: pageSize,
-      orderBy: { name: 'asc' },
-    }),
-    prisma.designation.count(),
-  ]);
+  const result = await cachedQuery(cacheKey, () =>
+    Promise.all([
+      prisma.designation.findMany({ skip, take: pageSize, orderBy: { name: 'asc' } }),
+      prisma.designation.count(),
+    ])
+  );
+
+  const [designations, totalRecords] = result as [any[], number];
 
   return successResponse(
     res,
@@ -123,6 +123,8 @@ export const updateDesignation = async (req: Request, res: Response) => {
     data: { name: name.trim(), description, classification },
   });
 
+  invalidateCache('designations:page=1:limit=10');
+
   return successResponse(
     res,
     designation,
@@ -138,9 +140,9 @@ export const deleteDesignation = async (req: Request, res: Response) => {
     throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
   }
 
-  await prisma.designation.delete({
-    where: { id },
-  });
+  await prisma.designation.delete({ where: { id } });
+
+  invalidateCache('designations:page=1:limit=10');
 
   return successResponse(
     res,

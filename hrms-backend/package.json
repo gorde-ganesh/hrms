@@ -25,6 +25,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.4.1",
     "jsonwebtoken": "^9.0.2",
+    "lru-cache": "^11.3.5",
     "multer": "^2.0.2",
     "nodemailer": "^8.0.7",
     "nodemon": "^3.1.10",
