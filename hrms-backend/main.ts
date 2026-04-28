@@ -8,6 +8,8 @@ import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './src/middlewares/error-handler.middleware';
 import { Server as SocketIOServer } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { Redis } from 'ioredis';
 import { logger } from './src/utils/logger';
 const swaggerDocument = require('./src/docs/swagger.json');
 
@@ -43,7 +45,34 @@ const io = new SocketIOServer(server, {
   cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'], credentials: true },
 });
 
-// Track online users and their rooms
+// Wire Redis adapter if REDIS_URL is configured
+if (process.env.REDIS_URL) {
+  try {
+    const pubClient = new Redis(process.env.REDIS_URL);
+    const subClient = pubClient.duplicate();
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info('✅ Socket.IO Redis adapter connected');
+
+    // Track online users in Redis instead of process memory
+    const registerUser = async (userId: string, socketId: string) => {
+      await pubClient.hset('online_users', userId, socketId);
+    };
+    const unregisterUser = async (userId: string) => {
+      await pubClient.hdel('online_users', userId);
+    };
+    const getSocketId = async (userId: string): Promise<string | null> => {
+      return pubClient.hget('online_users', userId);
+    };
+
+    // Expose helpers for use in socket handlers
+    (global as any).__redisOnlineUsers = { registerUser, unregisterUser, getSocketId };
+    logger.info('✅ Online user state backed by Redis');
+  } catch (err) {
+    logger.error('❌ Redis connection failed, falling back to in-memory:', err);
+  }
+}
+
+// Track online users and their rooms (in-memory fallback)
 const onlineUsers: Record<string, string> = {};
 const userRooms: Record<string, Set<string>> = {}; // userId -> Set of conversationIds
 
