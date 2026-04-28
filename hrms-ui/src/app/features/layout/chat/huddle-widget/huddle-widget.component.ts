@@ -50,7 +50,7 @@ export class HuddleWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
-    this.currentUserId = this.authState.userInfo?.id || '';
+    this.currentUserId = String(this.authState.userInfo?.id ?? '');
 
     this.subscriptions.push(
       this.huddleService.activeHuddle$.subscribe((huddle) => {

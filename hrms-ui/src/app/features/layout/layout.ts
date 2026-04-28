@@ -124,7 +124,7 @@ export class Layout implements OnInit {
     private spinnerService: SpinnerService,
     private authState: AuthStateService
   ) {
-    this.userInfo = this.authState.userInfo;
+    this.userInfo = this.authState.userInfo as any;
     this.changePasswordForm = this.fb.group(
       {
         oldPassword: ['', [Validators.required]],

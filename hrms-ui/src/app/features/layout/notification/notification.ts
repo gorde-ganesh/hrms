@@ -20,8 +20,8 @@ export class Notification {
 
   ngOnInit(): void {
     const userInfo = this.authState.userInfo;
-    this.notificationService.connect(userInfo?.employeeId);
-    this.notificationService.fetchNotifications(userInfo?.employeeId);
+    this.notificationService.connect(String(userInfo?.employeeId ?? ''));
+    this.notificationService.fetchNotifications(String(userInfo?.employeeId ?? ''));
 
     this.notificationService.notifications$.subscribe((data) => {
       this.notifications = data;
