@@ -7,6 +7,8 @@ import {
   updateDesignation,
 } from '../controllers/designation.controller';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate';
+import { CreateDesignationSchema, UpdateDesignationSchema } from '../schemas/designation.schema';
 import { Role } from '../../generated/prisma/client';
 
 function registerRouters(app: express.Application) {
@@ -14,6 +16,7 @@ function registerRouters(app: express.Application) {
     '/api/designations',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
+    validate(CreateDesignationSchema),
     createDesignation
   );
   app.get(
@@ -32,6 +35,7 @@ function registerRouters(app: express.Application) {
     '/api/designations/:id',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
+    validate(UpdateDesignationSchema),
     updateDesignation
   );
   app.delete(

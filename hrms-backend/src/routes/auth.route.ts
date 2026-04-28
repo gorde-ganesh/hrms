@@ -10,6 +10,8 @@ import {
   refreshAccessToken,
 } from '../controllers/auth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate';
+import { LoginSchema, ForgotPasswordSchema, ChangePasswordSchema } from '../schemas/auth.schema';
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -30,12 +32,12 @@ const globalLimiter = rateLimit({
 function registerRouters(app: express.Application) {
   app.use('/api', globalLimiter);
   app.post('/api/auth/register', authLimiter, registerUser);
-  app.post('/api/auth/login', authLimiter, loginUser);
+  app.post('/api/auth/login', authLimiter, validate(LoginSchema), loginUser);
   app.post('/api/auth/refresh', refreshAccessToken);
   app.post('/api/auth/logout', authenticate, logoutUser);
   app.get('/api/auth/me', authenticate, getCurrentUser);
-  app.post('/api/auth/forgot-password', authLimiter, forgotPassword);
-  app.post('/api/auth/change-password', authenticate, changePassword);
+  app.post('/api/auth/forgot-password', authLimiter, validate(ForgotPasswordSchema), forgotPassword);
+  app.post('/api/auth/change-password', authenticate, validate(ChangePasswordSchema), changePassword);
 }
 
 export default registerRouters;
