@@ -12,10 +12,10 @@ const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function setAuthCookies(res: Response, accessToken: string, rawRefreshToken: string) {
   res.cookie('authToken', accessToken, {
-    httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60 * 60 * 1000,
+    httpOnly: true, secure: true, sameSite: 'none', maxAge: 60 * 60 * 1000,
   });
   res.cookie('refreshToken', rawRefreshToken, {
-    httpOnly: true, secure: true, sameSite: 'strict',
+    httpOnly: true, secure: true, sameSite: 'none',
     maxAge: REFRESH_TOKEN_TTL_MS, path: '/api/auth/refresh',
   });
 }
@@ -329,8 +329,8 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
 export const logoutUser = async (req: Request, res: Response) => {
   if (req.user?.id) await authService.logout(req.user.id);
-  res.clearCookie('authToken', { httpOnly: true, secure: true, sameSite: 'strict' });
-  res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'strict', path: '/api/auth/refresh' });
+  res.clearCookie('authToken', { httpOnly: true, secure: true, sameSite: 'none' });
+  res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'none', path: '/api/auth/refresh' });
   return successResponse(res, null, 'Logged out successfully', SUCCESS_CODES.USER_LOGGED_IN, 200);
 };
 
