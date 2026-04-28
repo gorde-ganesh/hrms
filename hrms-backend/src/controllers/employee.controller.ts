@@ -23,6 +23,11 @@ export const deleteEmployee = async (req: Request, res: Response) => {
   return noContentResponse(res, 'Employee deleted successfully', SUCCESS_CODES.EMPLOYEE_DELETED);
 };
 
+export const restoreEmployee = async (req: Request, res: Response) => {
+  const result = await employeeService.restore(req.params.id);
+  return successResponse(res, result, 'Employee restored successfully', SUCCESS_CODES.SUCCESS, 200);
+};
+
 export const getEmployee = async (req: Request, res: Response) => {
   const employee = await employeeService.findById(req.params.id);
   return successResponse(res, employee, 'Details fetched', SUCCESS_CODES.EMPLOYEE_FETCHED, 200);

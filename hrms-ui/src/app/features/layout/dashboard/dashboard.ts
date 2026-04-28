@@ -95,9 +95,8 @@ export class Dashboard {
 
   async loadDashboardStats() {
     try {
-      const res: any = await this.serverApi.get('/api/dashboard/stats');
+      const res: any = await this.serverApi.get('/api/dashboard/summary');
       this.dashboardStats = res;
-      console.log('Dashboard Stats:', this.dashboardStats);
     } catch (error) {
       console.error('Failed to load dashboard stats', error);
     }

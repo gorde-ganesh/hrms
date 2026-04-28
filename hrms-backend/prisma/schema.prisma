@@ -107,9 +107,7 @@ model User {
   callsMade            CallLog[]            @relation("Caller")
   callsReceived        CallLog[]            @relation("Receiver")
   conversationsCreated Conversation[]       @relation("CreatedBy")
-  // Optional soft delete fields
-  // isDeleted      Boolean         @default(false)
-  // deletedAt      DateTime?
+  deletedAt            DateTime?
 }
 
 //////////////////////////////////////////
@@ -158,11 +156,12 @@ model RolePermission {
 //////////////////////////////////////////
 
 model Department {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String    @id @default(uuid())
+  name        String    @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   employees Employee[]
 }
@@ -172,12 +171,13 @@ model Department {
 //////////////////////////////////////////
 
 model Designation {
-  id             String   @id @default(uuid())
-  name           String   @unique
+  id             String    @id @default(uuid())
+  name           String    @unique
   description    String?
   classification String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
   employees Employee[]
 }
@@ -220,9 +220,7 @@ model Employee {
   notifications Notification[]
   leaveBalance  LeaveBalance[]
 
-  // Optional soft delete fields
-  // isDeleted              Boolean     @default(false)
-  // deletedAt              DateTime?
+  deletedAt DateTime?
 
   @@index([departmentId])
   @@index([managerId])

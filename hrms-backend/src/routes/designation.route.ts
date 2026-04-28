@@ -5,6 +5,7 @@ import {
   getAllDesignations,
   getDesignationById,
   updateDesignation,
+  restoreDesignation,
 } from '../controllers/designation.controller';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate';
@@ -43,6 +44,12 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
     deleteDesignation
+  );
+  app.put(
+    '/api/designations/:id/restore',
+    authenticate,
+    roleAccess([Role.ADMIN]),
+    restoreDesignation
   );
 }
 

@@ -2,6 +2,7 @@ import { EmployeeStatus, Prisma } from '../../generated/prisma';
 import { prisma } from '../lib/prisma';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES } from '../utils/response-codes';
+import { notDeleted, softDeleteData } from '../utils/soft-delete';
 
 export interface CreateEmployeeDto {
   userId: string;
@@ -110,7 +111,18 @@ export class EmployeeService {
     }
     return prisma.employee.update({
       where: { id },
-      data: { status: EmployeeStatus.INACTIVE },
+      data: { status: EmployeeStatus.INACTIVE, ...softDeleteData() },
+    });
+  }
+
+  async restore(id: string) {
+    const employee = await prisma.employee.findUnique({ where: { id } });
+    if (!employee) {
+      throw new HttpError(404, 'Employee not found', ERROR_CODES.EMPLOYEE_NOT_FOUND);
+    }
+    return prisma.employee.update({
+      where: { id },
+      data: { status: EmployeeStatus.ACTIVE, deletedAt: null },
     });
   }
 
@@ -138,7 +150,7 @@ export class EmployeeService {
     const sortOrder: 'asc' | 'desc' =
       dto.sortOrder?.toLowerCase() === 'asc' ? 'asc' : 'desc';
 
-    const where: Prisma.EmployeeWhereInput = {};
+    const where: Prisma.EmployeeWhereInput = { ...notDeleted };
     if (dto.departmentId) where.departmentId = dto.departmentId;
     if (dto.designationId) where.designationId = dto.designationId;
     if (dto.status) where.status = dto.status;

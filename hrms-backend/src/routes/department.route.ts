@@ -5,6 +5,7 @@ import {
   getDepartmentById,
   updateDepartment,
   deleteDepartment,
+  restoreDepartment,
 } from '../controllers/department.controller';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate';
@@ -43,6 +44,12 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
     deleteDepartment
+  );
+  app.put(
+    '/api/departments/:id/restore',
+    authenticate,
+    roleAccess([Role.ADMIN]),
+    restoreDepartment
   );
 }
 
