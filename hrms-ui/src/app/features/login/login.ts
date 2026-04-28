@@ -20,6 +20,7 @@ import { ValidationService } from '../../services/validation.service';
 import { DividerModule } from 'primeng/divider';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
+import { AuthStateService } from '../../services/auth-state.service';
 
 @Component({
   selector: 'app-login',
@@ -56,7 +57,8 @@ export class Login {
     private fb: FormBuilder,
     private serverApi: ApiService,
     private router: Router,
-    private validationService: ValidationService
+    private validationService: ValidationService,
+    private authState: AuthStateService
   ) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required, Validators.email]],
@@ -114,7 +116,7 @@ export class Login {
         password,
       });
 
-      sessionStorage.setItem('userInfo', JSON.stringify(login.user_details));
+      this.authState.set(login.user_details);
 
       this.messageService.add({
         severity: 'success',

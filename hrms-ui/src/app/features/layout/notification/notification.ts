@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { NotificationService } from '../../../services/notification.service';
+import { AuthStateService } from '../../../services/auth-state.service';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
@@ -15,12 +16,12 @@ export class Notification {
   notifications: any[] = [];
   unreadCount = 0;
   visible: boolean = false;
-  constructor(private notificationService: NotificationService) {}
+  constructor(private notificationService: NotificationService, private authState: AuthStateService) {}
 
   ngOnInit(): void {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
-    this.notificationService.connect(userInfo.employeeId);
-    this.notificationService.fetchNotifications(userInfo.employeeId);
+    const userInfo = this.authState.userInfo;
+    this.notificationService.connect(String(userInfo?.employeeId ?? ''));
+    this.notificationService.fetchNotifications(String(userInfo?.employeeId ?? ''));
 
     this.notificationService.notifications$.subscribe((data) => {
       this.notifications = data;

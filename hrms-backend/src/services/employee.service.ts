@@ -61,7 +61,7 @@ export class EmployeeService {
     return prisma.employee.create({
       data: {
         userId: dto.userId,
-        employeeCode: dto.employeeCode?.trim(),
+        employeeCode: dto.employeeCode?.trim() ?? '',
         departmentId: dto.departmentId,
         designationId: dto.designationId,
         joiningDate: dto.joiningDate ? new Date(dto.joiningDate) : undefined,

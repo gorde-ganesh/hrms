@@ -47,4 +47,14 @@ describe('buildMeta', () => {
     expect(m.limit).toBe(15);
     expect(m.total).toBe(45);
   });
+
+  it('rounds up for non-divisible totals', () => {
+    expect(buildMeta(1, 7, 15).pages).toBe(3);
+  });
+
+  it('returns page 1 when total is 0', () => {
+    const m = buildMeta(1, 20, 0);
+    expect(m.pages).toBe(0);
+    expect(m.total).toBe(0);
+  });
 });

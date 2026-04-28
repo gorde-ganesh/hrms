@@ -41,7 +41,7 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
         prisma.attendance.count({
           where: { attendanceDate: { gte: todayStart(), lt: todayEnd() } },
         }),
-        prisma.payroll.count({ where: { status: 'PENDING' } }),
+        prisma.payroll.count(),
       ]);
 
     stats = { totalEmployees, pendingLeaves, todayAttendance, pendingPayrolls };

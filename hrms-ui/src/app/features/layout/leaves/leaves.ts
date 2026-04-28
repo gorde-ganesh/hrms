@@ -18,6 +18,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
 import { ApiService } from '../../../services/api-interface.service';
+import { AuthStateService } from '../../../services/auth-state.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -70,8 +71,7 @@ export class Leaves implements OnInit {
   statuses = [];
   clonedLeaves: { [s: string]: any } = {};
   minDate = new Date();
-  permissions = JSON.parse(sessionStorage.getItem('userInfo') as string)
-    .permissions['leaves'];
+  permissions: any;
   leaveBalances: any[] = [];
   leaveTypes: any[] = [];
   leaveBalanceSummary: any = {};
@@ -93,8 +93,10 @@ export class Leaves implements OnInit {
     private cdr: ChangeDetectorRef,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authState: AuthStateService
   ) {
+    this.permissions = this.authState.userInfo?.permissions?.['leaves'];
     this.applyLeaveForm = fb.group({
       date: ['', [Validators.required]],
       reason: ['', [Validators.required]],
@@ -112,9 +114,9 @@ export class Leaves implements OnInit {
   }
 
   async loadLeaveBalances() {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    const userInfo = this.authState.userInfo;
     const balances: any = await this.serverApi.get(
-      `/api/leave-balance/${userInfo.employeeId}`
+      `/api/leave-balance/${userInfo?.employeeId}`
     );
     this.leaveBalances = balances;
 
@@ -135,10 +137,10 @@ export class Leaves implements OnInit {
   }
 
   async loadLeaves(payload = this.apiParams) {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    const userInfo = this.authState.userInfo;
     let leave: any;
     leave = await this.serverApi.get(
-      `/api/leaves/${userInfo.employeeId}`,
+      `/api/leaves/${userInfo?.employeeId}`,
       payload
     );
     this.leaves = leave.content;
@@ -183,11 +185,11 @@ export class Leaves implements OnInit {
   }
 
   async loadTeamLeaves(payload = this.apiParams) {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    const userInfo = this.authState.userInfo;
     let leave: any;
 
     leave = await this.serverApi.get(
-      `/api/leaves/${userInfo.employeeId}/team`,
+      `/api/leaves/${userInfo?.employeeId}/team`,
       payload
     );
     this.teamLeaves = leave.content;
@@ -208,7 +210,7 @@ export class Leaves implements OnInit {
   async onAddLeave() {
     this.applyLeaveForm.markAllAsTouched();
     if (!this.applyLeaveForm.valid) return;
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    const userInfo = this.authState.userInfo;
     const { date, reason, leaveType } = this.applyLeaveForm.value;
 
     // Client-side validation for balance
@@ -234,9 +236,9 @@ export class Leaves implements OnInit {
       return;
     }
 
-    const user: any = await this.serverApi.get(`/api/users/${userInfo.id}`);
+    const user: any = await this.serverApi.get(`/api/users/${userInfo?.id}`);
     const leave = await this.serverApi.post('/api/leaves', {
-      employeeId: userInfo.employeeId,
+      employeeId: userInfo?.employeeId,
       startDate: date[0],
       endDate: date[1],
       reason,
@@ -290,10 +292,10 @@ export class Leaves implements OnInit {
   }
 
   async onRowEditSave(leave: any) {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    const userInfo = this.authState.userInfo;
     const updateLeave = await this.serverApi.patch(
       `/api/leaves/${leave.id}/status`,
-      { status: leave.status, approvedBy: userInfo.id }
+      { status: leave.status, approvedBy: userInfo?.id }
     );
 
     this.loadLeaves();

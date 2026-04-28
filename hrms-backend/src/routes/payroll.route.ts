@@ -6,6 +6,8 @@ import {
   getPayroll,
 } from '../controllers/payroll.controller';
 import { getAllPayrollComponents } from '../controllers/payroll-components.controller';
+import { validate } from '../middlewares/validate';
+import { GeneratePayrollSchema } from '../schemas/payroll.schema';
 import { Role } from '../../generated/prisma';
 
 function registerRouters(app: express.Application) {
@@ -19,6 +21,7 @@ function registerRouters(app: express.Application) {
     '/api/payroll',
     authenticate,
     roleAccess([Role.HR, Role.ADMIN]),
+    validate(GeneratePayrollSchema),
     generatePayroll
   );
   app.get(

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ApiService } from '../../../services/api-interface.service';
+import { AuthStateService } from '../../../services/auth-state.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import {
@@ -81,16 +82,18 @@ export class Payroll {
   calculatedComponents: any[] = [];
   monthlySalary: number = 0;
 
-  permissions = JSON.parse(sessionStorage.getItem('userInfo') as string)
-    .permissions['payroll'];
-  userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+  permissions: any;
+  userInfo: any;
 
   constructor(
     private serverApi: ApiService,
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private authState: AuthStateService
   ) {
+    this.userInfo = this.authState.userInfo;
+    this.permissions = this.userInfo?.permissions?.['payroll'];
     this.addComponentForm = fb.group({
       name: ['', Validators.required],
       type: ['', [Validators.required]],
@@ -128,9 +131,9 @@ export class Payroll {
   }
 
   async loadPayrolls() {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    const userInfo = this.authState.userInfo;
     const payroll: any = await this.serverApi.get(
-      `/api/payroll?employeeId=${userInfo.employeeId}`,
+      `/api/payroll?employeeId=${userInfo?.employeeId}`,
       this.apiParams
     );
     this.payrolls = payroll.content.map((p: any) => ({
