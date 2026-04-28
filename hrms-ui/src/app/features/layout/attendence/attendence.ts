@@ -22,6 +22,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { FloatLabel } from 'primeng/floatlabel';
+import { AuthStateService } from '../../../services/auth-state.service';
 
 @Component({
   selector: 'app-attendence',
@@ -112,9 +113,10 @@ export class Attendence implements OnInit {
   constructor(
     private serverApi: ApiService,
     private cdr: ChangeDetectorRef,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private authState: AuthStateService
   ) {
-    this.userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    this.userInfo = this.authState.userInfo;
     this.userRole = this.userInfo?.role || 'EMPLOYEE';
 
     // Set role visibility

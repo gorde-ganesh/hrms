@@ -13,6 +13,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
 import { HuddleService } from '../../../../services/huddle.service';
+import { AuthStateService } from '../../../../services/auth-state.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -44,12 +45,12 @@ export class HuddleWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private huddleService: HuddleService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authState: AuthStateService
   ) {}
 
   ngOnInit() {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
-    this.currentUserId = userInfo?.id || '';
+    this.currentUserId = this.authState.userInfo?.id || '';
 
     this.subscriptions.push(
       this.huddleService.activeHuddle$.subscribe((huddle) => {

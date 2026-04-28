@@ -20,6 +20,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ChatService } from '../../../services/chat.service';
 import { HuddleService } from '../../../services/huddle.service';
 import { CallService } from '../../../services/call.service';
+import { AuthStateService } from '../../../services/auth-state.service';
 
 import { CreateGroupDialogComponent } from './create-group-dialog/create-group-dialog.component';
 import { CreateChannelDialogComponent } from './create-channel-dialog/create-channel-dialog.component';
@@ -76,12 +77,13 @@ export class Chat implements OnInit {
     private chatService: ChatService,
     public huddleService: HuddleService,
     public callService: CallService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authState: AuthStateService
   ) {}
 
   ngOnInit() {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
-    this.currentUser = userInfo;
+    const userInfo = this.authState.userInfo;
+    this.currentUser = userInfo as any;
 
     this.loadUsers();
     this.loadConversations();

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { AuthStateService } from './auth-state.service';
 
 export interface ErrorMessage {
   status: number;
@@ -13,7 +14,7 @@ export interface ErrorMessage {
   providedIn: 'root',
 })
 export class ErrorHandlerService {
-  constructor(private messageService: MessageService, private router: Router) {}
+  constructor(private messageService: MessageService, private router: Router, private authState: AuthStateService) {}
 
   handle(error: HttpErrorResponse): void {
     const status = error.status;
@@ -30,10 +31,7 @@ export class ErrorHandlerService {
 
     if (status === 401) {
       this.show(message);
-      // Clear tokens on unauthorized
-      sessionStorage.removeItem('authToken');
-      sessionStorage.removeItem('userInfo');
-      localStorage.removeItem('authToken');
+      this.authState.clear();
       this.router.navigate(['/login']);
       return;
     }

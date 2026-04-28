@@ -112,3 +112,42 @@ describe('AuthService.changePassword', () => {
     );
   });
 });
+
+describe('AuthService.refresh', () => {
+  it('throws 401 when no user matches the hashed refresh token', async () => {
+    (prisma.user.findFirst as any).mockResolvedValue(null);
+    await expect(svc.refresh('invalid-token')).rejects.toThrow(HttpError);
+  });
+
+  it('issues new access and refresh tokens on valid token', async () => {
+    const mockUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      role: 'EMPLOYEE',
+      roleId: null,
+      userRole: null,
+      name: 'Test',
+    };
+    (prisma.user.findFirst as any).mockResolvedValue(mockUser);
+    (prisma.user.update as any).mockResolvedValue({});
+
+    const result = await svc.refresh('valid-raw-token');
+    expect(result.newAccessToken).toBe('mock-token');
+    expect(result.newRawRefreshToken).toBeTruthy();
+    expect(prisma.user.update).toHaveBeenCalled();
+  });
+
+  it('rotates refresh token — stores a new hash on each refresh', async () => {
+    const mockUser = { id: 'user-1', email: 'a@b.com', role: 'EMPLOYEE', roleId: null, userRole: null, name: 'A' };
+    (prisma.user.findFirst as any).mockResolvedValue(mockUser);
+    (prisma.user.update as any).mockResolvedValue({});
+
+    const result1 = await svc.refresh('raw-token-a');
+    vi.clearAllMocks();
+    (prisma.user.findFirst as any).mockResolvedValue(mockUser);
+    (prisma.user.update as any).mockResolvedValue({});
+    const result2 = await svc.refresh('raw-token-b');
+
+    expect(result1.newRawRefreshToken).not.toBe(result2.newRawRefreshToken);
+  });
+});

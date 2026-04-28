@@ -10,6 +10,7 @@ import { Observable, throwError, from } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ErrorHandlerService } from '../services/error-handler.service';
+import { AuthStateService } from '../services/auth-state.service';
 import { environment } from '../../environment/environment';
 
 let isRefreshing = false;
@@ -21,6 +22,7 @@ export const apiInterceptor: HttpInterceptorFn = (
   const errorHandler = inject(ErrorHandlerService);
   const router = inject(Router);
   const http = inject(HttpClient);
+  const authState = inject(AuthStateService);
 
   const modifiedReq = req.clone({ withCredentials: true });
 
@@ -37,7 +39,7 @@ export const apiInterceptor: HttpInterceptorFn = (
           }),
           catchError((refreshError) => {
             isRefreshing = false;
-            sessionStorage.clear();
+            authState.clear();
             router.navigate(['/login']);
             return throwError(() => refreshError);
           })

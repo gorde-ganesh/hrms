@@ -28,6 +28,7 @@ import { ValidationService } from '../../services/validation.service';
 import { ApiService } from '../../services/api-interface.service';
 import { filter, Observable } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { AuthStateService } from '../../services/auth-state.service';
 import { Notification } from './notification/notification';
 import { ToolbarModule } from 'primeng/toolbar';
 
@@ -120,9 +121,10 @@ export class Layout implements OnInit {
     private fb: FormBuilder,
     private validationService: ValidationService,
     private serverApi: ApiService,
-    private spinnerService: SpinnerService
+    private spinnerService: SpinnerService,
+    private authState: AuthStateService
   ) {
-    this.userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    this.userInfo = this.authState.userInfo;
     this.changePasswordForm = this.fb.group(
       {
         oldPassword: ['', [Validators.required]],
@@ -199,7 +201,7 @@ export class Layout implements OnInit {
     try {
       await this.serverApi.post('/api/auth/logout', {}, false);
     } finally {
-      sessionStorage.clear();
+      this.authState.clear();
       this.router.navigate(['/login']);
     }
   }

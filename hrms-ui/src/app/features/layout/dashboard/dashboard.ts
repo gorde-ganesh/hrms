@@ -2,6 +2,7 @@ import { CommonModule, formatDate } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api-interface.service';
+import { AuthStateService } from '../../../services/auth-state.service';
 import { CardModule } from 'primeng/card';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
@@ -79,8 +80,8 @@ export class Dashboard {
 
   dashboardStats: any = {};
 
-  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef) {
-    this.userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService) {
+    this.userInfo = this.authState.userInfo;
     if (this.userInfo && this.userInfo.role) {
       this.userInfo.role = this.userInfo.role.toUpperCase();
     }

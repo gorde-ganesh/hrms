@@ -21,6 +21,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { AuthStateService } from '../../../services/auth-state.service';
 import dayjs from 'dayjs';
 
 @Component({
@@ -104,9 +105,10 @@ export class Performance implements OnInit {
     private apiService: ApiService,
     private fb: FormBuilder,
     private messageService: MessageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authState: AuthStateService
   ) {
-    this.userInfo = JSON.parse(sessionStorage.getItem('userInfo') as string);
+    this.userInfo = this.authState.userInfo;
     this.appraisalForm = this.fb.group({
       employeeId: [null, Validators.required],
       goals: ['', Validators.required],
