@@ -8,6 +8,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -52,6 +53,7 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(
     StepperModule,
     PasswordModule,
     DividerModule,
+    TooltipModule,
   ],
   templateUrl: './employee.html',
   styleUrl: './employee.css',
@@ -76,6 +78,7 @@ export class Employee implements OnInit {
   activeStep: number = 1;
   lastEmployeeCode = '';
   editingEmployeeId: string | null = null;
+  editNameControl = new FormControl('', [Validators.required]);
   bloodGroupOptions = BLOOD_GROUPS;
 
   employeeSummary: any = {
@@ -147,7 +150,6 @@ export class Employee implements OnInit {
   }
 
   async ngOnInit() {
-    this.loadEmployees();
     this.loadEmployeeSummary();
     const data: any = await this.serverApi.get('/api/master-data');
     this.options = data;
@@ -184,8 +186,17 @@ export class Employee implements OnInit {
     this.cdr.detectChanges();
   }
 
+  onLazyLoad(event: any) {
+    this.loadEmployees({ pageno: event.first, top: event.rows });
+  }
+
   pageChange(event: any) {
     this.loadEmployees({ pageno: event.first, top: event.rows });
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '?';
+    return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
   }
 
   applyFilter() {
@@ -275,7 +286,15 @@ export class Employee implements OnInit {
       salary: employeeDetails.salary,
     });
 
+    this.editNameControl.setValue(employee.user.name);
     this.editEmployeeDialog = true;
+  }
+
+  onEditDialogHide() {
+    this.editNameControl.reset();
+    this.addEmployeeForm.reset();
+    this.addEmployeeForm.get('employeeCode')?.enable();
+    this.editingEmployeeId = null;
   }
 
   async onAddEmploeeDialog() {
@@ -318,15 +337,13 @@ export class Employee implements OnInit {
 
   async onEditEmployee() {
     this.addEmployeeForm.markAllAsTouched();
-    if (!this.addEmployeeForm.valid) return;
+    this.editNameControl.markAsTouched();
+    if (!this.addEmployeeForm.valid || !this.editNameControl.valid) return;
     if (!this.editingEmployeeId) return;
 
-    const payload = this.addEmployeeForm.getRawValue();
+    const payload = { ...this.addEmployeeForm.getRawValue(), name: this.editNameControl.value };
     await this.serverApi.put(`/api/employees/${this.editingEmployeeId}`, payload);
-    this.addEmployeeForm.reset();
-    this.addEmployeeForm.get('employeeCode')?.enable();
     this.editEmployeeDialog = false;
-    this.editingEmployeeId = null;
     this.messageService.add({
       severity: 'success',
       summary: 'Changes saved',

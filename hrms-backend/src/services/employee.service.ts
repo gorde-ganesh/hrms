@@ -20,7 +20,9 @@ export interface CreateEmployeeDto {
   emergencyContactNumber?: string;
 }
 
-export interface UpdateEmployeeDto extends Partial<Omit<CreateEmployeeDto, 'userId'>> {}
+export interface UpdateEmployeeDto extends Partial<Omit<CreateEmployeeDto, 'userId'>> {
+  name?: string;
+}
 
 export interface ListEmployeesDto {
   pageno?: number;
@@ -88,6 +90,7 @@ export class EmployeeService {
     return prisma.employee.update({
       where: { id },
       data: {
+        ...(dto.name ? { user: { update: { name: dto.name } } } : {}),
         employeeCode: dto.employeeCode?.trim(),
         departmentId: dto.departmentId,
         designationId: dto.designationId,
@@ -181,10 +184,11 @@ export class EmployeeService {
   async getSummary() {
     const [totalEmployees, activeEmployees, newEmployees, totalDepartments] =
       await Promise.all([
-        prisma.employee.count(),
-        prisma.employee.count({ where: { status: EmployeeStatus.ACTIVE } }),
+        prisma.employee.count({ where: { ...notDeleted } }),
+        prisma.employee.count({ where: { ...notDeleted, status: EmployeeStatus.ACTIVE } }),
         prisma.employee.count({
           where: {
+            ...notDeleted,
             joiningDate: {
               gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
             },
