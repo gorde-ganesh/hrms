@@ -7,7 +7,6 @@ import { AvatarModule } from 'primeng/avatar';
 import { InputTextModule } from 'primeng/inputtext';
 import { CommonModule } from '@angular/common';
 import { Ripple } from 'primeng/ripple';
-import { PanelMenuModule } from 'primeng/panelmenu';
 import { DividerModule } from 'primeng/divider';
 import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
@@ -30,7 +29,6 @@ import { filter, Observable } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { AuthStateService } from '../../services/auth-state.service';
 import { Notification } from './notification/notification';
-import { ToolbarModule } from 'primeng/toolbar';
 
 @Component({
   selector: 'app-layout',
@@ -38,7 +36,6 @@ import { ToolbarModule } from 'primeng/toolbar';
     CommonModule,
     ReactiveFormsModule,
     RouterOutlet,
-    PanelMenuModule,
     BadgeModule,
     AvatarModule,
     InputTextModule,
@@ -55,7 +52,6 @@ import { ToolbarModule } from 'primeng/toolbar';
     FloatLabel,
     PasswordModule,
     Notification,
-    ToolbarModule,
   ],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
