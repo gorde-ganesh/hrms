@@ -23,11 +23,14 @@ import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { FormErrorDirective } from '../../../directives/form-error.directive';
 import { StepperModule } from 'primeng/stepper';
 import { ValidationService } from '../../../services/validation.service';
 import { PasswordModule } from 'primeng/password';
 import { DividerModule } from 'primeng/divider';
+
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(
+  (g) => ({ label: g, value: g })
+);
 
 @Component({
   selector: 'app-employee',
@@ -63,6 +66,8 @@ export class Employee implements OnInit {
   addEmployeeDialog = false;
   generatePayrollDialog = false;
   editEmployeeDialog = false;
+  viewEmployeeDialog = false;
+  viewEmployeeDetails: any = null;
   addEmployeeForm!: FormGroup;
   registerUserForm!: FormGroup;
   filterForm!: FormGroup;
@@ -71,6 +76,15 @@ export class Employee implements OnInit {
   activeStep: number = 1;
   lastEmployeeCode = '';
   editingEmployeeId: string | null = null;
+  bloodGroupOptions = BLOOD_GROUPS;
+
+  employeeSummary: any = {
+    totalEmployees: 0,
+    activeEmployees: 0,
+    newEmployees: 0,
+    totalDepartments: 0,
+  };
+
   constructor(
     private fb: FormBuilder,
     private serverApi: ApiService,
@@ -82,10 +96,7 @@ export class Employee implements OnInit {
     this.registerUserForm = fb.group({
       name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      password: [
-        '',
-        [Validators.required, validationService.passwordValidator],
-      ],
+      password: ['', [Validators.required, validationService.passwordValidator]],
       phone: ['', [Validators.required]],
       address: ['', [Validators.required]],
       country: [''],
@@ -108,54 +119,38 @@ export class Employee implements OnInit {
       joiningDate: ['', [Validators.required]],
       salary: ['', [Validators.required]],
       managerId: ['', [Validators.required]],
-      dob: [''],
-      personalEmail: ['', [Validators.email]],
-      bloodGroup: [''],
-      emergencyContactPerson: [''],
-      emergencyContactNumber: [''],
+      dob: ['', [Validators.required]],
+      personalEmail: ['', [Validators.required, Validators.email]],
+      bloodGroup: ['', [Validators.required]],
+      emergencyContactPerson: ['', [Validators.required]],
+      emergencyContactNumber: ['', [Validators.required]],
     });
     this.addEmployeeForm.get('managerId')?.disable();
-    this.addEmployeeForm
-      .get('managerId')
-      ?.removeValidators([Validators.required]);
+    this.addEmployeeForm.get('managerId')?.removeValidators([Validators.required]);
 
     this.payrollForm = fb.group({
       date: ['', [Validators.required]],
       components: this.fb.array([]),
     });
 
-    this.registerUserForm.valueChanges
-      .pipe(debounceTime(600))
-      .subscribe((value) => {
-        if (value && value.role === 'EMPLOYEE') {
-          this.addEmployeeForm
-            .get('managerId')
-            ?.setValidators([Validators.required]);
-          this.addEmployeeForm.get('managerId')?.enable();
-          this.addEmployeeForm.get('managerId')?.updateValueAndValidity();
-        } else {
-          this.addEmployeeForm
-            .get('managerId')
-            ?.removeValidators([Validators.required]);
-          this.addEmployeeForm.get('managerId')?.disable();
-
-          this.addEmployeeForm.get('managerId')?.updateValueAndValidity();
-        }
-      });
+    this.registerUserForm.valueChanges.pipe(debounceTime(600)).subscribe((value) => {
+      if (value && value.role === 'EMPLOYEE') {
+        this.addEmployeeForm.get('managerId')?.setValidators([Validators.required]);
+        this.addEmployeeForm.get('managerId')?.enable();
+        this.addEmployeeForm.get('managerId')?.updateValueAndValidity();
+      } else {
+        this.addEmployeeForm.get('managerId')?.removeValidators([Validators.required]);
+        this.addEmployeeForm.get('managerId')?.disable();
+        this.addEmployeeForm.get('managerId')?.updateValueAndValidity();
+      }
+    });
   }
-
-  employeeSummary: any = {
-    totalEmployees: 0,
-    activeEmployees: 0,
-    newEmployees: 0,
-    totalDepartments: 0,
-  };
 
   async ngOnInit() {
     this.loadEmployees();
     this.loadEmployeeSummary();
-    const deparment: any = await this.serverApi.get('/api/master-data');
-    this.options = deparment;
+    const data: any = await this.serverApi.get('/api/master-data');
+    this.options = data;
 
     this.searchControl.valueChanges
       .pipe(debounceTime(400), distinctUntilChanged())
@@ -172,16 +167,11 @@ export class Employee implements OnInit {
   async loadEmployeeSummary() {
     const summary: any = await this.serverApi.get('/api/employees/summary');
     this.employeeSummary = summary;
-
     this.cdr.detectChanges();
   }
 
   private buildRequestParams(extra: any = {}) {
-    return {
-      ...this.apiParams,
-      ...this.filterParams,
-      ...extra,
-    };
+    return { ...this.apiParams, ...this.filterParams, ...extra };
   }
 
   async loadEmployees(extraParams: any = {}) {
@@ -217,9 +207,6 @@ export class Employee implements OnInit {
     this.loadEmployees({ pageno: 0 });
   }
 
-  viewEmployeeDialog = false;
-  viewEmployeeDetails: any = null;
-
   onView(employee: any) {
     this.viewEmployeeDetails = employee;
     this.viewEmployeeDialog = true;
@@ -228,7 +215,7 @@ export class Employee implements OnInit {
   async onDelete(event: Event, employee: any) {
     this.confirmationService.confirm({
       target: event.currentTarget as EventTarget,
-      message: 'Are you sure you want to proceed?',
+      message: `Remove ${employee.user.name} from the system? This cannot be undone.`,
       icon: 'pi pi-exclamation-triangle',
       rejectButtonProps: {
         label: 'Cancel',
@@ -236,24 +223,22 @@ export class Employee implements OnInit {
         outlined: true,
       },
       acceptButtonProps: {
-        label: 'Save',
+        label: 'Delete',
+        severity: 'danger',
       },
       accept: async () => {
-        //delete
         const deletedEmployee: any = await this.serverApi.delete(
           `/api/employees/${employee.id}`
         );
         this.messageService.add({
           severity: 'info',
-          summary: 'Confirmed',
+          summary: 'Removed',
           detail: deletedEmployee.message,
           life: 3000,
         });
         this.loadEmployees();
       },
-      reject: () => {
-        // nothing
-      },
+      reject: () => {},
     });
   }
 
@@ -264,19 +249,13 @@ export class Employee implements OnInit {
     this.editingEmployeeId = employee.id;
 
     const role = employee.user.role;
-    console.log(employee);
     if (role && role === 'EMPLOYEE') {
-      this.addEmployeeForm
-        .get('managerId')
-        ?.setValidators([Validators.required]);
+      this.addEmployeeForm.get('managerId')?.setValidators([Validators.required]);
       this.addEmployeeForm.get('managerId')?.enable();
       this.addEmployeeForm.get('managerId')?.updateValueAndValidity();
     } else {
-      this.addEmployeeForm
-        .get('managerId')
-        ?.removeValidators([Validators.required]);
+      this.addEmployeeForm.get('managerId')?.removeValidators([Validators.required]);
       this.addEmployeeForm.get('managerId')?.disable();
-
       this.addEmployeeForm.get('managerId')?.updateValueAndValidity();
     }
 
@@ -306,6 +285,13 @@ export class Employee implements OnInit {
     );
   }
 
+  onAddDialogHide() {
+    this.registerUserForm.reset();
+    this.addEmployeeForm.reset();
+    this.addEmployeeForm.get('employeeCode')?.enable();
+    this.activeStep = 1;
+  }
+
   async onRegisterUser() {
     this.registerUserForm.markAllAsTouched();
     if (!this.registerUserForm.valid) return;
@@ -320,18 +306,14 @@ export class Employee implements OnInit {
       ...this.registerUserForm.value,
       ...this.addEmployeeForm.value,
     });
-    this.registerUserForm.reset();
-    this.addEmployeeForm.reset();
-    this.addEmployeeForm.get('employeeCode')?.enable();
     this.addEmployeeDialog = false;
-    this.activeStep = 1;
     this.messageService.add({
       severity: 'success',
-      summary: 'Employee created',
-      detail: 'Employee registered successfully',
+      summary: 'Employee added',
+      detail: 'Account created and onboarding complete.',
     });
-
     this.loadEmployees();
+    this.loadEmployeeSummary();
   }
 
   async onEditEmployee() {
@@ -340,20 +322,16 @@ export class Employee implements OnInit {
     if (!this.editingEmployeeId) return;
 
     const payload = this.addEmployeeForm.getRawValue();
-    await this.serverApi.put(
-      `/api/employees/${this.editingEmployeeId}`,
-      payload
-    );
+    await this.serverApi.put(`/api/employees/${this.editingEmployeeId}`, payload);
     this.addEmployeeForm.reset();
     this.addEmployeeForm.get('employeeCode')?.enable();
     this.editEmployeeDialog = false;
     this.editingEmployeeId = null;
     this.messageService.add({
       severity: 'success',
-      summary: 'Employee updated',
-      detail: 'Employee details saved successfully',
+      summary: 'Changes saved',
+      detail: 'Employee record updated.',
     });
-
     this.loadEmployees();
   }
 
@@ -364,12 +342,12 @@ export class Employee implements OnInit {
   payrollComponents: any[] = [];
   selectedEmployee: number | undefined;
   netSalary: number | null = null;
+
   async onGeneratePayroll(employee: any) {
     const employeeId = employee.id;
     const components: any = await this.serverApi.get(
       `/api/payroll/components/${employeeId}`
     );
-
     this.selectedEmployee = employeeId;
     this.payrollComponents = components;
     this.components.clear();
@@ -407,9 +385,7 @@ export class Employee implements OnInit {
       year: date ? new Date(date).getFullYear() : null,
       components,
     });
-
     this.netSalary = salary.netSalary;
-
     this.payrollForm.reset();
     this.generatePayrollDialog = false;
   }
