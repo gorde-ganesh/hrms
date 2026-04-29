@@ -140,7 +140,8 @@ export class Dashboard {
       datasets: [
         {
           label: 'Hours Worked',
-          backgroundColor: '#3B82F6',
+          backgroundColor: '#f97316',
+          borderRadius: 4,
           data: hours,
         },
       ],
@@ -226,9 +227,28 @@ export class Dashboard {
     this.chartOptions = {
       plugins: {
         legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          titleColor: '#111827',
+          bodyColor: '#6b7280',
+          borderColor: '#e5e7eb',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 6,
+        },
       },
       scales: {
-        y: { beginAtZero: true },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f3f4f6' },
+          border: { display: false },
+          ticks: { color: '#9ca3af', font: { size: 11 } },
+        },
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: '#9ca3af', font: { size: 11 } },
+        },
       },
     };
     console.log(this.attendanceData, 'chartdata');

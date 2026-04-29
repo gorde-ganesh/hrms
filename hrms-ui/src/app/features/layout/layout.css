@@ -1,104 +1,106 @@
-.pi {
-  font-size: 1.3rem;
+/* Layout shell */
+.layout-shell {
+  background-color: var(--p-surface-50);
 }
 
-:host::ng-deep.p-panelmenu-panel {
-  border: none;
-  background-color: inherit;
+/* Sidebar */
+.sidebar {
+  background-color: var(--p-surface-0);
+  border-right: 1px solid var(--p-surface-200);
 }
 
-/* ===== Sidebar Enhancements ===== */
-.sidebar-container {
-  background: linear-gradient(
-    180deg,
-    var(--p-surface-50) 0%,
-    var(--p-surface-100) 100%
-  );
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Brand bar — same height as topbar for visual alignment */
+.brand-bar {
+  height: 56px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--p-surface-200);
 }
 
-/* Menu Item Styles */
-.menu-item {
-  position: relative;
-  overflow: hidden;
+.brand-mark {
+  background-color: var(--p-primary-500);
 }
 
-.menu-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 3px;
-  background: var(--p-primary-500);
-  transform: scaleY(0);
-  transition: transform 0.2s ease;
+.brand-name {
+  color: var(--p-text-color);
+  letter-spacing: -0.01em;
 }
 
-.menu-item.active::before {
-  transform: scaleY(1);
+/* Nav items */
+.nav-link {
+  color: var(--p-text-muted-color);
+  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
-.menu-item:hover {
-  background: var(--p-surface-100);
+.nav-link:hover {
+  background-color: var(--p-surface-100);
+  color: var(--p-text-color);
 }
 
-/* User Profile Section */
-.user-profile-section {
-  background: linear-gradient(
-    135deg,
-    var(--p-surface-0) 0%,
-    var(--p-surface-50) 100%
-  );
-  border-radius: 12px;
-  padding: 16px;
-  transition: all 0.3s ease;
+.nav-link-active {
+  background-color: var(--p-primary-50);
+  color: var(--p-primary-700);
 }
 
-.user-profile-section:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+.nav-icon {
+  font-size: 0.875rem;
+  width: 1rem;
+  text-align: center;
 }
 
-/* Avatar Styles */
+/* User bar */
+.user-bar {
+  border-top: 1px solid var(--p-surface-200);
+  flex-shrink: 0;
+}
+
 .user-avatar {
-  position: relative;
-  display: inline-block;
+  background-color: var(--p-primary-500);
 }
 
-.user-avatar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background: #10b981;
-  border: 2px solid white;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.user-name {
+  color: var(--p-text-color);
 }
 
-/* Toolbar Enhancements */
-.modern-toolbar {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.user-role {
+  color: var(--p-text-muted-color);
 }
 
-/* Content Area */
-.content-area {
-  animation: fadeIn 0.3s ease-out;
+.sign-out-btn {
+  color: var(--p-text-muted-color);
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+  cursor: pointer;
+  background: transparent;
+  border: none;
 }
 
-/* Card Icons */
-.card-icons {
-  font-size: 2rem;
-  opacity: 0.8;
-  transition: all 0.3s ease;
+.sign-out-btn:hover {
+  background-color: var(--p-surface-100);
+  color: var(--p-text-color);
 }
 
-.card-icons:hover {
-  opacity: 1;
-  transform: scale(1.1);
+/* Main column */
+.main-column {
+  background-color: var(--p-surface-50);
+}
+
+/* Topbar */
+.topbar {
+  height: 56px;
+  flex-shrink: 0;
+  background-color: var(--p-surface-0);
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.avatar-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--p-surface-200);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Content */
+.main-content {
+  padding: 1.5rem;
 }
