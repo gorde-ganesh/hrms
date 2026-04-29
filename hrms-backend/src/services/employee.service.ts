@@ -87,10 +87,13 @@ export class EmployeeService {
 
     await this.ensureUniqueCode(dto.employeeCode, id);
 
+    if (dto.name) {
+      await prisma.user.update({ where: { id: employee.userId }, data: { name: dto.name } });
+    }
+
     return prisma.employee.update({
       where: { id },
       data: {
-        ...(dto.name ? { user: { update: { name: dto.name } } } : {}),
         employeeCode: dto.employeeCode?.trim(),
         departmentId: dto.departmentId,
         designationId: dto.designationId,
