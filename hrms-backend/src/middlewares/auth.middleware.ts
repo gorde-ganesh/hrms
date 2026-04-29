@@ -2,15 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { ApiResponse } from '../model/response.model';
 import { ERROR_CODES } from '../utils/response-codes';
-import { successResponse } from '../utils/response-helper';
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any;
-    }
-  }
-}
+import { errorResponse } from '../utils/response-helper';
 
 const JWT_SECRET = process.env.JWT_KEY;
 if (!JWT_SECRET) {
@@ -30,9 +22,8 @@ export const authenticate = async (
     const token = cookieToken || bearerToken;
 
     if (!token) {
-      return successResponse(
+      return errorResponse(
         res,
-        null,
         'Authorization token missing',
         ERROR_CODES.UNAUTHORIZED,
         401
@@ -46,9 +37,8 @@ export const authenticate = async (
     req.user = decoded;
     next();
   } catch (err) {
-    return successResponse(
+    return errorResponse(
       res,
-      null,
       'Invalid or expired token',
       ERROR_CODES.UNAUTHORIZED,
       401
@@ -61,9 +51,8 @@ export const roleAccess = (allowedRoles: string[]) => {
     const user = req.user;
 
     if (!user) {
-      return successResponse(
+      return errorResponse(
         res,
-        null,
         'Unauthorized: User not logged in',
         ERROR_CODES.UNAUTHORIZED,
         401
@@ -71,9 +60,8 @@ export const roleAccess = (allowedRoles: string[]) => {
     }
 
     if (!allowedRoles.includes(user.role)) {
-      return successResponse(
+      return errorResponse(
         res,
-        null,
         'Forbidden: Access denied',
         ERROR_CODES.FORBIDDEN,
         403

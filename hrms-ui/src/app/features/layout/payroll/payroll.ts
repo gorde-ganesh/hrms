@@ -187,24 +187,20 @@ export class Payroll {
   }
 
   onComponentDelete(event: any, component: any) {
+    if (!component?.id) return;
     this.confirmationService.confirm({
       target: event.currentTarget as EventTarget,
       message: 'Are you sure you want to proceed?',
       icon: 'pi pi-exclamation-triangle',
-      rejectButtonProps: {
-        label: 'Cancel',
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptButtonProps: {
-        label: 'Save',
-      },
-      accept: () => {
-        this.serverApi.delete(`/api/payroll/components/${component.id}`);
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'Delete', severity: 'danger' },
+      accept: async () => {
+        await this.serverApi.delete(`/api/payroll/components/${component.id}`);
+        this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Component deleted successfully', life: 3000 });
+        this.loadPayrollComponents();
       },
       reject: () => {},
     });
-    if (!component?.id) return;
   }
 
   addNew() {
@@ -366,6 +362,6 @@ export class Payroll {
   }
 
   hasPermission(action: string) {
-    return this.permissions.includes(action);
+    return this.permissions?.includes(action) ?? false;
   }
 }

@@ -166,13 +166,11 @@ export class Layout implements OnInit {
       initials = parts[0].substring(0, 2).toUpperCase();
     }
     this.userDetails = { ...details, initials: initials };
-    console.log(this.userDetails);
   }
 
   buildMenu(permissions: Record<string, string[]>): MenuItem[] {
     const menu: MenuItem[] = [];
     for (const page in permissions) {
-      console.log(page, permissions[page]);
       if (permissions[page].includes('view') && this.pageRouteMap[page]) {
         menu.push(this.pageRouteMap[page]);
       }
