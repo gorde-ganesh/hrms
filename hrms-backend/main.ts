@@ -11,7 +11,10 @@ import { Server as SocketIOServer } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
 import { logger } from './src/utils/logger';
+import rateLimit from 'express-rate-limit';
 const swaggerDocument = require('./src/docs/swagger.json');
+
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { success: false, statusCode: 429, message: 'Too many requests, please try again later.' } });
 
 const port = process.env['API_PORT'] ? Number(process.env['API_PORT']) : 8080;
 
@@ -272,10 +275,18 @@ app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Request Logger Middleware
+const sanitizeBody = (body: any): any => {
+  if (!body || typeof body !== 'object') return body;
+  const SENSITIVE = ['password', 'oldPassword', 'newPassword', 'confirmPassword', 'token', 'refreshToken'];
+  const clean = { ...body };
+  SENSITIVE.forEach((k) => { if (k in clean) clean[k] = '[REDACTED]'; });
+  return clean;
+};
+
 app.use((req: Request, res: Response, next) => {
   logger.info(`${req.method} ${req.url}`, {
     ip: req.ip,
-    body: req.body,
+    body: sanitizeBody(req.body),
     query: req.query,
     params: req.params,
   });
@@ -315,6 +326,9 @@ const MODULES: string[] = [
 
 async function startServer() {
   // ----------------- Start server -----------------
+  app.use('/api/auth/login', authLimiter);
+  app.use('/api/auth/forgot-password', authLimiter);
+
   for (const moduleName of MODULES) {
     try {
       const module = await import(`./src/routes/${moduleName}.route`);

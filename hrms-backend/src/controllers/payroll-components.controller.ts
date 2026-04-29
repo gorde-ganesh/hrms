@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
+import { successResponse, createdResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
 
 
@@ -42,12 +43,7 @@ export const getPayrollComponents = async (req: Request, res: Response) => {
     amount: Number((((ct.percent ?? 0) * salary) / 100).toFixed(2)),
   }));
 
-  return res.status(200).json({
-    message: 'Data fetched',
-    data: components,
-    statusCode: 200,
-    code: SUCCESS_CODES.SUCCESS,
-  });
+  return successResponse(res, components, 'Data fetched', SUCCESS_CODES.SUCCESS, 200);
 };
 
 // ----------------- Create Payroll Component -----------------
@@ -66,12 +62,7 @@ export const createPayrollComponent = async (req: Request, res: Response) => {
     data: { name, type, description, percent: Number(percent) },
   });
 
-  return res.status(200).json({
-    message: 'Component created successfully',
-    data: component,
-    statusCode: 201,
-    code: SUCCESS_CODES.SUCCESS,
-  });
+  return createdResponse(res, component, 'Component created successfully', SUCCESS_CODES.SUCCESS);
 };
 
 // ----------------- Update Payroll Component -----------------
@@ -92,12 +83,7 @@ export const updatePayrollComponent = async (req: Request, res: Response) => {
     data: { name, type, description, percent: Number(percent) },
   });
 
-  return res.status(200).json({
-    message: 'Component updated successfully',
-    data: updated,
-    statusCode: 200,
-    code: SUCCESS_CODES.SUCCESS,
-  });
+  return successResponse(res, updated, 'Component updated successfully', SUCCESS_CODES.SUCCESS, 200);
 };
 
 // ----------------- Delete Payroll Component -----------------
@@ -108,20 +94,13 @@ export const deletePayrollComponent = async (req: Request, res: Response) => {
     where: { id: id },
   });
 
-  console.log(existing, '>>>>>');
-
   if (!existing) {
     throw new HttpError(404, 'Component not found', ERROR_CODES.NOT_FOUND);
   }
 
   await prisma.payrollComponentType.delete({ where: { id: id } });
 
-  return res.status(200).json({
-    message: 'Component deleted successfully',
-    data: null,
-    statusCode: 200,
-    code: SUCCESS_CODES.SUCCESS,
-  });
+  return successResponse(res, null, 'Component deleted successfully', SUCCESS_CODES.SUCCESS, 200);
 };
 
 // ----------------- Get All Payroll Components (Paginated) -----------------
@@ -141,10 +120,5 @@ export const getAllPayrollComponents = async (req: Request, res: Response) => {
     prisma.payrollComponentType.count({ where: { isActive: true } }),
   ]);
 
-  return res.status(200).json({
-    message: 'Data fetched',
-    data: { content: componentTypes, totalRecords },
-    statusCode: 200,
-    code: SUCCESS_CODES.SUCCESS,
-  });
+  return successResponse(res, { content: componentTypes, totalRecords }, 'Data fetched', SUCCESS_CODES.SUCCESS, 200);
 };

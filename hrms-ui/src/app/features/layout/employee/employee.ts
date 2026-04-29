@@ -358,6 +358,7 @@ export class Employee implements OnInit {
 
   payrollComponents: any[] = [];
   selectedEmployee: number | undefined;
+  selectedEmployeeMonthlySalary: number = 0;
   netSalary: number | null = null;
 
   async onGeneratePayroll(employee: any) {
@@ -366,6 +367,7 @@ export class Employee implements OnInit {
       `/api/payroll/components/${employeeId}`
     );
     this.selectedEmployee = employeeId;
+    this.selectedEmployeeMonthlySalary = employee.salary ? employee.salary / 12 : 0;
     this.payrollComponents = components;
     this.components.clear();
     components?.forEach((comp: any) => {
@@ -393,7 +395,9 @@ export class Employee implements OnInit {
   async generatePayroll() {
     const components = this.payrollComponents.map((c) => ({
       componentTypeId: c.id,
-      amount: c.amount,
+      percent: this.selectedEmployeeMonthlySalary > 0
+        ? (c.amount / this.selectedEmployeeMonthlySalary) * 100
+        : 0,
     }));
     const date = this.payrollForm.get('date')?.value;
     const salary: any = await this.serverApi.post('/api/payroll', {
