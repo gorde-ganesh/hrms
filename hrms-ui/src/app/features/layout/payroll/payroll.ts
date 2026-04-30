@@ -3,6 +3,7 @@ import { ApiService } from '../../../services/api-interface.service';
 import { AuthStateService } from '../../../services/auth-state.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import {
   FormBuilder,
   FormGroup,
@@ -50,6 +51,7 @@ import { CardModule } from 'primeng/card';
     ToastModule,
     CardModule,
     ConfirmPopup,
+    AutoCompleteModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './payroll.html',
@@ -114,19 +116,18 @@ export class Payroll {
     this.loadPayrolls();
     if (this.hasPermission('generate')) {
       this.loadPayrollComponents();
-      this.loadEmployees();
     }
   }
 
-  async loadEmployees() {
+  async searchEmployees(event: any) {
     try {
       const response: any = await this.serverApi.get('/api/employees', {
-        skip: 0,
-        top: 1000,
+        search: event.query,
+        top: 10,
       });
       this.employees = response.content || [];
     } catch (error) {
-      console.error('Error loading employees:', error);
+      this.employees = [];
     }
   }
 
@@ -192,11 +193,20 @@ export class Payroll {
       target: event.currentTarget as EventTarget,
       message: 'Are you sure you want to proceed?',
       icon: 'pi pi-exclamation-triangle',
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true,
+      },
       acceptButtonProps: { label: 'Delete', severity: 'danger' },
       accept: async () => {
         await this.serverApi.delete(`/api/payroll/components/${component.id}`);
-        this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Component deleted successfully', life: 3000 });
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Deleted',
+          detail: 'Component deleted successfully',
+          life: 3000,
+        });
         this.loadPayrollComponents();
       },
       reject: () => {},

@@ -102,7 +102,8 @@ export const generatePayroll = async (req: Request, res: Response) => {
 
 // ----------------- Get Payroll Records -----------------
 export const getPayroll = async (req: Request, res: Response) => {
-  const { employeeId, month, year, skip, top } = req.query;
+  const { employeeId, month, year, skip, pageno, top } = req.query;
+  const skipValue = Number(skip ?? pageno) || 0;
 
   const [payroll, totalRecords] = await Promise.all([
     prisma.payroll.findMany({
@@ -112,7 +113,7 @@ export const getPayroll = async (req: Request, res: Response) => {
         year: year ? Number(year) : undefined,
       },
       orderBy: { id: 'asc' },
-      skip: skip ? Number(skip) : 0,
+      skip: skipValue,
       take: top ? Number(top) : 10,
     }),
     prisma.payroll.count({

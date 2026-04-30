@@ -34,9 +34,9 @@ export const getEmployee = async (req: Request, res: Response) => {
 };
 
 export const getEmployees = async (req: Request, res: Response) => {
-  const { pageno, top, departmentId, designationId, status, sortField, sortOrder, search } = req.query;
+  const { pageno, skip, top, departmentId, designationId, status, sortField, sortOrder, search } = req.query;
   const result = await employeeService.list({
-    pageno: Number(pageno),
+    pageno: Number(pageno ?? skip) || 0,
     top: Number(top),
     departmentId: departmentId as string,
     designationId: designationId as string,

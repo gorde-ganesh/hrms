@@ -145,7 +145,7 @@ export class EmployeeService {
 
   async list(dto: ListEmployeesDto) {
     const skip = Math.max(dto.pageno ?? 0, 0);
-    const take = Math.min(Math.max(dto.top ?? 10, 1), 100);
+    const take = Math.min(Math.max(dto.top ?? 10, 1), 1000);
 
     const validSortFields: Array<keyof Prisma.EmployeeOrderByWithRelationInput> = [
       'createdAt', 'joiningDate', 'salary', 'employeeCode',

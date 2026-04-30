@@ -149,30 +149,28 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2"
                   >Employee *</label
                 >
-                <p-select
+                <p-autocomplete
                   formControlName="employee"
-                  [options]="employees"
-                  optionLabel="user.name"
-                  placeholder="Select Employee"
-                  [filter]="true"
-                  filterBy="user.name,employeeCode"
+                  [suggestions]="employees"
+                  field="user.name"
+                  placeholder="Search employee..."
                   [showClear]="true"
                   styleClass="w-full"
-                  (onChange)="onEmployeeChange()"
+                  [inputStyleClass]="'w-full'"
+                  (completeMethod)="searchEmployees($event)"
+                  (onSelect)="onEmployeeChange()"
+                  (onClear)="onEmployeeChange()"
                   appendTo="body"
                 >
                   <ng-template #item let-employee>
-                    <div class="flex items-center gap-2">
-                      <div>
-                        <div class="font-medium">{{ employee.user?.name }}</div>
-                        <div class="text-sm text-gray-600">
-                          {{ employee.employeeCode }} - {{
-                          employee.department?.name }}
-                        </div>
+                    <div>
+                      <div class="font-medium">{{ employee.user?.name }}</div>
+                      <div class="text-sm text-gray-500">
+                        {{ employee.employeeCode }} · {{ employee.department?.name }}
                       </div>
                     </div>
                   </ng-template>
-                </p-select>
+                </p-autocomplete>
                 @if(generatePayrollForm.get('employee')?.touched &&
                 generatePayrollForm.get('employee')?.invalid) {
                 <small class="text-red-500">Employee is required</small>

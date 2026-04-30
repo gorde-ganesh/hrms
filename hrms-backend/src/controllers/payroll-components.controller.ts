@@ -106,9 +106,8 @@ export const deletePayrollComponent = async (req: Request, res: Response) => {
 // ----------------- Get All Payroll Components (Paginated) -----------------
 export const getAllPayrollComponents = async (req: Request, res: Response) => {
   const { pageno, top } = req.query;
-  const pageNumber: number = Number(pageno) || 1;
+  const skip: number = Number(pageno) || 0;
   const topNumber: number = Number(top) || 10;
-  const skip = (pageNumber - 1) * topNumber;
 
   const [componentTypes, totalRecords] = await Promise.all([
     prisma.payrollComponentType.findMany({
