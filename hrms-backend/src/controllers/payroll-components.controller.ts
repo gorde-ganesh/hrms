@@ -1,124 +1,127 @@
 import { Request, Response } from 'express';
+import { z } from 'zod/v4';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse, createdResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { calculatePayroll } from '../services/payroll.service';
 
+const ComponentSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  type: z.enum(['ALLOWANCE', 'DEDUCTION']),
+  description: z.string().max(500).optional(),
+  percent: z.number({ error: 'Percent must be a number' }).min(0).max(100),
+});
 
-// ----------------- Get Payroll Components for Employee -----------------
+// ----------------- Get Calculated Components for Employee -----------------
 export const getPayrollComponents = async (req: Request, res: Response) => {
-  const employeeId = req.params.employeeId as string;
-  if (!employeeId) {
-    throw new HttpError(
-      400,
-      'Employee ID required',
-      ERROR_CODES.VALIDATION_ERROR
-    );
-  }
+  const employeeId = req.params.employeeId;
+  const { month, year, lopDays = 0 } = req.query;
 
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
-    include: { user: true },
-  });
+  const calc = await calculatePayroll(
+    employeeId,
+    month ? Number(month) : new Date().getMonth() + 1,
+    year ? Number(year) : new Date().getFullYear(),
+    Number(lopDays)
+  );
 
-  if (!employee || !employee.salary) {
-    throw new HttpError(
-      404,
-      'Employee or salary not found',
-      ERROR_CODES.NOT_FOUND
-    );
-  }
-
-  const salary = employee.salary / 12;
-
-  const componentTypes = await prisma.payrollComponentType.findMany({
-    where: { isActive: true },
-    orderBy: { id: 'asc' },
-  });
-
-  const components = componentTypes.map((ct) => ({
-    id: ct.id,
-    name: ct.name,
-    type: ct.type,
-    amount: Number((((ct.percent ?? 0) * salary) / 100).toFixed(2)),
-  }));
-
-  return successResponse(res, components, 'Data fetched', SUCCESS_CODES.SUCCESS, 200);
+  return successResponse(res, calc, 'Components calculated', SUCCESS_CODES.SUCCESS);
 };
 
-// ----------------- Create Payroll Component -----------------
+// ----------------- Create Payroll Component Type -----------------
 export const createPayrollComponent = async (req: Request, res: Response) => {
-  const { name, type, description, percent } = req.body;
+  const parsed = ComponentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, 'Validation failed', ERROR_CODES.VALIDATION_ERROR);
+  }
 
-  if (!name || !type) {
+  const { name, type, description, percent } = parsed.data;
+
+  const existing = await prisma.payrollComponentType.findFirst({
+    where: { name, deletedAt: null },
+  });
+  if (existing) {
     throw new HttpError(
-      400,
-      'Name and type are required',
+      409,
+      `A component named "${name}" already exists`,
       ERROR_CODES.VALIDATION_ERROR
     );
   }
 
   const component = await prisma.payrollComponentType.create({
-    data: { name, type, description, percent: Number(percent) },
+    data: { name, type, description, percent },
   });
 
-  return createdResponse(res, component, 'Component created successfully', SUCCESS_CODES.SUCCESS);
+  return createdResponse(res, component, 'Component created', SUCCESS_CODES.SUCCESS);
 };
 
-// ----------------- Update Payroll Component -----------------
+// ----------------- Update Payroll Component Type -----------------
 export const updatePayrollComponent = async (req: Request, res: Response) => {
-  const id = req.params.id as string;
-  const { name, type, description, percent } = req.body;
+  const id = req.params.id;
 
-  const existing = await prisma.payrollComponentType.findUnique({
-    where: { id: id },
+  const parsed = ComponentSchema.partial().safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, 'Validation failed', ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const existing = await prisma.payrollComponentType.findFirst({
+    where: { id, deletedAt: null },
   });
-
   if (!existing) {
     throw new HttpError(404, 'Component not found', ERROR_CODES.NOT_FOUND);
   }
 
   const updated = await prisma.payrollComponentType.update({
-    where: { id: id },
-    data: { name, type, description, percent: Number(percent) },
+    where: { id },
+    data: parsed.data,
   });
 
-  return successResponse(res, updated, 'Component updated successfully', SUCCESS_CODES.SUCCESS, 200);
+  return successResponse(res, updated, 'Component updated', SUCCESS_CODES.SUCCESS);
 };
 
-// ----------------- Delete Payroll Component -----------------
+// ----------------- Soft Delete Payroll Component Type -----------------
 export const deletePayrollComponent = async (req: Request, res: Response) => {
-  const id = req.params.id as string;
+  const id = req.params.id;
 
-  const existing = await prisma.payrollComponentType.findUnique({
-    where: { id: id },
+  const existing = await prisma.payrollComponentType.findFirst({
+    where: { id, deletedAt: null },
   });
-
   if (!existing) {
     throw new HttpError(404, 'Component not found', ERROR_CODES.NOT_FOUND);
   }
 
-  await prisma.payrollComponentType.delete({ where: { id: id } });
+  // Soft delete — preserves historical PayrollComponent records that reference this type
+  await prisma.payrollComponentType.update({
+    where: { id },
+    data: { isActive: false, deletedAt: new Date() },
+  });
 
-  return successResponse(res, null, 'Component deleted successfully', SUCCESS_CODES.SUCCESS, 200);
+  return successResponse(res, null, 'Component deactivated', SUCCESS_CODES.SUCCESS);
 };
 
-// ----------------- Get All Payroll Components (Paginated) -----------------
+// ----------------- Get All Payroll Component Types (Paginated) -----------------
 export const getAllPayrollComponents = async (req: Request, res: Response) => {
-  const { pageno, top } = req.query;
-  const pageNumber: number = Number(pageno) || 1;
-  const topNumber: number = Number(top) || 10;
+  const { pageno, top, includeInactive } = req.query;
+  const pageNumber = Math.max(1, Number(pageno) || 1);
+  const topNumber = Math.min(100, Math.max(1, Number(top) || 10));
   const skip = (pageNumber - 1) * topNumber;
+
+  const where = includeInactive === 'true' ? { deletedAt: null } : { isActive: true, deletedAt: null };
 
   const [componentTypes, totalRecords] = await Promise.all([
     prisma.payrollComponentType.findMany({
-      where: { isActive: true },
-      orderBy: { id: 'asc' },
+      where,
+      orderBy: [{ type: 'asc' }, { name: 'asc' }],
       take: topNumber,
       skip,
     }),
-    prisma.payrollComponentType.count({ where: { isActive: true } }),
+    prisma.payrollComponentType.count({ where }),
   ]);
 
-  return successResponse(res, { content: componentTypes, totalRecords }, 'Data fetched', SUCCESS_CODES.SUCCESS, 200);
+  return successResponse(
+    res,
+    { content: componentTypes, totalRecords },
+    'Components fetched',
+    SUCCESS_CODES.SUCCESS
+  );
 };
