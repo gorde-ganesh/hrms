@@ -20,7 +20,7 @@ export const getRoles = async (req: Request, res: Response) => {
 
   const formattedRoles = roles.map((role) => ({
     ...role,
-    permissions: role.permissions.map((rp: any) => rp.permission),
+    permissions: (role as any).permissions.map((rp: any) => rp.permission),
     userCount: (role as any)._count.users,
   }));
 
@@ -35,7 +35,7 @@ export const getRoles = async (req: Request, res: Response) => {
 
 // Get role by ID
 export const getRoleById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const role = await prisma.userRole.findUnique({
     where: { id },
@@ -125,7 +125,7 @@ export const createRole = async (req: Request, res: Response) => {
 
 // Update role
 export const updateRole = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { name, description, permissionIds } = req.body;
 
   const role = await prisma.userRole.findUnique({ where: { id } });
@@ -181,7 +181,7 @@ export const updateRole = async (req: Request, res: Response) => {
 
 // Delete role
 export const deleteRole = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const role = await prisma.userRole.findUnique({
     where: { id },

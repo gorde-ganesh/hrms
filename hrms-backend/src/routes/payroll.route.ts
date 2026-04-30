@@ -8,26 +8,26 @@ import {
 import { getAllPayrollComponents } from '../controllers/payroll-components.controller';
 import { validate } from '../middlewares/validate';
 import { GeneratePayrollSchema } from '../schemas/payroll.schema';
-import { Role } from '../../generated/prisma';
+
 
 function registerRouters(app: express.Application) {
   app.get(
     '/api/payroll',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN, Role.EMPLOYEE]),
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE']),
     getPayroll
   );
   app.post(
     '/api/payroll',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     validate(GeneratePayrollSchema),
     generatePayroll
   );
   app.get(
     '/api/payroll/download/:payrollId',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN, Role.EMPLOYEE]),
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE']),
     downloadPayslip
   );
 }

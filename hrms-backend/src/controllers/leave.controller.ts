@@ -197,7 +197,7 @@ export const applyLeave = async (req: Request, res: Response) => {
 
 // ----------------- Update Leave Status -----------------
 export const updateLeaveStatus = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { status, approvedBy } = req.body;
 
   if (!approvedBy) {
@@ -283,7 +283,7 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
 
 // ----------------- Get Employee Leaves -----------------
 export const getEmployeeLeaves = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
 
   if (!employeeId) {
     throw new HttpError(
@@ -312,7 +312,7 @@ export const getEmployeeLeaves = async (req: Request, res: Response) => {
 };
 
 export const getTeamLeaves = async (req: Request, res: Response) => {
-  const { managerId } = req.params;
+  const managerId = req.params.managerId as string;
 
   if (!managerId) {
     throw new HttpError(

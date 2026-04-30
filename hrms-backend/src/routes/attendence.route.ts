@@ -11,14 +11,14 @@ import {
   bulkMarkAttendance,
   getAttendanceReport,
 } from '../controllers/attendence.controller';
-import { Role } from '../../generated/prisma/client';
+
 
 function registerRouters(app: express.Application) {
   // Clock in/out - All roles can mark their own attendance
   app.post(
     '/api/attendance',
     authenticate,
-    roleAccess([Role.EMPLOYEE, Role.HR, Role.MANAGER, Role.ADMIN]),
+    roleAccess(['EMPLOYEE', 'HR', 'MANAGER', 'ADMIN']),
     clockInOut
   );
 
@@ -26,7 +26,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/attendance',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     getAttendance
   );
 
@@ -36,7 +36,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/attendance/team',
     authenticate,
-    roleAccess([Role.MANAGER]),
+    roleAccess(['MANAGER']),
     getTeamAttendance
   );
 
@@ -44,7 +44,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/attendance/all',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     getAllEmployeesAttendance
   );
 
@@ -52,7 +52,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/attendance/summary/:employeeId',
     authenticate,
-    roleAccess([Role.EMPLOYEE, Role.HR, Role.ADMIN, Role.MANAGER]),
+    roleAccess(['EMPLOYEE', 'HR', 'ADMIN', 'MANAGER']),
     getAttendanceSummary
   );
 
@@ -60,7 +60,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/attendance/report',
     authenticate,
-    roleAccess([Role.EMPLOYEE, Role.HR, Role.ADMIN, Role.MANAGER]),
+    roleAccess(['EMPLOYEE', 'HR', 'ADMIN', 'MANAGER']),
     getAttendanceReport
   );
 
@@ -68,7 +68,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/attendance/:employeeId',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN, Role.EMPLOYEE, Role.MANAGER]),
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE', 'MANAGER']),
     getAttendenceById
   );
 
@@ -76,7 +76,7 @@ function registerRouters(app: express.Application) {
   app.put(
     '/api/attendance/:id',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     updateAttendance
   );
 
@@ -84,7 +84,7 @@ function registerRouters(app: express.Application) {
   app.post(
     '/api/attendance/bulk',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     bulkMarkAttendance
   );
 }

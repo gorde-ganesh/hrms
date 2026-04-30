@@ -69,7 +69,7 @@ export const getAllDepartments = async (req: Request, res: Response) => {
 };
 
 export const getDepartmentById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) {
     throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
@@ -85,7 +85,7 @@ export const getDepartmentById = async (req: Request, res: Response) => {
 };
 
 export const updateDepartment = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { name, description } = req.body;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
@@ -107,7 +107,7 @@ export const updateDepartment = async (req: Request, res: Response) => {
 };
 
 export const deleteDepartment = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 
@@ -119,7 +119,7 @@ export const deleteDepartment = async (req: Request, res: Response) => {
 };
 
 export const restoreDepartment = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 

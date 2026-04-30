@@ -26,7 +26,7 @@ export const upload = multer({ storage });
 
 export const getUserConversations = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
 
     if (!userId) {
       return errorResponse(
@@ -92,7 +92,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
-    const { conversationId } = req.params;
+    const conversationId = req.params.conversationId as string;
     const { cursor, take = '50' } = req.query as { cursor?: string; take?: string };
     const limit = Math.min(Number(take), 100);
 
@@ -487,7 +487,7 @@ export const getPublicChannels = async (_req: Request, res: Response) => {
 // Join Channel
 export const joinChannel = async (req: Request, res: Response) => {
   try {
-    const { channelId } = req.params;
+    const channelId = req.params.channelId as string;
     const { userId } = req.body;
 
     if (!userId) {
@@ -564,7 +564,7 @@ export const joinChannel = async (req: Request, res: Response) => {
 // Leave Channel
 export const leaveChannel = async (req: Request, res: Response) => {
   try {
-    const { channelId } = req.params;
+    const channelId = req.params.channelId as string;
     const { userId } = req.body;
 
     if (!userId) {
@@ -612,7 +612,7 @@ export const leaveChannel = async (req: Request, res: Response) => {
 // Add Member to Group/Channel
 export const addMember = async (req: Request, res: Response) => {
   try {
-    const { conversationId } = req.params;
+    const conversationId = req.params.conversationId as string;
     const { userId, addedBy } = req.body;
 
     if (!userId) {
@@ -683,7 +683,8 @@ export const addMember = async (req: Request, res: Response) => {
 // Remove Member from Group/Channel
 export const removeMember = async (req: Request, res: Response) => {
   try {
-    const { conversationId, userId } = req.params;
+    const conversationId = req.params.conversationId as string;
+    const userId = req.params.userId as string;
     const { removedBy } = req.body;
 
     // Check if requester is admin

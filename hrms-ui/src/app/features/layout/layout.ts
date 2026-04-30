@@ -93,22 +93,22 @@ export class Layout implements OnInit {
     },
     payroll: { label: 'Payroll', icon: 'pi pi-money-bill', route: '/payroll' },
     leaves: { label: 'Leaves', icon: 'pi pi-calendar-times', route: '/leaves' },
-    performance: {
-      label: 'Performance',
-      icon: 'pi pi-star',
-      route: '/performance',
-    },
-    chat: {
-      label: 'Chat',
-      icon: 'pi pi-comments',
-      route: '/chat',
-    },
-    notifications: {
-      label: 'Notifications',
-      icon: 'pi pi-bell',
-      route: '/notifications',
-    },
-    reports: { label: 'Reports', icon: 'pi pi-chart-line', route: '/reports' },
+    // performance: {
+    //   label: 'Performance',
+    //   icon: 'pi pi-star',
+    //   route: '/performance',
+    // },
+    // chat: {
+    //   label: 'Chat',
+    //   icon: 'pi pi-comments',
+    //   route: '/chat',
+    // },
+    // notifications: {
+    //   label: 'Notifications',
+    //   icon: 'pi pi-bell',
+    //   route: '/notifications',
+    // },
+    // reports: { label: 'Reports', icon: 'pi pi-chart-line', route: '/reports' },
     admin: { label: 'Admin', icon: 'pi pi-cog', route: '/admin' },
   };
 

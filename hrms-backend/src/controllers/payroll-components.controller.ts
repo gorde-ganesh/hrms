@@ -6,7 +6,7 @@ import { prisma } from '../lib/prisma';
 
 // ----------------- Get Payroll Components for Employee -----------------
 export const getPayrollComponents = async (req: Request, res: Response) => {
-  const employeeId = req.params.employeeId;
+  const employeeId = req.params.employeeId as string;
   if (!employeeId) {
     throw new HttpError(
       400,
@@ -76,7 +76,7 @@ export const createPayrollComponent = async (req: Request, res: Response) => {
 
 // ----------------- Update Payroll Component -----------------
 export const updatePayrollComponent = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { name, type, description, percent } = req.body;
 
   const existing = await prisma.payrollComponentType.findUnique({
@@ -102,7 +102,7 @@ export const updatePayrollComponent = async (req: Request, res: Response) => {
 
 // ----------------- Delete Payroll Component -----------------
 export const deletePayrollComponent = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const existing = await prisma.payrollComponentType.findUnique({
     where: { id: id },

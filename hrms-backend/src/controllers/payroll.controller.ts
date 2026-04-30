@@ -1,4 +1,3 @@
-import { Department } from './../../generated/prisma/index.d';
 import { Request, Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { HttpError } from '../utils/http-error';
@@ -66,7 +65,6 @@ export const generatePayroll = async (req: Request, res: Response) => {
   const payroll = await prisma.payroll.create({
     data: {
       employeeId,
-      userId: employee.user.id,
       month,
       year,
       netSalary,
@@ -131,7 +129,7 @@ export const getPayroll = async (req: Request, res: Response) => {
 
 // ----------------- Download Payslip -----------------
 export const downloadPayslip = async (req: Request, res: Response) => {
-  const { payrollId } = req.params;
+  const payrollId = req.params.payrollId as string;
 
   if (!payrollId) {
     throw new HttpError(

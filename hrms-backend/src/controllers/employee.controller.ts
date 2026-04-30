@@ -14,22 +14,22 @@ export const addEmployee = async (req: Request, res: Response) => {
 };
 
 export const updateEmployee = async (req: Request, res: Response) => {
-  const result = await employeeService.update(req.params.id, req.body);
+  const result = await employeeService.update((req.params.id as string), req.body);
   return successResponse(res, result, 'Employee updated successfully', SUCCESS_CODES.EMPLOYEE_UPDATED, 200);
 };
 
 export const deleteEmployee = async (req: Request, res: Response) => {
-  await employeeService.softDelete(req.params.id);
+  await employeeService.softDelete((req.params.id as string));
   return noContentResponse(res, 'Employee deleted successfully', SUCCESS_CODES.EMPLOYEE_DELETED);
 };
 
 export const restoreEmployee = async (req: Request, res: Response) => {
-  const result = await employeeService.restore(req.params.id);
+  const result = await employeeService.restore((req.params.id as string));
   return successResponse(res, result, 'Employee restored successfully', SUCCESS_CODES.SUCCESS, 200);
 };
 
 export const getEmployee = async (req: Request, res: Response) => {
-  const employee = await employeeService.findById(req.params.id);
+  const employee = await employeeService.findById((req.params.id as string));
   return successResponse(res, employee, 'Details fetched', SUCCESS_CODES.EMPLOYEE_FETCHED, 200);
 };
 

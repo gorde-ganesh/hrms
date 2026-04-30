@@ -31,7 +31,6 @@ export const addAppraisal = async (req: Request, res: Response) => {
   const performance = await prisma.performance.create({
     data: {
       employeeId: employee.id,
-      userId: employee.user.id,
       goals,
       rating,
       comments,
@@ -55,7 +54,7 @@ export const addAppraisal = async (req: Request, res: Response) => {
 };
 
 export const updateAppraisal = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { rating, comments, managerComments } = req.body;
 
   if (!rating && !comments && !managerComments) {
@@ -107,7 +106,7 @@ export const updateAppraisal = async (req: Request, res: Response) => {
 };
 
 export const getEmployeePerformance = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
   const currentUser = req.user;
 
   if (!employeeId) {

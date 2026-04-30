@@ -169,7 +169,7 @@ export const clockInOut = async (req: Request, res: Response) => {
 };
 
 export const getAttendanceSummary = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
   const { month, year } = req.query;
 
   if (!employeeId || !month || !year) {
@@ -438,7 +438,7 @@ export const getAllEmployeesAttendance = async (
  * Allows manual correction of attendance records
  */
 export const updateAttendance = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { checkIn, checkOut, status, attendanceDate } = req.body;
 
   if (!id) {

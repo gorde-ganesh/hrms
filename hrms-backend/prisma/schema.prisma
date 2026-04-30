@@ -12,13 +12,6 @@ datasource db {
 // ENUMS
 //////////////////////////////////////////
 
-enum Role {
-  ADMIN
-  HR
-  EMPLOYEE
-  MANAGER
-}
-
 enum LeaveStatus {
   PENDING
   APPROVED
@@ -75,39 +68,34 @@ enum LeaveType {
 //////////////////////////////////////////
 
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  password      String
-  phone         String
-  address       String
-  state         String
-  city          String
-  country       String
-  zipCode       String
-  role          Role
-  roleId        String?
-  userRole      UserRole? @relation(fields: [roleId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  password        String
+  phone           String
+  address         String
+  state           String
+  city            String
+  country         String
+  zipCode         String
+  roleId          String
+  userRole        UserRole  @relation(fields: [roleId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   resetToken      String?
   resetTokenExp   DateTime?
   refreshToken    String?
   refreshTokenExp DateTime?
+  deletedAt       DateTime?
 
-  employee       Employee?
-  payrolls       Payroll[]      @relation("UserPayrolls")
-  performance    Performance[]
-  notifications  Notification[]
-  leavesApproved Leave[]        @relation("LeaveApprovedBy")
-  leavesManaged  Leave[]        @relation("LeaveManagerApproval")
-
+  employee             Employee?
+  leavesApproved       Leave[]              @relation("LeaveApprovedBy")
+  leavesManaged        Leave[]              @relation("LeaveManagerApproval")
   messagesSent         Message[]            @relation("SentMessages")
   conversations        ConversationMember[]
   callsMade            CallLog[]            @relation("Caller")
   callsReceived        CallLog[]            @relation("Receiver")
   conversationsCreated Conversation[]       @relation("CreatedBy")
-  deletedAt            DateTime?
 }
 
 //////////////////////////////////////////
@@ -134,19 +122,19 @@ model Permission {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  roles       RolePermission[]
+  roles RolePermission[]
 
   @@unique([resource, action])
 }
 
 model RolePermission {
-  id           String     @id @default(uuid())
+  id           String   @id @default(uuid())
   roleId       String
   permissionId String
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime @default(now())
 
-  role         UserRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       UserRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
 }
@@ -189,8 +177,8 @@ model Designation {
 model Employee {
   id           String @id @default(uuid())
   employeeCode String @unique
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
@@ -208,6 +196,7 @@ model Employee {
   status                 EmployeeStatus
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
+  deletedAt              DateTime?
 
   managerId    String?
   manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
@@ -220,8 +209,6 @@ model Employee {
   notifications Notification[]
   leaveBalance  LeaveBalance[]
 
-  deletedAt DateTime?
-
   @@index([departmentId])
   @@index([managerId])
 }
@@ -232,8 +219,8 @@ model Employee {
 
 model Leave {
   id         String      @id @default(uuid())
-  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   startDate  DateTime
   endDate    DateTime
   reason     String
@@ -242,9 +229,8 @@ model Leave {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
-  approvedById String?
-  approvedBy   User?   @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
-
+  approvedById      String?
+  approvedBy        User?   @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
   managerApprovalId String?
   managerApproval   User?   @relation("LeaveManagerApproval", fields: [managerApprovalId], references: [id])
 
@@ -258,8 +244,8 @@ model Leave {
 
 model LeaveBalance {
   id          String    @id @default(uuid())
-  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   year        Int
   leaveType   LeaveType @default(ANNUAL)
   totalLeaves Int       @default(21)
@@ -275,17 +261,16 @@ model LeaveBalance {
 //////////////////////////////////////////
 
 model Attendance {
-  id         String   @id @default(uuid())
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  employeeId String
-
-  attendanceDate DateTime? // <-- temporarily optional
+  id             String           @id @default(uuid())
+  employeeId     String
+  employee       Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attendanceDate DateTime
   checkIn        DateTime?
   checkOut       DateTime?
   totalHours     Float?
-  status         AttendanceStatus? @default(PRESENT) // optional for migration
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime? // <-- temporarily optional
+  status         AttendanceStatus @default(PRESENT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   @@index([employeeId, attendanceDate])
 }
@@ -296,16 +281,13 @@ model Attendance {
 
 model Payroll {
   id         String   @id @default(uuid())
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String
-  user       User?    @relation("UserPayrolls", fields: [userId], references: [id])
-  userId     String?
-
-  month     Int
-  year      Int
-  netSalary Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month      Int
+  year       Int
+  netSalary  Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   components PayrollComponent[]
 
@@ -323,9 +305,9 @@ model PayrollComponentType {
   description String?
   type        ComponentType
   isActive    Boolean       @default(true)
+  percent     Float?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  percent     Float?
 
   components PayrollComponent[]
 }
@@ -336,10 +318,10 @@ model PayrollComponentType {
 
 model PayrollComponent {
   id              String               @id @default(uuid())
-  payroll         Payroll              @relation(fields: [payrollId], references: [id], onDelete: Cascade)
   payrollId       String
-  componentType   PayrollComponentType @relation(fields: [componentTypeId], references: [id])
+  payroll         Payroll              @relation(fields: [payrollId], references: [id], onDelete: Cascade)
   componentTypeId String
+  componentType   PayrollComponentType @relation(fields: [componentTypeId], references: [id])
   amount          Float                @default(0)
 
   @@unique([payrollId, componentTypeId])
@@ -351,10 +333,8 @@ model PayrollComponent {
 
 model Performance {
   id              String   @id @default(uuid())
-  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId      String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   goals           String
   rating          Int?
   comments        String?
@@ -369,33 +349,33 @@ model Performance {
 
 model Notification {
   id         String           @id @default(uuid())
-  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   type       NotificationType
   message    String
   readStatus Boolean          @default(false)
   createdAt  DateTime         @default(now())
 
   @@index([employeeId])
-  @@index([userId])
 }
+
+//////////////////////////////////////////
+// CHAT MODELS
+//////////////////////////////////////////
 
 model Conversation {
   id           String      @id @default(uuid())
   isGroup      Boolean     @default(false)
-  name         String? // group/channel name
-  description  String? // channel description
+  name         String?
+  description  String?
   channelType  ChannelType @default(DM)
-  isPublic     Boolean     @default(false) // For channels
+  isPublic     Boolean     @default(false)
   isHuddle     Boolean     @default(false)
   huddleActive Boolean     @default(false)
   createdById  String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  // Relations
   createdBy User?                @relation("CreatedBy", fields: [createdById], references: [id])
   members   ConversationMember[]
   messages  Message[]
@@ -417,7 +397,7 @@ model Message {
   conversationId String
   senderId       String
   messageText    String?
-  messageType    String   @default("text") // text, image, file, system
+  messageType    String   @default("text")
   fileUrl        String?
   isRead         Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -430,8 +410,8 @@ model CallLog {
   id         String    @id @default(uuid())
   callerId   String
   receiverId String
-  callType   String    @default("video") // audio or video
-  status     String    @default("missed") // ongoing, ended, missed
+  callType   String    @default("video")
+  status     String    @default("missed")
   startTime  DateTime  @default(now())
   endTime    DateTime?
 

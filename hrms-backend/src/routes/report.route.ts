@@ -6,7 +6,7 @@ import {
   getDashboardSummary,
 } from '../controllers/report.controller';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
-import { Role } from '../../generated/prisma';
+
 
 function registerRouters(app: express.Application) {
   app.get('/api/reports/leaves', authenticate, leaveReport);

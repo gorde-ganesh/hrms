@@ -18,7 +18,7 @@ export const sendNotification = async (req: Request, res: Response) => {
   }
 
   const notification = await prisma.notification.create({
-    data: { employeeId, userId: employeeId, type, message },
+    data: { employeeId, type, message },
   });
 
   return res.status(200).json({

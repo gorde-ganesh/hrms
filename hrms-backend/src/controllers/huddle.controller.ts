@@ -72,7 +72,7 @@ export const startHuddle = async (req: Request, res: Response) => {
 // Join Huddle
 export const joinHuddle = async (req: Request, res: Response) => {
   try {
-    const { huddleId } = req.params;
+    const huddleId = req.params.huddleId as string;
     const { userId } = req.body;
 
     if (!userId) {
@@ -144,7 +144,7 @@ export const joinHuddle = async (req: Request, res: Response) => {
 // Leave Huddle
 export const leaveHuddle = async (req: Request, res: Response) => {
   try {
-    const { huddleId } = req.params;
+    const huddleId = req.params.huddleId as string;
     const { userId } = req.body;
 
     if (!userId) {
@@ -220,7 +220,7 @@ export const getActiveHuddles = async (req: Request, res: Response) => {
 // End Huddle
 export const endHuddle = async (req: Request, res: Response) => {
   try {
-    const { huddleId } = req.params;
+    const huddleId = req.params.huddleId as string;
     const { userId } = req.body;
 
     if (!userId) {

@@ -1,11 +1,10 @@
-import { Role } from '../../generated/prisma';
 import { Request } from 'express';
 
 export interface User {
   name: string;
   email: string;
   password: string;
-  role: Role;
+  role: string;
   token?: string;
   newPassword?: string;
   phone: string;

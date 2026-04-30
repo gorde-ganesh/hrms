@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
-import { Role } from '../../generated/prisma';
+
 import {
   getEmployeeLeaveBalance,
   getLeaveBalanceSummary,
@@ -13,7 +13,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/leave-balance/:employeeId',
     authenticate,
-    roleAccess([Role.EMPLOYEE, Role.MANAGER, Role.HR, Role.ADMIN]),
+    roleAccess(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']),
     getEmployeeLeaveBalance
   );
 
@@ -21,7 +21,7 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/leave-balance/:employeeId/summary',
     authenticate,
-    roleAccess([Role.EMPLOYEE, Role.MANAGER, Role.HR, Role.ADMIN]),
+    roleAccess(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN']),
     getLeaveBalanceSummary
   );
 
@@ -29,7 +29,7 @@ function registerRouters(app: express.Application) {
   app.put(
     '/api/leave-balance/:employeeId',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     updateLeaveBalance
   );
 
@@ -37,7 +37,7 @@ function registerRouters(app: express.Application) {
   app.post(
     '/api/leave-balance/:employeeId/initialize',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     initializeLeaveBalances
   );
 }

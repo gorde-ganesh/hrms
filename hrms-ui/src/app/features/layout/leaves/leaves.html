@@ -55,6 +55,7 @@
         <p-table
           [value]="leaves"
           [paginator]="true"
+          [lazy]="true"
           [rows]="apiParams.top"
           editMode="row"
           [tableStyle]="{ 'min-width': '50rem' }"
@@ -124,9 +125,7 @@
                   </ng-template>
                 </p-cellEditor>
               </td>
-              <td>
-                {{ leave.reason }}
-              </td>
+              <td>{{ leave.reason }}</td>
               <td>
                 @if(!editing && hasPermission('EDIT_TEAM_LEAVES')) {
                 <p-button
@@ -172,6 +171,7 @@
         <p-table
           [value]="teamLeaves"
           [paginator]="true"
+          [lazy]="true"
           [rows]="apiParams.top"
           editMode="row"
           dataKey="id"
@@ -244,9 +244,7 @@
                   </ng-template>
                 </p-cellEditor>
               </td>
-              <td>
-                {{ leave.reason }}
-              </td>
+              <td>{{ leave.reason }}</td>
               <td>
                 @if(!editing && hasPermission('approve') && leave.status ===
                 'PENDING') {

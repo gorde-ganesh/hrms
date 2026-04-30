@@ -4,17 +4,28 @@
   <!-- Header -->
   <div class="flex flex-wrap gap-3 items-start justify-between">
     <div>
-      <div class="text-2xl leading-8 text-color font-semibold">Performance Management</div>
-      <div class="mt-1 leading-6 text-muted-color">Track goals, reviews, and appraisals</div>
+      <div class="text-2xl leading-8 text-color font-semibold">
+        Performance Management
+      </div>
+      <div class="mt-1 leading-6 text-muted-color">
+        Track goals, reviews, and appraisals
+      </div>
     </div>
     @if (canManage) {
-      <p-button label="Add Appraisal" icon="pi pi-plus" size="large" (onClick)="openAddDialog()"></p-button>
+    <p-button
+      label="Add Appraisal"
+      icon="pi pi-plus"
+      size="large"
+      (onClick)="openAddDialog()"
+    ></p-button>
     }
   </div>
 
   <!-- Summary Cards -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm">
+    <div
+      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
+    >
       <p class="text-sm text-muted-color">Latest Rating</p>
       <p class="text-3xl font-bold text-color mt-2">
         {{ latestRating !== null ? latestRating + '/10' : 'N/A' }}
@@ -22,21 +33,33 @@
       <p class="text-sm text-muted-color mt-1">Most recent review</p>
     </div>
 
-    <div class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm">
+    <div
+      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
+    >
       <p class="text-sm text-muted-color">Performance Rank</p>
       <div class="mt-2">
-        <p-tag [value]="ratingLabel" [severity]="ratingLabelSeverity" [rounded]="true"></p-tag>
+        <p-tag
+          [value]="ratingLabel"
+          [severity]="ratingLabelSeverity"
+          [rounded]="true"
+        ></p-tag>
       </div>
       <p class="text-sm text-muted-color mt-2">Based on latest review</p>
     </div>
 
-    <div class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm">
+    <div
+      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
+    >
       <p class="text-sm text-muted-color">Total Reviews</p>
-      <p class="text-3xl font-bold text-color mt-2">{{ performanceRecords.length }}</p>
+      <p class="text-3xl font-bold text-color mt-2">
+        {{ performanceRecords.length }}
+      </p>
       <p class="text-sm text-muted-color mt-1">All time</p>
     </div>
 
-    <div class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm">
+    <div
+      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
+    >
       <p class="text-sm text-muted-color">Last Review Date</p>
       <p class="text-lg font-semibold text-color mt-2">{{ lastReviewDate }}</p>
       <p class="text-sm text-muted-color mt-1">Most recent appraisal</p>
@@ -49,7 +72,7 @@
       <p-tab value="0">My Performance</p-tab>
       <p-tab value="1">Goals & KPIs</p-tab>
       @if (showTeamTab) {
-        <p-tab value="2">Team Performance</p-tab>
+      <p-tab value="2">Team Performance</p-tab>
       }
     </p-tablist>
 
@@ -62,18 +85,25 @@
             <ng-template pTemplate="header">
               <div class="p-4 pb-0">
                 <h4 class="font-semibold text-color">Rating Trend</h4>
-                <p class="text-sm text-muted-color">Your performance scores over time</p>
+                <p class="text-sm text-muted-color">
+                  Your performance scores over time
+                </p>
               </div>
             </ng-template>
             @if (performanceRecords.length > 0) {
-              <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="220px"></p-chart>
+            <p-chart
+              type="bar"
+              [data]="chartData"
+              [options]="chartOptions"
+              height="220px"
+            ></p-chart>
             } @else {
-              <div class="flex items-center justify-center h-40 text-muted-color">
-                <div class="text-center">
-                  <i class="pi pi-chart-bar text-4xl mb-2 block"></i>
-                  <p>No performance data yet</p>
-                </div>
+            <div class="flex items-center justify-center h-40 text-muted-color">
+              <div class="text-center">
+                <i class="pi pi-chart-bar text-4xl mb-2 block"></i>
+                <p>No performance data yet</p>
               </div>
+            </div>
             }
           </p-card>
 
@@ -82,12 +112,15 @@
             <ng-template pTemplate="header">
               <div class="p-4 pb-0">
                 <h4 class="font-semibold text-color">Review History</h4>
-                <p class="text-sm text-muted-color">Past performance reviews and feedback</p>
+                <p class="text-sm text-muted-color">
+                  Past performance reviews and feedback
+                </p>
               </div>
             </ng-template>
             <p-table
               [value]="performanceRecords"
               [paginator]="true"
+              [lazy]="true"
               [rows]="5"
               [rowsPerPageOptions]="[5, 10, 20]"
               emptyMessage="No reviews found"
@@ -100,42 +133,49 @@
                   <th>Rating</th>
                   <th>Comments</th>
                   @if (canManage) {
-                    <th class="w-24 text-right">Actions</th>
+                  <th class="w-24 text-right">Actions</th>
                   }
                 </tr>
               </ng-template>
               <ng-template pTemplate="body" let-record>
                 <tr>
-                  <td class="whitespace-nowrap text-sm">{{ record.createdAt | date: 'MMM d, y' }}</td>
+                  <td class="whitespace-nowrap text-sm">
+                    {{ record.createdAt | date: 'MMM d, y' }}
+                  </td>
                   <td class="max-w-xs">
-                    <p class="text-sm truncate" [title]="record.goals">{{ record.goals }}</p>
+                    <p class="text-sm truncate" [title]="record.goals">
+                      {{ record.goals }}
+                    </p>
                   </td>
                   <td>
                     @if (record.rating) {
-                      <p-tag
-                        [value]="record.rating + '/10'"
-                        [severity]="record.rating >= 7 ? 'success' : record.rating >= 4 ? 'info' : 'danger'"
-                        [rounded]="true"
-                      ></p-tag>
+                    <p-tag
+                      [value]="record.rating + '/10'"
+                      [severity]="record.rating >= 7 ? 'success' : record.rating >= 4 ? 'info' : 'danger'"
+                      [rounded]="true"
+                    ></p-tag>
                     } @else {
-                      <span class="text-muted-color text-sm">Pending</span>
+                    <span class="text-muted-color text-sm">Pending</span>
                     }
                   </td>
                   <td class="max-w-xs">
-                    <p class="text-sm truncate text-muted-color" [title]="record.comments">
+                    <p
+                      class="text-sm truncate text-muted-color"
+                      [title]="record.comments"
+                    >
                       {{ record.comments || '-' }}
                     </p>
                   </td>
                   @if (canManage) {
-                    <td class="text-right">
-                      <p-button
-                        icon="pi pi-pencil"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        (onClick)="openEditDialog(record)"
-                      ></p-button>
-                    </td>
+                  <td class="text-right">
+                    <p-button
+                      icon="pi pi-pencil"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="secondary"
+                      (onClick)="openEditDialog(record)"
+                    ></p-button>
+                  </td>
                   }
                 </tr>
               </ng-template>
@@ -151,12 +191,15 @@
             <ng-template pTemplate="header">
               <div class="p-4 pb-0">
                 <h4 class="font-semibold text-color">Goals & KPIs</h4>
-                <p class="text-sm text-muted-color">Your stated goals from all reviews</p>
+                <p class="text-sm text-muted-color">
+                  Your stated goals from all reviews
+                </p>
               </div>
             </ng-template>
             <p-table
               [value]="performanceRecords"
               [paginator]="true"
+              [lazy]="true"
               [rows]="10"
               emptyMessage="No goals defined yet"
               [tableStyle]="{ 'min-width': '30rem' }"
@@ -171,22 +214,28 @@
               </ng-template>
               <ng-template pTemplate="body" let-record>
                 <tr>
-                  <td class="whitespace-nowrap text-sm">{{ record.createdAt | date: 'MMM d, y' }}</td>
+                  <td class="whitespace-nowrap text-sm">
+                    {{ record.createdAt | date: 'MMM d, y' }}
+                  </td>
                   <td>
-                    <p class="text-sm whitespace-pre-line">{{ record.goals }}</p>
+                    <p class="text-sm whitespace-pre-line">
+                      {{ record.goals }}
+                    </p>
                   </td>
                   <td>
                     @if (record.rating) {
-                      <p-tag
-                        [value]="record.rating + '/10'"
-                        [severity]="record.rating >= 7 ? 'success' : record.rating >= 4 ? 'info' : 'danger'"
-                        [rounded]="true"
-                      ></p-tag>
+                    <p-tag
+                      [value]="record.rating + '/10'"
+                      [severity]="record.rating >= 7 ? 'success' : record.rating >= 4 ? 'info' : 'danger'"
+                      [rounded]="true"
+                    ></p-tag>
                     } @else {
-                      <span class="text-muted-color text-sm">Pending</span>
+                    <span class="text-muted-color text-sm">Pending</span>
                     }
                   </td>
-                  <td class="text-sm text-muted-color">{{ record.managerComments || '-' }}</td>
+                  <td class="text-sm text-muted-color">
+                    {{ record.managerComments || '-' }}
+                  </td>
                 </tr>
               </ng-template>
             </p-table>
@@ -196,56 +245,63 @@
 
       <!-- Tab 2: Team Performance (Manager/HR/Admin only) -->
       @if (showTeamTab) {
-        <p-tabpanel value="2">
-          <div class="mt-4">
-            <p-card>
+      <p-tabpanel value="2">
+        <div class="mt-4">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-4 pb-0">
+                <h4 class="font-semibold text-color">
+                  Team Performance Summary
+                </h4>
+                <p class="text-sm text-muted-color">
+                  Overview of your team's appraisals
+                </p>
+              </div>
+            </ng-template>
+            <p-table
+              [value]="getTeamSummary()"
+              [paginator]="true"
+              [lazy]="true"
+              [rows]="10"
+              emptyMessage="No team performance data available"
+              [tableStyle]="{ 'min-width': '40rem' }"
+            >
               <ng-template pTemplate="header">
-                <div class="p-4 pb-0">
-                  <h4 class="font-semibold text-color">Team Performance Summary</h4>
-                  <p class="text-sm text-muted-color">Overview of your team's appraisals</p>
-                </div>
+                <tr>
+                  <th>Employee</th>
+                  <th>Designation</th>
+                  <th>Latest Rating</th>
+                  <th>Total Reviews</th>
+                  <th>Last Reviewed</th>
+                </tr>
               </ng-template>
-              <p-table
-                [value]="getTeamSummary()"
-                [paginator]="true"
-                [rows]="10"
-                emptyMessage="No team performance data available"
-                [tableStyle]="{ 'min-width': '40rem' }"
-              >
-                <ng-template pTemplate="header">
-                  <tr>
-                    <th>Employee</th>
-                    <th>Designation</th>
-                    <th>Latest Rating</th>
-                    <th>Total Reviews</th>
-                    <th>Last Reviewed</th>
-                  </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-summary>
-                  <tr>
-                    <td class="font-medium">{{ summary.name }}</td>
-                    <td class="text-sm text-muted-color">{{ summary.designation }}</td>
-                    <td>
-                      @if (summary.latestRating) {
-                        <p-tag
-                          [value]="summary.latestRating + '/10'"
-                          [severity]="summary.latestRating >= 7 ? 'success' : summary.latestRating >= 4 ? 'info' : 'danger'"
-                          [rounded]="true"
-                        ></p-tag>
-                      } @else {
-                        <span class="text-muted-color text-sm">No rating</span>
-                      }
-                    </td>
-                    <td>{{ summary.reviewCount }}</td>
-                    <td class="text-sm text-muted-color">
-                      {{ summary.lastReviewed | date: 'MMM d, y' }}
-                    </td>
-                  </tr>
-                </ng-template>
-              </p-table>
-            </p-card>
-          </div>
-        </p-tabpanel>
+              <ng-template pTemplate="body" let-summary>
+                <tr>
+                  <td class="font-medium">{{ summary.name }}</td>
+                  <td class="text-sm text-muted-color">
+                    {{ summary.designation }}
+                  </td>
+                  <td>
+                    @if (summary.latestRating) {
+                    <p-tag
+                      [value]="summary.latestRating + '/10'"
+                      [severity]="summary.latestRating >= 7 ? 'success' : summary.latestRating >= 4 ? 'info' : 'danger'"
+                      [rounded]="true"
+                    ></p-tag>
+                    } @else {
+                    <span class="text-muted-color text-sm">No rating</span>
+                    }
+                  </td>
+                  <td>{{ summary.reviewCount }}</td>
+                  <td class="text-sm text-muted-color">
+                    {{ summary.lastReviewed | date: 'MMM d, y' }}
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </p-card>
+        </div>
+      </p-tabpanel>
       }
     </p-tabpanels>
   </p-tabs>
@@ -265,46 +321,50 @@
 
   <form [formGroup]="appraisalForm" class="flex flex-col gap-5">
     @if (!editingId) {
-      <!-- Employee selector — only shown when creating new -->
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium">Employee <span class="text-red-500">*</span></label>
-        <p-select
-          formControlName="employeeId"
-          [options]="employees"
-          optionLabel="user.name"
-          optionValue="id"
-          placeholder="Select Employee"
-          [filter]="true"
-          filterBy="user.name"
-          [showClear]="true"
-          styleClass="w-full"
-          appendTo="body"
-        >
-          <ng-template #item let-emp>
-            <div>
-              <div class="font-medium">{{ emp.user?.name }}</div>
-              <div class="text-xs text-muted-color">{{ emp.employeeCode }}</div>
-            </div>
-          </ng-template>
-        </p-select>
-        @if (appraisalForm.get('employeeId')?.touched && appraisalForm.get('employeeId')?.invalid) {
-          <small class="text-red-500">Employee is required</small>
-        }
-      </div>
+    <!-- Employee selector — only shown when creating new -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium"
+        >Employee <span class="text-red-500">*</span></label
+      >
+      <p-select
+        formControlName="employeeId"
+        [options]="employees"
+        optionLabel="user.name"
+        optionValue="id"
+        placeholder="Select Employee"
+        [filter]="true"
+        filterBy="user.name"
+        [showClear]="true"
+        styleClass="w-full"
+        appendTo="body"
+      >
+        <ng-template #item let-emp>
+          <div>
+            <div class="font-medium">{{ emp.user?.name }}</div>
+            <div class="text-xs text-muted-color">{{ emp.employeeCode }}</div>
+          </div>
+        </ng-template>
+      </p-select>
+      @if (appraisalForm.get('employeeId')?.touched &&
+      appraisalForm.get('employeeId')?.invalid) {
+      <small class="text-red-500">Employee is required</small>
+      }
+    </div>
 
-      <p-floatlabel class="w-full" variant="on">
-        <textarea
-          pTextarea
-          rows="4"
-          class="w-full"
-          formControlName="goals"
-          id="perf-goals"
-        ></textarea>
-        <label for="perf-goals">Goals <span class="text-red-500">*</span></label>
-        @if (appraisalForm.get('goals')?.touched && appraisalForm.get('goals')?.invalid) {
-          <small class="text-red-500">Goals are required</small>
-        }
-      </p-floatlabel>
+    <p-floatlabel class="w-full" variant="on">
+      <textarea
+        pTextarea
+        rows="4"
+        class="w-full"
+        formControlName="goals"
+        id="perf-goals"
+      ></textarea>
+      <label for="perf-goals">Goals <span class="text-red-500">*</span></label>
+      @if (appraisalForm.get('goals')?.touched &&
+      appraisalForm.get('goals')?.invalid) {
+      <small class="text-red-500">Goals are required</small>
+      }
+    </p-floatlabel>
     }
 
     <div class="flex flex-col gap-2">

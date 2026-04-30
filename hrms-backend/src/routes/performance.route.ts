@@ -7,20 +7,20 @@ import {
   getAllPerformance,
   getTeamPerformance,
 } from '../controllers/performance.controller';
-import { Role } from '../../generated/prisma/client';
+
 
 function registerRouters(app: express.Application) {
   app.post(
     '/api/performance',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN, Role.MANAGER]),
+    roleAccess(['HR', 'ADMIN', 'MANAGER']),
     addAppraisal
   );
 
   app.put(
     '/api/performance/:id',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN, Role.MANAGER]),
+    roleAccess(['HR', 'ADMIN', 'MANAGER']),
     updateAppraisal
   );
 
@@ -28,21 +28,21 @@ function registerRouters(app: express.Application) {
   app.get(
     '/api/performance/all',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     getAllPerformance
   );
 
   app.get(
     '/api/performance/team',
     authenticate,
-    roleAccess([Role.MANAGER]),
+    roleAccess(['MANAGER']),
     getTeamPerformance
   );
 
   app.get(
     '/api/performance/:employeeId',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN, Role.EMPLOYEE, Role.MANAGER]),
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE', 'MANAGER']),
     getEmployeePerformance
   );
 }

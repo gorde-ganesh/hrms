@@ -64,7 +64,7 @@ export const getAllDesignations = async (req: Request, res: Response) => {
 };
 
 export const getDesignationById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 
@@ -78,7 +78,7 @@ export const getDesignationById = async (req: Request, res: Response) => {
 };
 
 export const updateDesignation = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { name, description, classification } = req.body;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
@@ -100,7 +100,7 @@ export const updateDesignation = async (req: Request, res: Response) => {
 };
 
 export const deleteDesignation = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 
@@ -112,7 +112,7 @@ export const deleteDesignation = async (req: Request, res: Response) => {
 };
 
 export const restoreDesignation = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 

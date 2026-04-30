@@ -18,11 +18,8 @@
         <div class="flex items-center gap-2 mt-2">
           <i class="pi pi-clock"></i>
           <span class="text-gray-700">
-            {{
-              todayStatus === 'PRESENT'
-                ? 'Checked in at ' + todayCheckInTime
-                : todayStatus
-            }}
+            {{ todayStatus === 'PRESENT' ? 'Checked in at ' + todayCheckInTime :
+            todayStatus }}
           </span>
         </div>
         <p class="text-sm text-gray-600 mt-1">
@@ -65,12 +62,8 @@
             {{ attendenceSummary?.presentDays }} days
           </p>
           <p class="text-sm text-green-600 mt-1">
-            {{
-              getPercentage(
-                attendenceSummary?.presentDays,
-                attendenceSummary?.workingDays
-              )
-            }}%
+            {{ getPercentage( attendenceSummary?.presentDays,
+            attendenceSummary?.workingDays ) }}%
           </p>
         </div>
         <span
@@ -88,12 +81,8 @@
             {{ attendenceSummary?.absentDays }} days
           </p>
           <p class="text-sm text-red-600 mt-1">
-            {{
-              getPercentage(
-                attendenceSummary?.absentDays,
-                attendenceSummary?.workingDays
-              )
-            }}%
+            {{ getPercentage( attendenceSummary?.absentDays,
+            attendenceSummary?.workingDays ) }}%
           </p>
         </div>
         <span class="h-8 w-8 text-red-600 pi pi-times-circle card-icons"></span>
@@ -129,6 +118,7 @@
         <p-table
           [value]="myAttendence"
           [paginator]="true"
+          [lazy]="true"
           [rows]="myAttendenceParams.top"
           editMode="row"
           [tableStyle]="{ 'min-width': '50rem' }"
@@ -191,6 +181,7 @@
         <p-table
           [value]="teamAttendence"
           [paginator]="true"
+          [lazy]="true"
           [rows]="teamAttendenceParams.top"
           [tableStyle]="{ 'min-width': '50rem' }"
           (onPage)="teamPageChange($event)"
@@ -265,6 +256,7 @@
         <p-table
           [value]="allAttendence"
           [paginator]="true"
+          [lazy]="true"
           [rows]="allAttendenceParams.top"
           [tableStyle]="{ 'min-width': '50rem' }"
           (onPage)="allPageChange($event)"

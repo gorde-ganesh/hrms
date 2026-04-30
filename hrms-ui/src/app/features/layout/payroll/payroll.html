@@ -14,6 +14,7 @@
         <p-table
           [value]="payrolls"
           [paginator]="true"
+          [lazy]="true"
           [rows]="apiParams.top"
           [tableStyle]="{ 'min-width': '50rem' }"
           (onPage)="pageChange($event)"
@@ -67,6 +68,7 @@
         <p-table
           [value]="payrollComponentsAll"
           [paginator]="true"
+          [lazy]="true"
           [rows]="payrollComponentsApiParams.top"
           [tableStyle]="{ 'min-width': '50rem' }"
           (onPage)="pageComponentChange($event)"
@@ -87,9 +89,7 @@
           <ng-template #body let-component>
             <tr>
               <td>{{ component.name }}</td>
-              <td>
-                {{ component.type }}
-              </td>
+              <td>{{ component.type }}</td>
               <td>
                 <p-tag
                   [severity]="component.isActive | status"
@@ -166,8 +166,8 @@
                       <div>
                         <div class="font-medium">{{ employee.user?.name }}</div>
                         <div class="text-sm text-gray-600">
-                          {{ employee.employeeCode }} -
-                          {{ employee.department?.name }}
+                          {{ employee.employeeCode }} - {{
+                          employee.department?.name }}
                         </div>
                       </div>
                     </div>
@@ -270,8 +270,8 @@
                               : 'text-red-600'
                           "
                         >
-                          {{ component.type === 'ALLOWANCE' ? '+' : '-' }}
-                          {{ component.amount.toFixed(2) }}
+                          {{ component.type === 'ALLOWANCE' ? '+' : '-' }} {{
+                          component.amount.toFixed(2) }}
                         </span>
                       </td>
                     </tr>

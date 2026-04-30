@@ -52,6 +52,7 @@
   <p-table
     [value]="employees"
     [paginator]="true"
+    [lazy]="true"
     [rows]="apiParams.top"
     [tableStyle]="{ 'min-width': '50rem' }"
     (onPage)="pageChange($event)"

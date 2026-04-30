@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES } from '../utils/response-codes';
-import { rolePermissions } from '../utils/permission.utils';
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const JWT_SECRET = process.env.JWT_KEY as string;
@@ -45,7 +44,7 @@ export class AuthService {
     }
 
     const accessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, employeeId: employee.id },
+      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee.id },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -59,14 +58,12 @@ export class AuthService {
       },
     });
 
-    const permissions = user.userRole
-      ? user.userRole.permissions.reduce((acc: any, rp) => {
-          const { resource, action } = rp.permission;
-          if (!acc[resource]) acc[resource] = [];
-          acc[resource].push(action);
-          return acc;
-        }, {})
-      : rolePermissions[user.role];
+    const permissions = user.userRole.permissions.reduce((acc: any, rp) => {
+      const { resource, action } = rp.permission;
+      if (!acc[resource]) acc[resource] = [];
+      acc[resource].push(action);
+      return acc;
+    }, {});
 
     return {
       accessToken,
@@ -75,9 +72,8 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.userRole.name,
         roleId: user.roleId,
-        roleName: user.userRole?.name,
         employeeId: employee.id,
         permissions,
       },
@@ -88,6 +84,7 @@ export class AuthService {
     const hashed = this.hashToken(rawRefreshToken);
     const user = await prisma.user.findFirst({
       where: { refreshToken: hashed, refreshTokenExp: { gte: new Date() } },
+      include: { userRole: true },
     });
     if (!user) {
       throw new HttpError(401, 'Invalid or expired refresh token', ERROR_CODES.UNAUTHORIZED);
@@ -96,7 +93,7 @@ export class AuthService {
     const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
 
     const newAccessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, employeeId: employee?.id },
+      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee?.id },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -131,18 +128,16 @@ export class AuthService {
 
     const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
 
-    const permissions = user.userRole
-      ? user.userRole.permissions.reduce((acc: any, rp) => {
-          const { resource, action } = rp.permission;
-          if (!acc[resource]) acc[resource] = [];
-          acc[resource].push(action);
-          return acc;
-        }, {})
-      : rolePermissions[user.role];
+    const permissions = user.userRole.permissions.reduce((acc: any, rp) => {
+      const { resource, action } = rp.permission;
+      if (!acc[resource]) acc[resource] = [];
+      acc[resource].push(action);
+      return acc;
+    }, {});
 
     return {
-      id: user.id, name: user.name, email: user.email, role: user.role,
-      roleId: user.roleId, roleName: user.userRole?.name,
+      id: user.id, name: user.name, email: user.email,
+      role: user.userRole.name, roleId: user.roleId,
       employeeId: employee?.id, permissions,
     };
   }

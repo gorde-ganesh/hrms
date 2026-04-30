@@ -10,45 +10,45 @@ import {
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate';
 import { CreateDesignationSchema, UpdateDesignationSchema } from '../schemas/designation.schema';
-import { Role } from '../../generated/prisma/client';
+
 
 function registerRouters(app: express.Application) {
   app.post(
     '/api/designations',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     validate(CreateDesignationSchema),
     createDesignation
   );
   app.get(
     '/api/designations',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     getAllDesignations
   );
   app.get(
     '/api/designations/:id',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     getDesignationById
   );
   app.put(
     '/api/designations/:id',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     validate(UpdateDesignationSchema),
     updateDesignation
   );
   app.delete(
     '/api/designations/:id',
     authenticate,
-    roleAccess([Role.HR, Role.ADMIN]),
+    roleAccess(['HR', 'ADMIN']),
     deleteDesignation
   );
   app.put(
     '/api/designations/:id/restore',
     authenticate,
-    roleAccess([Role.ADMIN]),
+    roleAccess(['ADMIN']),
     restoreDesignation
   );
 }

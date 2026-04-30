@@ -22,7 +22,7 @@ const getDefaultLeaveCount = (leaveType: LeaveType): number => {
 
 // GET /api/leave-balance/:employeeId
 export const getEmployeeLeaveBalance = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
   const { year } = req.query;
 
   if (!employeeId) {
@@ -58,7 +58,7 @@ export const getEmployeeLeaveBalance = async (req: Request, res: Response) => {
 
 // GET /api/leave-balance/:employeeId/summary
 export const getLeaveBalanceSummary = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
 
   if (!employeeId) {
     throw new HttpError(
@@ -98,7 +98,7 @@ export const getLeaveBalanceSummary = async (req: Request, res: Response) => {
 
 // PUT /api/leave-balance/:employeeId
 export const updateLeaveBalance = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
   const { year, leaveType, totalLeaves } = req.body;
 
   if (!employeeId || !year || !leaveType || totalLeaves === undefined) {
@@ -149,7 +149,7 @@ export const updateLeaveBalance = async (req: Request, res: Response) => {
 
 // POST /api/leave-balance/:employeeId/initialize
 export const initializeLeaveBalances = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
   const { year } = req.body;
 
   if (!employeeId) {

@@ -1,11 +1,6 @@
-import {
-  Notification,
-  NotificationType,
-  Role,
-} from '../../generated/prisma';
+import { NotificationType } from '../../generated/prisma';
 import { io, onlineUsers } from '../../main';
 import { prisma } from '../lib/prisma';
-
 
 export const sendNotification = async (options: {
   employeeIds?: string[];
@@ -14,22 +9,17 @@ export const sendNotification = async (options: {
   message: string;
 }) => {
   const { employeeIds = [], managerId, type, message } = options;
-  const notificationsData: any[] = [];
-
-  // Fetch employees with userIds
-  const employees = await prisma.employee.findMany({
-    where: { id: { in: employeeIds } },
-    select: { id: true, userId: true },
-  });
+  const notificationsData: { employeeId: string; userId: string; type: NotificationType; message: string }[] = [];
 
   // Employee notifications
-  for (const emp of employees) {
-    notificationsData.push({
-      employeeId: emp.id,
-      userId: emp.userId,
-      type,
-      message,
+  if (employeeIds.length > 0) {
+    const employees = await prisma.employee.findMany({
+      where: { id: { in: employeeIds } },
+      select: { id: true, userId: true },
     });
+    for (const emp of employees) {
+      notificationsData.push({ employeeId: emp.id, userId: emp.userId, type, message });
+    }
   }
 
   // Manager notification
@@ -39,35 +29,24 @@ export const sendNotification = async (options: {
       select: { id: true, userId: true },
     });
     if (manager) {
-      notificationsData.push({
-        employeeId: manager.id,
-        userId: manager.userId,
-        type,
-        message,
-      });
+      notificationsData.push({ employeeId: manager.id, userId: manager.userId, type, message });
     }
   }
 
-  // HR/Admin notifications — single query with employee joined
+  // HR users — look up by role name via RBAC
   const hrUsers = await prisma.user.findMany({
-    where: { role: { in: [Role.HR] } },
+    where: { userRole: { name: 'HR' } },
     include: { employee: { select: { id: true } } },
   });
-
   for (const hr of hrUsers) {
     if (hr.employee) {
-      notificationsData.push({
-        employeeId: hr.employee.id,
-        userId: hr.id,
-        type,
-        message,
-      });
+      notificationsData.push({ employeeId: hr.employee.id, userId: hr.id, type, message });
     }
   }
 
   if (notificationsData.length > 0) {
     await prisma.notification.createMany({
-      data: notificationsData,
+      data: notificationsData.map(({ employeeId, type, message }) => ({ employeeId, type, message })),
       skipDuplicates: true,
     });
 
@@ -75,10 +54,7 @@ export const sendNotification = async (options: {
     notificationsData.forEach((n) => {
       const socketId = onlineUsers[n.userId];
       if (socketId) {
-        io.to(socketId).emit('notification', {
-          type: n.type,
-          message: n.message,
-        });
+        io.to(socketId).emit('notification', { type: n.type, message: n.message });
       }
     });
   }

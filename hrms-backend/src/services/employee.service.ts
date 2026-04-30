@@ -129,7 +129,7 @@ export class EmployeeService {
   async findById(id: string) {
     const employee = await prisma.employee.findUnique({
       where: { id },
-      include: { user: { select: { name: true, email: true, role: true } } },
+      include: { user: { select: { name: true, email: true, userRole: { select: { name: true } } } } },
     });
     if (!employee) {
       throw new HttpError(404, 'Employee not found', ERROR_CODES.EMPLOYEE_NOT_FOUND);
@@ -167,7 +167,7 @@ export class EmployeeService {
         where, take, skip,
         orderBy: { [sortField]: sortOrder },
         include: {
-          user: { select: { name: true, email: true, role: true } },
+          user: { select: { name: true, email: true, userRole: { select: { name: true } } } },
           department: { select: { name: true } },
           designation: { select: { name: true } },
         },

@@ -128,6 +128,12 @@ export const registerUser = async (req: Request, res: Response) => {
     );
   }
 
+  // Validate role exists
+  const userRole = await prisma.userRole.findUnique({ where: { name: role } });
+  if (!userRole) {
+    throw new HttpError(400, 'Invalid role', ERROR_CODES.VALIDATION_ERROR);
+  }
+
   // Validate manager exists if provided
   if (managerId) {
     const manager = await prisma.employee.findUnique({
@@ -157,7 +163,7 @@ export const registerUser = async (req: Request, res: Response) => {
         data: {
           name,
           password: hashedPassword,
-          role,
+          roleId: userRole.id,
           phone,
           address,
           state,
@@ -218,7 +224,7 @@ export const registerUser = async (req: Request, res: Response) => {
           name,
           email,
           password: hashedPassword,
-          role,
+          roleId: userRole.id,
           phone,
           address,
           state,

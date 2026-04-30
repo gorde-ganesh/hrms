@@ -24,9 +24,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role, // Keep for backward compatibility
+    role: user.userRole?.name,
     roleId: user.roleId,
-    roleName: user.userRole?.name,
     department: user.employee?.department?.name,
     designation: user.employee?.designation?.name,
   }));
@@ -42,7 +41,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 // ----------------- Get User Details -----------------
 export const getUserDetails = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!id) {
     throw new HttpError(
@@ -108,7 +107,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
 
 // ----------------- Update User Details -----------------
 export const updateUserDetails = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { name, email, phone, address, country, state, city, zipCode } =
     req.body;
 
