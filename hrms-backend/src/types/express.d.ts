@@ -2,6 +2,10 @@ import 'express';
 import { Response } from 'express';
 
 declare module 'express-serve-static-core' {
+  interface Request {
+    user?: any;
+  }
+
   interface Response<ResBody = any, LocalsObj = Record<string, any>> {
     success: (
       message: string,

@@ -51,21 +51,27 @@
   <!-- ── Employee table ── -->
   <p-table
     [value]="employees"
+    [lazy]="true"
     [paginator]="true"
     [lazy]="true"
     [rows]="apiParams.top"
     [tableStyle]="{ 'min-width': '50rem' }"
-    (onPage)="pageChange($event)"
+    (onLazyLoad)="onLazyLoad($event)"
     [showCurrentPageReport]="true"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
     [rowsPerPageOptions]="[5, 10, 20]"
     [totalRecords]="totalRecords"
     [first]="apiParams.pageno"
+    styleClass="p-datatable-sm"
   >
     <ng-template #caption>
-      <form [formGroup]="filterForm" class="flex gap-3 flex-wrap items-center justify-between">
-        <div class="flex gap-3 flex-wrap items-end">
-          <p-floatlabel variant="on" class="w-44">
+      <form [formGroup]="filterForm" class="table-filters">
+        <div class="filters-left">
+          <p-iconfield iconPosition="left">
+            <p-inputicon><i class="pi pi-search"></i></p-inputicon>
+            <input pInputText type="text" [formControl]="searchControl" placeholder="Search employees…" class="search-input" />
+          </p-iconfield>
+          <p-floatlabel variant="on" class="filter-select">
             <p-select
               formControlName="departmentId"
               [options]="options?.['DEPARTMENTS']"
@@ -76,7 +82,7 @@
             />
             <label>Department</label>
           </p-floatlabel>
-          <p-floatlabel variant="on" class="w-36">
+          <p-floatlabel variant="on" class="filter-select">
             <p-select
               formControlName="status"
               [options]="options?.['EMPLOYEE_STATUS']"
@@ -87,7 +93,7 @@
             />
             <label>Status</label>
           </p-floatlabel>
-          <p-floatlabel variant="on" class="w-44">
+          <p-floatlabel variant="on" class="filter-select">
             <p-select
               formControlName="designationId"
               [options]="options?.['DESIGNATIONS']"
@@ -99,11 +105,7 @@
             <label>Designation</label>
           </p-floatlabel>
         </div>
-        <div class="flex gap-2 items-center">
-          <p-iconfield iconPosition="left">
-            <p-inputicon><i class="pi pi-search"></i></p-inputicon>
-            <input pInputText type="text" [formControl]="searchControl" placeholder="Search employees" />
-          </p-iconfield>
+        <div class="filters-right">
           <p-button label="Apply" [outlined]="true" size="small" icon="pi pi-check" (click)="applyFilter()" />
           <p-button label="Clear" [outlined]="true" size="small" severity="secondary" icon="pi pi-filter-slash" (click)="clearFilter()" />
         </div>
@@ -112,25 +114,31 @@
 
     <ng-template #header>
       <tr>
-        <th>Code</th>
-        <th>Name</th>
-        <th>Email</th>
+        <th style="width:7rem">Code</th>
+        <th>Employee</th>
         <th>Department</th>
         <th>Designation</th>
-        <th>Joined</th>
-        <th>Status</th>
-        <th>Actions</th>
+        <th style="width:8rem">Joined</th>
+        <th style="width:7rem">Status</th>
+        <th style="width:9rem">Actions</th>
       </tr>
     </ng-template>
 
     <ng-template #body let-employee>
       <tr>
-        <td class="font-mono text-sm font-medium">{{ employee.employeeCode }}</td>
-        <td class="font-medium">{{ employee.user.name }}</td>
-        <td class="text-sm text-muted-color">{{ employee.user.email }}</td>
-        <td>{{ employee.department?.name || '—' }}</td>
-        <td>{{ employee.designation?.name || '—' }}</td>
-        <td class="text-sm">{{ employee.joiningDate | date : 'dd MMM yyyy' }}</td>
+        <td><span class="emp-code">{{ employee.employeeCode }}</span></td>
+        <td>
+          <div class="emp-cell">
+            <div class="emp-avatar">{{ getInitials(employee.user.name) }}</div>
+            <div>
+              <div class="emp-name">{{ employee.user.name }}</div>
+              <div class="emp-email">{{ employee.user.email }}</div>
+            </div>
+          </div>
+        </td>
+        <td class="text-sm">{{ employee.department?.name || '—' }}</td>
+        <td class="text-sm">{{ employee.designation?.name || '—' }}</td>
+        <td class="text-sm text-muted-color">{{ employee.joiningDate | date : 'dd MMM yyyy' }}</td>
         <td>
           <p-tag
             [severity]="employee.status === 'ACTIVE' ? 'success' : 'danger'"
@@ -139,11 +147,11 @@
           />
         </td>
         <td>
-          <div class="flex gap-1">
-            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" size="small" (click)="onView(employee)" />
-            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" size="small" (click)="onEdit(employee)" />
-            <p-button icon="pi pi-money-bill" [rounded]="true" [text]="true" size="small" (click)="onGeneratePayroll(employee)" />
-            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" size="small" severity="danger" (click)="onDelete($event, employee)" />
+          <div class="flex gap-0.5">
+            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" size="small" pTooltip="View" tooltipPosition="top" (click)="onView(employee)" />
+            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" size="small" pTooltip="Edit" tooltipPosition="top" (click)="onEdit(employee)" />
+            <p-button icon="pi pi-money-bill" [rounded]="true" [text]="true" size="small" pTooltip="Payroll" tooltipPosition="top" (click)="onGeneratePayroll(employee)" />
+            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" size="small" severity="danger" pTooltip="Remove" tooltipPosition="top" (click)="onDelete($event, employee)" />
           </div>
         </td>
       </tr>
@@ -151,7 +159,10 @@
 
     <ng-template #emptymessage>
       <tr>
-        <td colspan="8" class="text-center py-12 text-muted-color text-sm">No employees found.</td>
+        <td colspan="7" class="text-center py-14 text-muted-color text-sm">
+          <i class="pi pi-users text-3xl block mb-3 opacity-30"></i>
+          No employees found.
+        </td>
       </tr>
     </ng-template>
   </p-table>
@@ -513,173 +524,195 @@
   [style]="{ width: '52rem' }"
   [breakpoints]="{ '1199px': '75vw', '575px': '92vw' }"
   [draggable]="false"
+  (onHide)="onEditDialogHide()"
 >
-  <form [formGroup]="addEmployeeForm" class="pt-4">
+  <div class="pt-4">
 
+    <!-- Name field (updates user.name) -->
     <div class="section-block">
       <div class="section-header">
-        <i class="pi pi-briefcase section-icon"></i>
-        <span class="section-title">Work Details</span>
+        <i class="pi pi-user section-icon"></i>
+        <span class="section-title">Account</span>
       </div>
-      <div class="grid grid-cols-2 gap-x-5 gap-y-6">
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <input pInputText formControlName="employeeCode" class="w-full"
-              [invalid]="addEmployeeForm.controls['employeeCode'].invalid && addEmployeeForm.controls['employeeCode'].touched" />
-            <label>Employee Code</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['employeeCode'].invalid && addEmployeeForm.controls['employeeCode'].touched) {
-            <p-message severity="error" size="small" variant="simple">Employee code is required.</p-message>
-          }
-        </div>
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-select formControlName="departmentId" [options]="options?.['DEPARTMENTS']" optionLabel="display_text" optionValue="value"
-              class="w-full" appendTo="body"
-              [invalid]="addEmployeeForm.controls['departmentId'].invalid && addEmployeeForm.controls['departmentId'].touched" />
-            <label>Department</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['departmentId'].invalid && addEmployeeForm.controls['departmentId'].touched) {
-            <p-message severity="error" size="small" variant="simple">Department is required.</p-message>
-          }
-        </div>
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-select formControlName="designationId" [options]="options?.['DESIGNATIONS']" optionLabel="display_text" optionValue="value"
-              class="w-full" appendTo="body"
-              [invalid]="addEmployeeForm.controls['designationId'].invalid && addEmployeeForm.controls['designationId'].touched" />
-            <label>Designation</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['designationId'].invalid && addEmployeeForm.controls['designationId'].touched) {
-            <p-message severity="error" size="small" variant="simple">Designation is required.</p-message>
-          }
-        </div>
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-datepicker formControlName="joiningDate" class="w-full" dateFormat="dd/mm/yy" appendTo="body"
-              [invalid]="addEmployeeForm.controls['joiningDate'].invalid && addEmployeeForm.controls['joiningDate'].touched" />
-            <label>Joining Date</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['joiningDate'].invalid && addEmployeeForm.controls['joiningDate'].touched) {
-            <p-message severity="error" size="small" variant="simple">Joining date is required.</p-message>
-          }
-        </div>
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-inputnumber formControlName="salary" class="w-full" [useGrouping]="true" prefix="₹ "
-              [invalid]="addEmployeeForm.controls['salary'].invalid && addEmployeeForm.controls['salary'].touched" />
-            <label>Annual Salary</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['salary'].invalid && addEmployeeForm.controls['salary'].touched) {
-            <p-message severity="error" size="small" variant="simple">Salary is required.</p-message>
-          }
-        </div>
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-select formControlName="managerId" [options]="options?.['MANAGERS']" optionLabel="display_text" optionValue="value"
-              class="w-full" appendTo="body"
-              [invalid]="addEmployeeForm.controls['managerId'].invalid && addEmployeeForm.controls['managerId'].touched" />
-            <label>Reporting Manager</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['managerId'].invalid && addEmployeeForm.controls['managerId'].touched) {
-            <p-message severity="error" size="small" variant="simple">Manager is required for this role.</p-message>
-          }
-        </div>
-
+      <div>
+        <p-floatlabel class="w-full" variant="on">
+          <input pInputText [formControl]="editNameControl" class="w-full"
+            [invalid]="editNameControl.invalid && editNameControl.touched" />
+          <label>Full Name</label>
+        </p-floatlabel>
+        @if (editNameControl.invalid && editNameControl.touched) {
+          <p-message severity="error" size="small" variant="simple">Name is required.</p-message>
+        }
       </div>
     </div>
 
-    <div class="section-block">
-      <div class="section-header">
-        <i class="pi pi-id-card section-icon"></i>
-        <span class="section-title">Personal Information</span>
+    <form [formGroup]="addEmployeeForm">
+
+      <div class="section-block">
+        <div class="section-header">
+          <i class="pi pi-briefcase section-icon"></i>
+          <span class="section-title">Work Details</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-5 gap-y-6">
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <input pInputText formControlName="employeeCode" class="w-full"
+                [invalid]="addEmployeeForm.controls['employeeCode'].invalid && addEmployeeForm.controls['employeeCode'].touched" />
+              <label>Employee Code</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['employeeCode'].invalid && addEmployeeForm.controls['employeeCode'].touched) {
+              <p-message severity="error" size="small" variant="simple">Employee code is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-select formControlName="departmentId" [options]="options?.['DEPARTMENTS']" optionLabel="display_text" optionValue="value"
+                class="w-full" appendTo="body"
+                [invalid]="addEmployeeForm.controls['departmentId'].invalid && addEmployeeForm.controls['departmentId'].touched" />
+              <label>Department</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['departmentId'].invalid && addEmployeeForm.controls['departmentId'].touched) {
+              <p-message severity="error" size="small" variant="simple">Department is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-select formControlName="designationId" [options]="options?.['DESIGNATIONS']" optionLabel="display_text" optionValue="value"
+                class="w-full" appendTo="body"
+                [invalid]="addEmployeeForm.controls['designationId'].invalid && addEmployeeForm.controls['designationId'].touched" />
+              <label>Designation</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['designationId'].invalid && addEmployeeForm.controls['designationId'].touched) {
+              <p-message severity="error" size="small" variant="simple">Designation is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-datepicker formControlName="joiningDate" class="w-full" dateFormat="dd/mm/yy" appendTo="body"
+                [invalid]="addEmployeeForm.controls['joiningDate'].invalid && addEmployeeForm.controls['joiningDate'].touched" />
+              <label>Joining Date</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['joiningDate'].invalid && addEmployeeForm.controls['joiningDate'].touched) {
+              <p-message severity="error" size="small" variant="simple">Joining date is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-inputnumber formControlName="salary" class="w-full" [useGrouping]="true" prefix="₹ "
+                [invalid]="addEmployeeForm.controls['salary'].invalid && addEmployeeForm.controls['salary'].touched" />
+              <label>Annual Salary</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['salary'].invalid && addEmployeeForm.controls['salary'].touched) {
+              <p-message severity="error" size="small" variant="simple">Salary is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-select formControlName="managerId" [options]="options?.['MANAGERS']" optionLabel="display_text" optionValue="value"
+                class="w-full" appendTo="body"
+                [invalid]="addEmployeeForm.controls['managerId'].invalid && addEmployeeForm.controls['managerId'].touched" />
+              <label>Reporting Manager</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['managerId'].invalid && addEmployeeForm.controls['managerId'].touched) {
+              <p-message severity="error" size="small" variant="simple">Manager is required for this role.</p-message>
+            }
+          </div>
+
+        </div>
       </div>
-      <div class="grid grid-cols-2 gap-x-5 gap-y-6">
 
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-datepicker formControlName="dob" class="w-full" dateFormat="dd/mm/yy" appendTo="body"
-              [invalid]="addEmployeeForm.controls['dob'].invalid && addEmployeeForm.controls['dob'].touched" />
-            <label>Date of Birth</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['dob'].invalid && addEmployeeForm.controls['dob'].touched) {
-            <p-message severity="error" size="small" variant="simple">Date of birth is required.</p-message>
-          }
+      <div class="section-block">
+        <div class="section-header">
+          <i class="pi pi-id-card section-icon"></i>
+          <span class="section-title">Personal Information</span>
         </div>
+        <div class="grid grid-cols-2 gap-x-5 gap-y-6">
 
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <p-select formControlName="bloodGroup" [options]="bloodGroupOptions" optionLabel="label" optionValue="value"
-              class="w-full" appendTo="body"
-              [invalid]="addEmployeeForm.controls['bloodGroup'].invalid && addEmployeeForm.controls['bloodGroup'].touched" />
-            <label>Blood Group</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['bloodGroup'].invalid && addEmployeeForm.controls['bloodGroup'].touched) {
-            <p-message severity="error" size="small" variant="simple">Blood group is required.</p-message>
-          }
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-datepicker formControlName="dob" class="w-full" dateFormat="dd/mm/yy" appendTo="body"
+                [invalid]="addEmployeeForm.controls['dob'].invalid && addEmployeeForm.controls['dob'].touched" />
+              <label>Date of Birth</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['dob'].invalid && addEmployeeForm.controls['dob'].touched) {
+              <p-message severity="error" size="small" variant="simple">Date of birth is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <p-select formControlName="bloodGroup" [options]="bloodGroupOptions" optionLabel="label" optionValue="value"
+                class="w-full" appendTo="body"
+                [invalid]="addEmployeeForm.controls['bloodGroup'].invalid && addEmployeeForm.controls['bloodGroup'].touched" />
+              <label>Blood Group</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['bloodGroup'].invalid && addEmployeeForm.controls['bloodGroup'].touched) {
+              <p-message severity="error" size="small" variant="simple">Blood group is required.</p-message>
+            }
+          </div>
+
+          <div class="col-span-2">
+            <p-floatlabel class="w-full" variant="on">
+              <input pInputText type="email" formControlName="personalEmail" class="w-full"
+                [invalid]="addEmployeeForm.controls['personalEmail'].invalid && addEmployeeForm.controls['personalEmail'].touched" />
+              <label>Personal Email</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['personalEmail'].invalid && addEmployeeForm.controls['personalEmail'].touched) {
+              <p-message severity="error" size="small" variant="simple">
+                @if (addEmployeeForm.controls['personalEmail'].hasError('required')) { Personal email is required. }
+                @if (addEmployeeForm.controls['personalEmail'].hasError('email')) { Enter a valid email address. }
+              </p-message>
+            }
+          </div>
+
         </div>
-
-        <div class="col-span-2">
-          <p-floatlabel class="w-full" variant="on">
-            <input pInputText type="email" formControlName="personalEmail" class="w-full"
-              [invalid]="addEmployeeForm.controls['personalEmail'].invalid && addEmployeeForm.controls['personalEmail'].touched" />
-            <label>Personal Email</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['personalEmail'].invalid && addEmployeeForm.controls['personalEmail'].touched) {
-            <p-message severity="error" size="small" variant="simple">
-              @if (addEmployeeForm.controls['personalEmail'].hasError('required')) { Personal email is required. }
-              @if (addEmployeeForm.controls['personalEmail'].hasError('email')) { Enter a valid email address. }
-            </p-message>
-          }
-        </div>
-
       </div>
-    </div>
 
-    <div class="section-block">
-      <div class="section-header">
-        <i class="pi pi-phone section-icon"></i>
-        <span class="section-title">Emergency Contact</span>
-      </div>
-      <div class="grid grid-cols-2 gap-x-5 gap-y-6">
-
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <input pInputText formControlName="emergencyContactPerson" class="w-full"
-              [invalid]="addEmployeeForm.controls['emergencyContactPerson'].invalid && addEmployeeForm.controls['emergencyContactPerson'].touched" />
-            <label>Contact Person</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['emergencyContactPerson'].invalid && addEmployeeForm.controls['emergencyContactPerson'].touched) {
-            <p-message severity="error" size="small" variant="simple">Emergency contact name is required.</p-message>
-          }
+      <div class="section-block">
+        <div class="section-header">
+          <i class="pi pi-phone section-icon"></i>
+          <span class="section-title">Emergency Contact</span>
         </div>
+        <div class="grid grid-cols-2 gap-x-5 gap-y-6">
 
-        <div>
-          <p-floatlabel class="w-full" variant="on">
-            <input pInputText type="tel" formControlName="emergencyContactNumber" class="w-full"
-              [invalid]="addEmployeeForm.controls['emergencyContactNumber'].invalid && addEmployeeForm.controls['emergencyContactNumber'].touched" />
-            <label>Contact Number</label>
-          </p-floatlabel>
-          @if (addEmployeeForm.controls['emergencyContactNumber'].invalid && addEmployeeForm.controls['emergencyContactNumber'].touched) {
-            <p-message severity="error" size="small" variant="simple">Emergency contact number is required.</p-message>
-          }
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <input pInputText formControlName="emergencyContactPerson" class="w-full"
+                [invalid]="addEmployeeForm.controls['emergencyContactPerson'].invalid && addEmployeeForm.controls['emergencyContactPerson'].touched" />
+              <label>Contact Person</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['emergencyContactPerson'].invalid && addEmployeeForm.controls['emergencyContactPerson'].touched) {
+              <p-message severity="error" size="small" variant="simple">Emergency contact name is required.</p-message>
+            }
+          </div>
+
+          <div>
+            <p-floatlabel class="w-full" variant="on">
+              <input pInputText type="tel" formControlName="emergencyContactNumber" class="w-full"
+                [invalid]="addEmployeeForm.controls['emergencyContactNumber'].invalid && addEmployeeForm.controls['emergencyContactNumber'].touched" />
+              <label>Contact Number</label>
+            </p-floatlabel>
+            @if (addEmployeeForm.controls['emergencyContactNumber'].invalid && addEmployeeForm.controls['emergencyContactNumber'].touched) {
+              <p-message severity="error" size="small" variant="simple">Emergency contact number is required.</p-message>
+            }
+          </div>
+
         </div>
-
       </div>
-    </div>
 
-    <div class="flex justify-end gap-2 pt-2">
-      <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="editEmployeeDialog = false" />
-      <p-button label="Save Changes" icon="pi pi-check" (onClick)="onEditEmployee()" />
-    </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="editEmployeeDialog = false" />
+        <p-button label="Save Changes" icon="pi pi-check" (onClick)="onEditEmployee()" />
+      </div>
 
-  </form>
+    </form>
+  </div>
 </p-dialog>
 
 

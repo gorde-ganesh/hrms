@@ -30,10 +30,6 @@ export const getAttendance = async (req: Request, res: Response) => {
     }),
   ]);
 
-  if (!attendances || attendances.length === 0) {
-    throw new HttpError(404, 'No records found', ERROR_CODES.NOT_FOUND);
-  }
-
   return successResponse(
     res,
     { content: attendances, totalRecords },
@@ -82,10 +78,6 @@ export const getAttendenceById = async (req: Request, res: Response) => {
       },
     }),
   ]);
-
-  if (!records || records.length === 0) {
-    throw new HttpError(404, 'No records found', ERROR_CODES.NOT_FOUND);
-  }
 
   return successResponse(
     res,

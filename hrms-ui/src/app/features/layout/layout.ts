@@ -61,6 +61,7 @@ export class Layout implements OnInit {
   items: MenuItem[] | undefined;
   isSettings: boolean = false;
   changePasswordDialog: boolean = false;
+  sidebarOpen = false;
   userInfo!: {
     id: string;
     name: string;
@@ -166,13 +167,11 @@ export class Layout implements OnInit {
       initials = parts[0].substring(0, 2).toUpperCase();
     }
     this.userDetails = { ...details, initials: initials };
-    console.log(this.userDetails);
   }
 
   buildMenu(permissions: Record<string, string[]>): MenuItem[] {
     const menu: MenuItem[] = [];
     for (const page in permissions) {
-      console.log(page, permissions[page]);
       if (permissions[page].includes('view') && this.pageRouteMap[page]) {
         menu.push(this.pageRouteMap[page]);
       }
@@ -189,8 +188,24 @@ export class Layout implements OnInit {
     return menu;
   }
 
+  get activePageLabel(): string {
+    const found = this.items?.find(
+      (i) => i['route'] && (this.activeRoute === i['route'] || this.activeRoute.startsWith(i['route'] + '/'))
+    );
+    return found?.label || 'PeopleOS';
+  }
+
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  closeSidebar() {
+    this.sidebarOpen = false;
+  }
+
   navigate(item: any) {
     this.router.navigate([item.route]);
+    this.sidebarOpen = false;
   }
 
   async onLogoutClick() {

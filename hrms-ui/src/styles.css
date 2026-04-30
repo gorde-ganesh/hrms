@@ -1,228 +1,109 @@
 @import 'tailwindcss';
 @import 'primeicons/primeicons.css';
 @plugin "tailwindcss-primeui";
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-/* ===== Global Styles ===== */
+/* Dark mode: keyed to the same selector used by PrimeNG */
+@custom-variant dark (&:where(.my-app-dark, .my-app-dark *));
+
+/* ── Base ── */
 html,
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-optical-sizing: auto;
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
-  background-color: color-mix(
-    in srgb,
-    var(--p-surface-0) calc(100% * var(--tw-bg-opacity, 1)),
-    transparent
-  );
-  scroll-behavior: smooth;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ===== Custom Scrollbar ===== */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--p-surface-100);
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--p-surface-300);
-  border-radius: 10px;
-  transition: background 0.3s ease;
+  border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--p-surface-400);
 }
 
-/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--p-surface-300) var(--p-surface-100);
+  scrollbar-color: var(--p-surface-300) transparent;
 }
 
-/* ===== Typography Enhancements ===== */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+/* ── Typography ── */
+h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
   color: var(--p-text-color);
+  text-wrap: balance;
+  margin: 0;
 }
 
-h1 {
-  font-size: 2.5rem;
-}
-h2 {
-  font-size: 2rem;
-}
-h3 {
-  font-size: 1.75rem;
-}
-h4 {
-  font-size: 1.5rem;
-}
-h5 {
-  font-size: 1.25rem;
-}
-h6 {
-  font-size: 1rem;
-}
+/* Product UI scale: tight ratio (1.2), fixed rem */
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.125rem; }
+h4 { font-size: 1rem; }
+h5 { font-size: 0.9375rem; }
+h6 { font-size: 0.875rem; }
 
-/* ===== Smooth Transitions ===== */
-* {
+/* ── Interactive element transitions (targeted, not wildcard) ── */
+button,
+a,
+[role="button"],
+.p-button,
+.nav-link,
+.p-inputtext,
+.p-select,
+.p-checkbox,
+input,
+select,
+textarea {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ===== Animations ===== */
+/* ── Animations ── */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
 }
 
 @keyframes scaleIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.97); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-.animate-fadein {
-  animation: fadeIn 0.3s ease-out;
-}
+.animate-fadein  { animation: fadeIn  200ms ease-out; }
+.animate-slidein { animation: slideIn 200ms ease-out; }
+.animate-scalein { animation: scaleIn 150ms ease-out; }
 
-.animate-slidein {
-  animation: slideIn 0.3s ease-out;
-}
-
-.animate-scalein {
-  animation: scaleIn 0.2s ease-out;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* ===== Modern Card Styles ===== */
-.modern-card {
-  background: var(--p-surface-0);
-  border-radius: 10px;
-  padding: 20px;
-  border: 1px solid var(--p-surface-200);
-}
-
-/* ===== Input Enhancements ===== */
-.p-inputtext {
-  width: inherit;
-  transition: all 0.2s ease;
-}
-
-.p-inputtext:focus {
-  box-shadow: 0 0 0 3px rgba(var(--p-primary-500), 0.1);
-}
-
-
-/* ===== Table Enhancements ===== */
-.p-datatable .p-datatable-tbody > tr {
-  transition: background-color 0.2s ease;
-}
-
-.p-datatable .p-datatable-tbody > tr:hover {
-  background-color: var(--p-surface-50) !important;
-}
-
-.p-datatable .p-datatable-thead > tr > th {
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  color: var(--p-text-muted-color);
-}
-
-/* ===== Card Icon Styles ===== */
-.card-icons {
-  font-size: 2rem;
-  opacity: 0.8;
-}
-
-/* ===== Badge Enhancements ===== */
-.p-badge {
-  font-weight: 600;
-  letter-spacing: 0.025em;
-}
-
-/* ===== Dialog Enhancements ===== */
-.p-dialog {
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.p-dialog .p-dialog-header {
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-}
-
-
-/* ===== Utility Classes ===== */
-.shadow-soft {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.shadow-medium {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.shadow-strong {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
-}
-
-
-/* ===== Focus Visible for Accessibility ===== */
-*:focus-visible {
-  outline: 2px solid var(--p-primary-500);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ===== Loading States ===== */
+/* ── Skeleton loading ── */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -231,35 +112,90 @@ h6 {
     var(--p-surface-100) 75%
   );
   background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 4px;
 }
 
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+/* ── Surface card ── */
+.modern-card {
+  background: var(--p-surface-0);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid var(--p-surface-200);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.03);
 }
 
-/* ===== Responsive Utilities ===== */
+/* ── Shadow scale ── */
+.shadow-soft   { box-shadow: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04); }
+.shadow-medium { box-shadow: 0 4px 12px oklch(0 0 0 / 0.08), 0 2px 4px oklch(0 0 0 / 0.05); }
+.shadow-strong { box-shadow: 0 8px 24px oklch(0 0 0 / 0.10), 0 4px 8px oklch(0 0 0 / 0.06); }
+
+/* ── Input focus ring ── */
+.p-inputtext:focus,
+.p-password input:focus {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--p-primary-500) 18%, transparent);
+}
+
+/* ── Table ── */
+.p-datatable .p-datatable-tbody > tr {
+  transition: background-color 120ms ease-out;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background-color: var(--p-surface-50) !important;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  color: var(--p-text-muted-color);
+}
+
+/* Tabular numbers in data contexts */
+.p-datatable,
+.stat-value,
+.metric-value,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Dialog ── */
+.p-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.p-dialog .p-dialog-header {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* ── Focus visible ── */
+*:focus-visible {
+  outline: 2px solid var(--p-primary-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Badge ── */
+.p-badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ── Responsive adjustments ── */
 @media (max-width: 768px) {
-  h1 {
-    font-size: 2rem;
-  }
-  h2 {
-    font-size: 1.75rem;
-  }
-  h3 {
-    font-size: 1.5rem;
-  }
-  h4 {
-    font-size: 1.25rem;
-  }
+  .modern-card { padding: 16px; }
+}
 
-  .modern-card {
-    padding: 16px;
-    border-radius: 12px;
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadein,
+  .animate-slidein,
+  .animate-scalein,
+  .skeleton {
+    animation: none;
   }
 }

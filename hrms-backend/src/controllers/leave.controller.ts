@@ -10,17 +10,6 @@ import {
 } from './leave-balance.controller';
 import { prisma } from '../lib/prisma';
 import { successResponse } from '../utils/response-helper';
-let ioInstance: any;
-let onlineUsersRef: Record<number, string> = {};
-
-export const initNotificationService = (
-  io: any,
-  onlineUsers: Record<number, string>
-) => {
-  ioInstance = io;
-  onlineUsersRef = onlineUsers;
-};
-
 
 // ----------------- Helper Functions -----------------
 
@@ -385,34 +374,31 @@ export const getAllLeaves = async (req: Request, res: Response) => {
 // GET /api/leaves/upcoming
 export const getUpcomingLeaves = async (req: Request, res: Response) => {
   const userId = req.user.id;
-  try {
-    const employee = await prisma.employee.findFirst({ where: { userId } });
-    if (!employee)
-      return res.status(404).json({ message: 'Employee not found' });
 
-    const leaves = await prisma.leave.findMany({
-      where: {
-        employeeId: employee.id,
-        status: 'APPROVED',
-        startDate: { gt: new Date() },
-      },
-      orderBy: { startDate: 'asc' },
-      take: 5,
-    });
+  const employee = await prisma.employee.findFirst({ where: { userId } });
+  if (!employee)
+    throw new HttpError(404, 'Employee not found', ERROR_CODES.NOT_FOUND);
 
-    return successResponse(
-      res,
-      leaves.map((l) => ({
-        title: l.reason,
-        startDate: l.startDate,
-        endDate: l.endDate,
-        status: l.status,
-      })),
-      'Upcoming leaves fetched',
-      SUCCESS_CODES.SUCCESS,
-      200
-    );
-  } catch (e: any) {
-    return successResponse(res, null, e.message, ERROR_CODES.SERVER_ERROR, 500);
-  }
+  const leaves = await prisma.leave.findMany({
+    where: {
+      employeeId: employee.id,
+      status: 'APPROVED',
+      startDate: { gt: new Date() },
+    },
+    orderBy: { startDate: 'asc' },
+    take: 5,
+  });
+
+  return successResponse(
+    res,
+    leaves.map((l) => ({
+      title: l.reason,
+      startDate: l.startDate,
+      endDate: l.endDate,
+      status: l.status,
+    })),
+    'Upcoming leaves fetched',
+    SUCCESS_CODES.SUCCESS,
+    200
+  );
 };

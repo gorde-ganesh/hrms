@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
+import { successResponse } from '../utils/response-helper';
 import { sendNotification } from '../utils/notification';
 import { prisma } from '../lib/prisma';
 
@@ -37,10 +38,15 @@ export const generatePayroll = async (req: Request, res: Response) => {
   let netSalary = 0;
   const componentData = [];
 
+  // Batch-fetch all component types upfront to avoid N+1 queries
+  const componentTypeIds = components.map((c: any) => c.componentTypeId);
+  const componentTypes = await prisma.payrollComponentType.findMany({
+    where: { id: { in: componentTypeIds } },
+  });
+  const componentTypeMap = new Map(componentTypes.map((ct) => [ct.id, ct]));
+
   for (const comp of components) {
-    const componentType = await prisma.payrollComponentType.findUnique({
-      where: { id: comp.componentTypeId },
-    });
+    const componentType = componentTypeMap.get(comp.componentTypeId);
 
     if (!componentType) {
       throw new HttpError(
@@ -60,6 +66,14 @@ export const generatePayroll = async (req: Request, res: Response) => {
       componentTypeId: comp.componentTypeId,
       amount,
     });
+  }
+
+  // Check for duplicate payroll before creating
+  const existingPayroll = await prisma.payroll.findUnique({
+    where: { employeeId_month_year: { employeeId, month, year } },
+  });
+  if (existingPayroll) {
+    throw new HttpError(400, `Payroll for ${month}/${year} already generated for this employee`, ERROR_CODES.VALIDATION_ERROR);
   }
 
   const payroll = await prisma.payroll.create({
@@ -83,22 +97,13 @@ export const generatePayroll = async (req: Request, res: Response) => {
     )}`,
   });
 
-  return res.status(200).json({
-    message: 'Payroll generated successfully',
-    data: payroll,
-    statusCode: 200,
-  });
+  return successResponse(res, payroll, 'Payroll generated successfully', SUCCESS_CODES.SUCCESS, 200);
 };
 
 // ----------------- Get Payroll Records -----------------
 export const getPayroll = async (req: Request, res: Response) => {
   const { employeeId, month, year, skip, top } = req.query;
 
-  // const where: any = {};
-  // if (employeeId) where.employeeId = Number(employeeId);
-  // if (month) where.month = Number(month);
-  // if (year) where.year = Number(year);
-  // console.log(employeeId, '>>>>>>>');
   const [payroll, totalRecords] = await Promise.all([
     prisma.payroll.findMany({
       where: {
@@ -119,12 +124,7 @@ export const getPayroll = async (req: Request, res: Response) => {
     }),
   ]);
 
-  return res.status(200).json({
-    message: 'Data fetched successfully',
-    data: { content: payroll, totalRecords },
-    statusCode: 200,
-    code: SUCCESS_CODES.SUCCESS,
-  });
+  return successResponse(res, { content: payroll, totalRecords }, 'Data fetched successfully', SUCCESS_CODES.SUCCESS, 200);
 };
 
 // ----------------- Download Payslip -----------------

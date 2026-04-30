@@ -52,7 +52,6 @@ import timeGridPlugin from '@fullcalendar/timegrid';
     TextareaModule,
     SelectModule,
     StatusPipe,
-    StatusPipe,
     CardModule,
     FullCalendarModule,
   ],
@@ -106,7 +105,10 @@ export class Leaves implements OnInit {
 
   async ngOnInit() {
     this.loadLeaves();
-    this.loadTeamLeaves();
+    const role = this.authState.userInfo?.role;
+    if (role === 'MANAGER' || role === 'ADMIN' || role === 'HR') {
+      this.loadTeamLeaves();
+    }
     this.loadLeaveBalances();
     const masterData: any = await this.serverApi.get('/api/master-data');
     this.statuses = masterData.LEAVE_STATUS;
@@ -246,8 +248,6 @@ export class Leaves implements OnInit {
       managerApprovalId: user.manager.userId,
     });
 
-    this.applyLeaveForm.reset();
-    this.applyLeaveDialog = false;
     this.applyLeaveForm.reset();
     this.applyLeaveDialog = false;
     this.loadLeaves();
