@@ -9,7 +9,7 @@
 .brand-panel {
   display: flex;
   flex-direction: column;
-  background-color: oklch(18% 0.012 255);
+  background-color: oklch(18% 0.014 248);
   padding: 44px 48px;
   overflow: hidden;
 }
@@ -23,7 +23,7 @@
 .brand-mark {
   width: 36px;
   height: 36px;
-  background-color: oklch(26% 0.016 255);
+  background-color: oklch(26% 0.018 248);
   border-radius: 9px;
   display: flex;
   align-items: center;
@@ -102,7 +102,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: oklch(26% 0.016 255);
+  background-color: oklch(26% 0.018 248);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -195,14 +195,14 @@
 .soft-link {
   font-size: 12.5px;
   font-weight: 500;
-  color: oklch(48% 0.14 255);
+  color: oklch(50% 0.16 259);
   cursor: pointer;
   text-decoration: none;
   transition: color 0.15s ease-out;
 }
 
 .soft-link:hover {
-  color: oklch(36% 0.17 255);
+  color: oklch(38% 0.18 259);
 }
 
 .field-error {

@@ -1,11 +1,14 @@
-<div class="layout-shell flex flex-col lg:flex-row h-screen overflow-hidden">
+<div class="layout-shell flex flex-col lg:flex-row h-screen overflow-hidden" [class.sidebar-open]="sidebarOpen">
+
+  <!-- Mobile backdrop -->
+  <div class="sidebar-backdrop" (click)="closeSidebar()" [class.backdrop-visible]="sidebarOpen"></div>
 
   <!-- Sidebar -->
-  <aside class="sidebar flex flex-col w-full lg:w-60 shrink-0 lg:h-full">
+  <aside class="sidebar flex flex-col shrink-0">
 
     <!-- Brand -->
     <div class="brand-bar flex items-center gap-2.5 px-5">
-      <div class="brand-mark flex items-center justify-center w-6 h-6 rounded-lg">
+      <div class="brand-mark flex items-center justify-center w-6 h-6 rounded-lg shrink-0">
         <i class="pi pi-th-large" style="font-size: 0.75rem; color: white"></i>
       </div>
       <span class="brand-name text-sm font-semibold">PeopleOS</span>
@@ -53,7 +56,15 @@
   <div class="main-column flex-1 flex flex-col min-w-0 overflow-hidden">
 
     <!-- Topbar -->
-    <header class="topbar flex items-center justify-end px-6">
+    <header class="topbar flex items-center justify-between px-4 lg:px-6">
+      <div class="flex items-center gap-3">
+        <button class="menu-btn flex items-center justify-center w-8 h-8 rounded-md"
+                (click)="toggleSidebar()"
+                aria-label="Open navigation">
+          <i class="pi pi-bars" style="font-size: 0.9rem"></i>
+        </button>
+        <span class="topbar-page-label">{{ activePageLabel }}</span>
+      </div>
       <div class="flex items-center gap-2">
         <app-notification></app-notification>
         <button class="avatar-btn block rounded-full overflow-hidden" title="Profile" aria-label="User profile">
@@ -77,12 +88,12 @@
   header="Change Password"
   [modal]="true"
   [(visible)]="changePasswordDialog"
-  [style]="{ width: '30vw' }"
+  [style]="{ width: '30rem' }"
   [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
 >
-  <span class="p-text-secondary block mb-8">Update your password.</span>
+  <span class="text-sm text-muted-color block mb-6">Update your account password.</span>
   <form
-    class="flex flex-col items-stretch justify-stretch gap-6"
+    class="flex flex-col items-stretch justify-stretch gap-5"
     [formGroup]="changePasswordForm"
     (ngSubmit)="onChangePassword()"
   >
@@ -94,7 +105,7 @@
           inputId="old_password"
           fluid
         ></p-password>
-        <label for="old_password">Old Password</label>
+        <label for="old_password">Current password</label>
       </p-floatlabel>
     </div>
     <div>
@@ -108,15 +119,15 @@
         >
           <ng-template #footer>
             <p-divider />
-            <ul class="pl-2 my-0 leading-normal">
-              <li>At least one lowercase</li>
-              <li>At least one uppercase</li>
-              <li>At least one numeric</li>
+            <ul class="pl-2 my-0 text-sm text-muted-color leading-relaxed list-none">
+              <li>At least one lowercase letter</li>
+              <li>At least one uppercase letter</li>
+              <li>At least one number</li>
               <li>Minimum 8 characters</li>
             </ul>
           </ng-template>
         </p-password>
-        <label for="new_password">New Password</label>
+        <label for="new_password">New password</label>
       </p-floatlabel>
     </div>
     <div>
@@ -127,9 +138,11 @@
           inputId="confirm_password"
           fluid
         />
-        <label for="confirm_password">Confirm Password</label>
+        <label for="confirm_password">Confirm new password</label>
       </p-floatlabel>
     </div>
-    <button pButton type="submit">Change Password</button>
+    <div class="flex justify-end pt-1">
+      <p-button type="submit" label="Update password" icon="pi pi-check" />
+    </div>
   </form>
 </p-dialog>
