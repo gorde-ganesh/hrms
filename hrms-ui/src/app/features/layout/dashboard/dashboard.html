@@ -32,28 +32,28 @@
           <span class="stat-label">Total Employees</span>
           <i class="pi pi-users stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.totalEmployees || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.totalEmployees || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Departments</span>
           <i class="pi pi-sitemap stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.totalDepartments || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.totalDepartments || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Pending Leaves</span>
           <i class="pi pi-calendar-times stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.pendingLeaves || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.pendingLeaves || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Present Today</span>
           <i class="pi pi-check-circle stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.todayAttendance || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.todayAttendance || 0 }}</p>
       </div>
     </ng-container>
 
@@ -64,28 +64,28 @@
           <span class="stat-label">Total Employees</span>
           <i class="pi pi-users stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.totalEmployees || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.totalEmployees || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Pending Leaves</span>
           <i class="pi pi-calendar-times stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.pendingLeaves || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.pendingLeaves || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Attendance Today</span>
           <i class="pi pi-check-circle stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.todayAttendance || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.todayAttendance || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Pending Payrolls</span>
           <i class="pi pi-dollar stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.pendingPayrolls || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.pendingPayrolls || 0 }}</p>
       </div>
     </ng-container>
 
@@ -96,21 +96,21 @@
           <span class="stat-label">Team Size</span>
           <i class="pi pi-users stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.teamSize || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.teamSize || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Pending Leaves</span>
           <i class="pi pi-calendar-times stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.teamLeaves || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.teamLeaves || 0 }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Present Today</span>
           <i class="pi pi-check-circle stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats?.teamAttendance || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.teamAttendance || 0 }}</p>
       </div>
     </ng-container>
 
@@ -129,7 +129,7 @@
           <i class="pi pi-calendar stat-icon"></i>
         </div>
         <p class="stat-value">
-          {{ (dashboardStats?.leaveBalance?.totalLeaves - dashboardStats?.leaveBalance?.usedLeaves) || 0 }}<span class="stat-unit"> days</span>
+          {{ leaveBalanceDaysRemaining }}<span class="stat-unit"> days</span>
         </p>
       </div>
     </ng-container>
@@ -170,7 +170,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let employee of dashboardStats?.recentJoiners">
+          <tr *ngFor="let employee of dashboardStats.recentJoiners">
             <td class="font-medium">{{ employee.user.name }}</td>
             <td>{{ employee.user.email }}</td>
             <td>{{ employee.designation?.name || 'N/A' }}</td>

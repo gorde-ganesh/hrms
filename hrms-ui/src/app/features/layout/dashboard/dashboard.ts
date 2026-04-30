@@ -115,6 +115,11 @@ export class Dashboard implements OnInit {
     this.loadDashboardStats();
   }
 
+
+  get leaveBalanceDaysRemaining(): number {
+    if (!this.dashboardStats.leaveBalance) return 0;
+    return this.dashboardStats.leaveBalance.totalLeaves - this.dashboardStats.leaveBalance.usedLeaves;
+  }
   async loadDashboardStats() {
     try {
       const res = await this.serverApi.get<DashboardSummary>('/api/dashboard/summary');
