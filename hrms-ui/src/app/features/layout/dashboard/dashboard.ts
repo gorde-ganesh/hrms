@@ -1,5 +1,6 @@
 import { CommonModule, formatDate } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api-interface.service';
 import { AuthStateService } from '../../../services/auth-state.service';
@@ -11,6 +12,25 @@ import { ChartModule } from 'primeng/chart';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TagModule } from 'primeng/tag';
 import dayjs from 'dayjs';
+
+interface DashboardSummary {
+  totalEmployees?: number;
+  totalDepartments?: number;
+  pendingLeaves?: number;
+  todayAttendance?: number;
+  pendingPayrolls?: number;
+  teamSize?: number;
+  teamLeaves?: number;
+  teamAttendance?: number;
+  leaveBalance?: { totalLeaves: number; usedLeaves: number } | null;
+  attendanceSummary?: number;
+  recentJoiners?: Array<{
+    user: { name: string; email: string };
+    designation?: { name: string } | null;
+    joiningDate?: string;
+  }>;
+}
+
 
 @Component({
   selector: 'app-dashboard',
@@ -28,7 +48,7 @@ import dayjs from 'dayjs';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   currentDate = new Date();
   checkInTime = '9:05 AM';
   workingHours = '7h 25m';
@@ -78,25 +98,36 @@ export class Dashboard {
   chartOptions = {};
   userInfo: any;
 
-  dashboardStats: any = {};
+  dashboardStats: DashboardSummary = {};
 
-  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService) {
+  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService, private router: Router) {}
+
+  ngOnInit(): void {
     this.userInfo = this.authState.userInfo;
-    if (this.userInfo && this.userInfo.role) {
+    if (this.userInfo?.role) {
       this.userInfo.role = this.userInfo.role.toUpperCase();
     }
-    console.log('UserInfo:', this.userInfo);
-    this.initChartOptions();
-    this.loadUpcomingLeaves();
-    this.loadPerformanceGoals();
-    this.loadPendingTasks();
+
     this.loadQuickActions();
     this.loadDashboardStats();
+
+    if (['EMPLOYEE', 'MANAGER', 'HR'].includes(this.userInfo?.role) && this.userInfo?.employeeId) {
+      this.initChartOptions();
+    }
+
+    if (['ADMIN', 'HR', 'MANAGER'].includes(this.userInfo?.role)) {
+      this.loadUpcomingLeaves();
+    }
   }
 
+
+  get leaveBalanceDaysRemaining(): number {
+    if (!this.dashboardStats.leaveBalance) return 0;
+    return this.dashboardStats.leaveBalance.totalLeaves - this.dashboardStats.leaveBalance.usedLeaves;
+  }
   async loadDashboardStats() {
     try {
-      const res: any = await this.serverApi.get('/api/dashboard/summary');
+      const res = await this.serverApi.get<DashboardSummary>('/api/dashboard/summary');
       this.dashboardStats = res;
     } catch (error) {
       console.error('Failed to load dashboard stats', error);
@@ -116,13 +147,16 @@ export class Dashboard {
   todayStatus = '';
   attendenceSummary: any = {};
   async loadAttendenceSummary(month?: number, year?: number) {
+    if (!this.userInfo?.employeeId) return;
+
     const now = new Date();
     month = month || now.getMonth() + 1;
     year = year || now.getFullYear();
-    const summary: any = await this.serverApi.get(
-      `/api/attendance/summary/${this.userInfo.employeeId}`,
-      { month, year }
-    );
+    try {
+      const summary: any = await this.serverApi.get(
+        `/api/attendance/summary/${this.userInfo.employeeId}`,
+        { month, year }
+      );
     this.attendenceSummary = summary;
     this.todayWorkHours = summary.today.totalHours
       ? `${summary.today.totalHours.toFixed(2)}h`
@@ -146,20 +180,26 @@ export class Dashboard {
         },
       ],
     };
-    this.cdr.detectChanges();
-    console.log(this.todayStatus, 'status>>>>');
+      this.cdr.detectChanges();
+    } catch {
+      this.attendanceData = { labels: [], datasets: [] };
+    }
   }
 
   async loadUpcomingLeaves() {
-    const res: any = await this.serverApi.get('/api/leaves/upcoming');
-    this.upcomingLeaves = res?.content?.map((l: any) => ({
+    try {
+      const res: any = await this.serverApi.get('/api/leaves/upcoming');
+      this.upcomingLeaves = (res || []).map((l: any) => ({
       title: l.title,
       status: l.status,
       date: `${dayjs(l.startDate).format('MMM D')} - ${dayjs(l.endDate).format(
         'D'
       )}`,
       away: `${dayjs(l.startDate).diff(dayjs(), 'day')} days away`,
-    }));
+      }));
+    } catch {
+      this.upcomingLeaves = [];
+    }
   }
 
   async loadPerformanceGoals() {
@@ -221,6 +261,21 @@ export class Dashboard {
     ];
   }
 
+
+  onQuickAction(actionLabel: string) {
+    const routeMap: Record<string, string> = {
+      'Request Leave': '/leaves',
+      'View Payslip': '/payroll',
+      'View Attendance': '/attendence',
+      'Performance Review': '/performance',
+    };
+
+    const targetRoute = routeMap[actionLabel];
+    if (targetRoute) {
+      this.router.navigate([targetRoute]);
+    }
+  }
+
   async initChartOptions() {
     await this.loadAttendenceSummary();
 
@@ -251,7 +306,7 @@ export class Dashboard {
         },
       },
     };
-    console.log(this.attendanceData, 'chartdata');
+    
     this.cdr.markForCheck();
   }
 }
