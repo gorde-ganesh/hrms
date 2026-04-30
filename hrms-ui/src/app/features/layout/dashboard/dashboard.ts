@@ -1,5 +1,5 @@
 import { CommonModule, formatDate } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api-interface.service';
 import { AuthStateService } from '../../../services/auth-state.service';
@@ -11,6 +11,25 @@ import { ChartModule } from 'primeng/chart';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TagModule } from 'primeng/tag';
 import dayjs from 'dayjs';
+
+interface DashboardSummary {
+  totalEmployees?: number;
+  totalDepartments?: number;
+  pendingLeaves?: number;
+  todayAttendance?: number;
+  pendingPayrolls?: number;
+  teamSize?: number;
+  teamLeaves?: number;
+  teamAttendance?: number;
+  leaveBalance?: { totalLeaves: number; usedLeaves: number } | null;
+  attendanceSummary?: number;
+  recentJoiners?: Array<{
+    user: { name: string; email: string };
+    designation?: { name: string } | null;
+    joiningDate?: string;
+  }>;
+}
+
 
 @Component({
   selector: 'app-dashboard',
@@ -28,7 +47,7 @@ import dayjs from 'dayjs';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   currentDate = new Date();
   checkInTime = '9:05 AM';
   workingHours = '7h 25m';
@@ -78,14 +97,16 @@ export class Dashboard {
   chartOptions = {};
   userInfo: any;
 
-  dashboardStats: any = {};
+  dashboardStats: DashboardSummary = {};
 
-  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService) {
+  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService) {}
+
+  ngOnInit(): void {
     this.userInfo = this.authState.userInfo;
-    if (this.userInfo && this.userInfo.role) {
+    if (this.userInfo?.role) {
       this.userInfo.role = this.userInfo.role.toUpperCase();
     }
-    console.log('UserInfo:', this.userInfo);
+
     this.initChartOptions();
     this.loadUpcomingLeaves();
     this.loadPerformanceGoals();
@@ -96,7 +117,7 @@ export class Dashboard {
 
   async loadDashboardStats() {
     try {
-      const res: any = await this.serverApi.get('/api/dashboard/summary');
+      const res = await this.serverApi.get<DashboardSummary>('/api/dashboard/summary');
       this.dashboardStats = res;
     } catch (error) {
       console.error('Failed to load dashboard stats', error);
@@ -147,7 +168,7 @@ export class Dashboard {
       ],
     };
     this.cdr.detectChanges();
-    console.log(this.todayStatus, 'status>>>>');
+    
   }
 
   async loadUpcomingLeaves() {
@@ -251,7 +272,7 @@ export class Dashboard {
         },
       },
     };
-    console.log(this.attendanceData, 'chartdata');
+    
     this.cdr.markForCheck();
   }
 }
