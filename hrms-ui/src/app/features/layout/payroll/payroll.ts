@@ -26,6 +26,7 @@ import { TagModule } from 'primeng/tag';
 import { StatusPipe } from '../../../pipes/status.pipe';
 import { ToastModule } from 'primeng/toast';
 import { CardModule } from 'primeng/card';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-payroll',
@@ -48,6 +49,7 @@ import { CardModule } from 'primeng/card';
     StatusPipe,
     ToastModule,
     CardModule,
+    TooltipModule,
     ConfirmPopup,
   ],
   providers: [MessageService, ConfirmationService],
