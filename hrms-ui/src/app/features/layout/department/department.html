@@ -1,17 +1,20 @@
 <div class="space-y-6">
-  <div class="flex flex-wrap gap-3 items-start justify-between">
+  <!-- ── Page header ── -->
+  <div class="flex items-start justify-between">
     <div>
-      <div class="text-2xl leading-8 text-color font-semibold">Departments</div>
-      <div class="mt-1 leading-6 text-muted-color">
+      <h1 class="text-2xl font-bold text-color leading-tight mb-1">
+        Departments
+      </h1>
+      <p class="text-sm text-muted-color flex items-center gap-2">
+        <i class="pi pi-users text-xs"></i>
         Maintain your org structure and business units.
-      </div>
+      </p>
     </div>
     <p-button
       label="Add Department"
-      icon="pi pi-plus"
-      size="large"
+      icon="pi pi-user-plus"
       (onClick)="openCreateDialog()"
-    ></p-button>
+    />
   </div>
 
   <div

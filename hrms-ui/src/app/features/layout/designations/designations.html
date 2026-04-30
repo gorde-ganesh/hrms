@@ -1,19 +1,20 @@
 <div class="space-y-6">
-  <div class="flex flex-wrap gap-3 items-start justify-between">
+  <!-- ── Page header ── -->
+  <div class="flex items-start justify-between">
     <div>
-      <div class="text-2xl leading-8 text-color font-semibold">
+      <h1 class="text-2xl font-bold text-color leading-tight mb-1">
         Designations
-      </div>
-      <div class="mt-1 leading-6 text-muted-color">
+      </h1>
+      <p class="text-sm text-muted-color flex items-center gap-2">
+        <i class="pi pi-users text-xs"></i>
         Manage organization-wide roles and classifications.
-      </div>
+      </p>
     </div>
     <p-button
       label="Add Designation"
       icon="pi pi-plus"
-      size="large"
       (onClick)="openCreateDialog()"
-    ></p-button>
+    />
   </div>
 
   <div
