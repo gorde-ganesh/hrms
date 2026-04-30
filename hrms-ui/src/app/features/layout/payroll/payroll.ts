@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../../../services/api-interface.service';
 import { AuthStateService } from '../../../services/auth-state.service';
 import { CommonModule } from '@angular/common';
@@ -35,7 +35,6 @@ import { CardModule } from 'primeng/card';
     FormsModule,
     ReactiveFormsModule,
     ButtonModule,
-    ReactiveFormsModule,
     InputText,
     TabsModule,
     TableModule,
@@ -55,35 +54,40 @@ import { CardModule } from 'primeng/card';
   templateUrl: './payroll.html',
   styleUrl: './payroll.css',
 })
-export class Payroll {
+export class Payroll implements OnInit {
   employees: any[] = [];
-  payrollComponents: any[] = [];
-  selectedEmployee: any = null;
   netSalary: number = 0;
 
   payrolls: any[] = [];
-  apiParams = { pageno: 0, top: 10 };
+  apiParams = { pageno: 1, top: 10 };
   totalRecords = 0;
 
   payrollComponentsAll: any[] = [];
-  payrollComponentsApiParams = { pageno: 0, top: 10 };
+  payrollComponentsApiParams = { pageno: 1, top: 10 };
   payrollComponentsTotalRecords = 0;
 
   options: any;
 
   componentDialog = false;
+  isEditMode = false;
+  editId: string | null = null;
   tabIndex = '0';
   addComponentForm!: FormGroup;
   generatePayrollForm!: FormGroup;
 
-  // Payroll generation
-  selectedMonth: Date = new Date();
-  selectedYear: Date = new Date();
   calculatedComponents: any[] = [];
   monthlySalary: number = 0;
+  grossSalary: number = 0;
 
   permissions: any;
   userInfo: any;
+
+  readonly statusSeverityMap: Record<string, string> = {
+    DRAFT: 'secondary',
+    APPROVED: 'info',
+    LOCKED: 'warn',
+    PAID: 'success',
+  };
 
   constructor(
     private serverApi: ApiService,
@@ -94,10 +98,11 @@ export class Payroll {
   ) {
     this.userInfo = this.authState.userInfo;
     this.permissions = this.userInfo?.permissions?.['payroll'];
+
     this.addComponentForm = fb.group({
       name: ['', Validators.required],
-      type: ['', [Validators.required]],
-      percent: [''],
+      type: ['', Validators.required],
+      percent: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
       description: [''],
     });
 
@@ -105,16 +110,15 @@ export class Payroll {
       employee: [null, Validators.required],
       month: [new Date(), Validators.required],
       year: [new Date(), Validators.required],
+      lopDays: [0, [Validators.min(0), Validators.max(31)]],
     });
   }
 
   async ngOnInit() {
     this.options = await this.serverApi.get('/api/master-data');
-
-    this.loadPayrolls();
+    await this.loadPayrolls();
     if (this.hasPermission('generate')) {
-      this.loadPayrollComponents();
-      this.loadEmployees();
+      await Promise.all([this.loadPayrollComponents(), this.loadEmployees()]);
     }
   }
 
@@ -125,55 +129,73 @@ export class Payroll {
         top: 1000,
       });
       this.employees = response.content || [];
-    } catch (error) {
-      console.error('Error loading employees:', error);
+    } catch {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load employees' });
     }
   }
 
   async loadPayrolls() {
-    const userInfo = this.authState.userInfo;
-    const payroll: any = await this.serverApi.get(
-      `/api/payroll?employeeId=${userInfo?.employeeId}`,
-      this.apiParams
-    );
-    this.payrolls = payroll.content.map((p: any) => ({
-      ...p,
-      date: new Date(p.year, p.month - 1, 1), // first day of the month
-    }));
+    try {
+      const isHrOrAdmin = this.userInfo?.role === 'HR' || this.userInfo?.role === 'ADMIN';
+      const params: any = { ...this.apiParams };
+      // Employees are restricted server-side; HR/Admin can optionally filter
+      if (!isHrOrAdmin) {
+        params.employeeId = this.userInfo?.employeeId;
+      }
 
-    this.totalRecords = payroll.totalRecords;
+      const payroll: any = await this.serverApi.get('/api/payroll', params);
+      this.payrolls = (payroll.content ?? []).map((p: any) => ({
+        ...p,
+        date: new Date(p.year, p.month - 1, 1),
+        netSalaryNum: Number(p.netSalary),
+      }));
+      this.totalRecords = payroll.totalRecords ?? 0;
+    } catch (error: any) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: error?.message || 'Failed to load payroll records',
+      });
+    }
   }
 
   async loadPayrollComponents() {
-    const components: any = await this.serverApi.get(
-      `/api/payroll/components`,
-      this.payrollComponentsApiParams
-    );
-
-    this.payrollComponentsAll = components.content;
-    this.payrollComponentsTotalRecords = components.totalRecords;
+    try {
+      const components: any = await this.serverApi.get(
+        '/api/payroll/components',
+        this.payrollComponentsApiParams
+      );
+      this.payrollComponentsAll = components.content ?? [];
+      this.payrollComponentsTotalRecords = components.totalRecords ?? 0;
+    } catch (error: any) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: error?.message || 'Failed to load components',
+      });
+    }
   }
 
   async onPayrollDownload(pay: any) {
-    const payId = pay.id;
-
-    await this.serverApi.downloadPayslip(payId);
+    try {
+      await this.serverApi.downloadPayslip(pay.id);
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'Download failed' });
+    }
   }
 
   pageChange(event: any) {
-    this.apiParams.pageno = event.first;
+    this.apiParams.pageno = Math.floor(event.first / event.rows) + 1;
     this.apiParams.top = event.rows;
     this.loadPayrolls();
   }
 
   pageComponentChange(event: any) {
-    this.payrollComponentsApiParams.pageno = event.first;
+    this.payrollComponentsApiParams.pageno = Math.floor(event.first / event.rows) + 1;
     this.payrollComponentsApiParams.top = event.rows;
     this.loadPayrollComponents();
   }
 
-  isEditMode = false;
-  editId = null;
   onComponentEdit(component: any) {
     this.componentDialog = true;
     this.isEditMode = true;
@@ -181,8 +203,8 @@ export class Payroll {
     this.addComponentForm.patchValue({
       name: component.name,
       type: component.type,
-      percent: component.percent,
-      description: component.description,
+      percent: component.percent != null ? Number(component.percent) : null,
+      description: component.description ?? '',
     });
   }
 
@@ -190,26 +212,35 @@ export class Payroll {
     if (!component?.id) return;
     this.confirmationService.confirm({
       target: event.currentTarget as EventTarget,
-      message: 'Are you sure you want to proceed?',
+      message: 'Deactivate this component? Historical payslips are unaffected.',
       icon: 'pi pi-exclamation-triangle',
       rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Delete', severity: 'danger' },
+      acceptButtonProps: { label: 'Deactivate', severity: 'danger' },
       accept: async () => {
-        await this.serverApi.delete(`/api/payroll/components/${component.id}`);
-        this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Component deleted successfully', life: 3000 });
-        this.loadPayrollComponents();
+        try {
+          await this.serverApi.delete(`/api/payroll/components/${component.id}`);
+          this.messageService.add({ severity: 'success', summary: 'Deactivated', detail: 'Component deactivated', life: 3000 });
+          await this.loadPayrollComponents();
+        } catch (error: any) {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'Failed to deactivate' });
+        }
       },
       reject: () => {},
     });
   }
 
   addNew() {
+    this.isEditMode = false;
+    this.editId = null;
+    this.addComponentForm.reset({ name: '', type: '', percent: null, description: '' });
     this.componentDialog = true;
   }
 
   hideDialog() {
     this.addComponentForm.reset();
     this.componentDialog = false;
+    this.isEditMode = false;
+    this.editId = null;
   }
 
   async saveComponent() {
@@ -218,74 +249,74 @@ export class Payroll {
 
     const { name, type, description, percent } = this.addComponentForm.value;
 
-    if (!this.isEditMode)
-      await this.serverApi.post('/api/payroll/components', {
-        name,
-        type,
-        percent,
-        description,
-      });
-    else
-      await this.serverApi.put(`/api/payroll/components/${this.editId}`, {
-        name,
-        type,
-        percent,
-        description,
-      });
-
-    this.hideDialog();
-    this.loadPayrollComponents();
+    try {
+      if (!this.isEditMode) {
+        await this.serverApi.post('/api/payroll/components', { name, type, percent: Number(percent), description });
+        this.messageService.add({ severity: 'success', summary: 'Created', detail: 'Component created', life: 3000 });
+      } else {
+        await this.serverApi.put(`/api/payroll/components/${this.editId}`, { name, type, percent: Number(percent), description });
+        this.messageService.add({ severity: 'success', summary: 'Updated', detail: 'Component updated', life: 3000 });
+      }
+      this.hideDialog();
+      await this.loadPayrollComponents();
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'Save failed' });
+    }
   }
 
   async onEmployeeChange() {
-    if (!this.generatePayrollForm.get('employee')?.value) {
+    const employee = this.generatePayrollForm.get('employee')?.value;
+
+    if (!employee) {
       this.calculatedComponents = [];
       this.netSalary = 0;
+      this.grossSalary = 0;
       this.monthlySalary = 0;
       return;
     }
 
-    const employee = this.generatePayrollForm.get('employee')?.value;
-
     if (!employee.salary) {
       this.messageService.add({
         severity: 'error',
-        summary: 'Error',
-        detail: 'Selected employee does not have a salary configured',
+        summary: 'No Salary',
+        detail: 'Selected employee does not have an annual CTC configured',
       });
+      this.calculatedComponents = [];
       return;
     }
 
-    // Calculate monthly salary from annual CTC
-    this.monthlySalary = employee.salary / 12;
+    this.monthlySalary = Number(employee.salary) / 12;
+    await this.recalculateComponents();
+  }
 
-    // Load payroll components and calculate amounts
+  async onLopDaysChange() {
+    if (this.generatePayrollForm.get('employee')?.value) {
+      await this.recalculateComponents();
+    }
+  }
+
+  private async recalculateComponents() {
+    const formValue = this.generatePayrollForm.value;
+    if (!formValue.employee) return;
+
+    const month = formValue.month instanceof Date ? formValue.month.getMonth() + 1 : formValue.month;
+    const year = formValue.year instanceof Date ? formValue.year.getFullYear() : formValue.year;
+    const lopDays = formValue.lopDays ?? 0;
+
     try {
-      const components: any = await this.serverApi.get(
-        `/api/payroll/components/${employee.id}`
+      const calc: any = await this.serverApi.get(
+        `/api/payroll/components/${formValue.employee.id}`,
+        { month, year, lopDays }
       );
 
-      this.calculatedComponents = components.map((comp: any) => ({
-        id: comp.id,
-        name: comp.name,
-        type: comp.type,
-        amount: comp.amount,
-      }));
-
-      // Calculate net salary
-      this.netSalary = this.calculatedComponents.reduce((sum, comp) => {
-        if (comp.type === 'ALLOWANCE') {
-          return sum + comp.amount;
-        } else if (comp.type === 'DEDUCTION') {
-          return sum - comp.amount;
-        }
-        return sum;
-      }, 0);
+      this.calculatedComponents = calc.components ?? [];
+      this.grossSalary = Number(calc.grossSalary ?? 0);
+      this.netSalary = Number(calc.netSalary ?? 0);
     } catch (error: any) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: error.message || 'Failed to load payroll components',
+        detail: error?.message || 'Failed to calculate components',
       });
     }
   }
@@ -293,75 +324,48 @@ export class Payroll {
   async generatePayroll() {
     this.generatePayrollForm.markAllAsTouched();
     if (!this.generatePayrollForm.valid) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Please fill all required fields',
-      });
+      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Please fill all required fields' });
       return;
     }
 
     if (this.calculatedComponents.length === 0) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No payroll components found for this employee',
-      });
+      this.messageService.add({ severity: 'warn', summary: 'No Components', detail: 'No active payroll components found. Configure components first.' });
       return;
     }
 
     const formValue = this.generatePayrollForm.value;
-    const month = formValue.month.getMonth() + 1;
-    const year = formValue.year.getFullYear();
+    const month = formValue.month instanceof Date ? formValue.month.getMonth() + 1 : formValue.month;
+    const year = formValue.year instanceof Date ? formValue.year.getFullYear() : formValue.year;
 
     try {
       await this.serverApi.post('/api/payroll', {
         employeeId: formValue.employee.id,
         month,
         year,
-        components: this.calculatedComponents.map((comp) => ({
-          componentTypeId: comp.id,
-          percent: (comp.amount / this.monthlySalary) * 100,
-        })),
+        lopDays: formValue.lopDays ?? 0,
       });
 
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Payroll generated successfully',
-      });
-
-      // Reset form and reload payrolls
-      this.generatePayrollForm.reset({
-        employee: null,
-        month: new Date(),
-        year: new Date(),
-      });
-      this.calculatedComponents = [];
-      this.netSalary = 0;
-      this.monthlySalary = 0;
-      this.loadPayrolls();
+      this.messageService.add({ severity: 'success', summary: 'Draft Created', detail: 'Payroll generated in DRAFT state. An HR Admin must approve it.' });
+      this.resetPayrollForm();
+      await this.loadPayrolls();
     } catch (error: any) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error.message || 'Failed to generate payroll',
-      });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'Failed to generate payroll' });
     }
   }
 
   resetPayrollForm() {
-    this.generatePayrollForm.reset({
-      employee: null,
-      month: new Date(),
-      year: new Date(),
-    });
+    this.generatePayrollForm.reset({ employee: null, month: new Date(), year: new Date(), lopDays: 0 });
     this.calculatedComponents = [];
     this.netSalary = 0;
+    this.grossSalary = 0;
     this.monthlySalary = 0;
   }
 
-  hasPermission(action: string) {
+  getStatusSeverity(status: string): string {
+    return this.statusSeverityMap[status] ?? 'secondary';
+  }
+
+  hasPermission(action: string): boolean {
     return this.permissions?.includes(action) ?? false;
   }
 }

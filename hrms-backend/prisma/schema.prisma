@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 //////////////////////////////////////////
@@ -44,6 +43,13 @@ enum NotificationType {
 enum ComponentType {
   ALLOWANCE
   DEDUCTION
+}
+
+enum PayrollStatus {
+  DRAFT
+  APPROVED
+  LOCKED
+  PAID
 }
 
 enum ChannelType {
@@ -280,19 +286,28 @@ model Attendance {
 //////////////////////////////////////////
 
 model Payroll {
-  id         String   @id @default(uuid())
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  month      Int
-  year       Int
-  netSalary  Float    @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String        @id @default(uuid())
+  employeeId  String
+  employee    Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month       Int
+  year        Int
+  grossSalary Decimal       @default(0) @db.Decimal(15, 2)
+  netSalary   Decimal       @default(0) @db.Decimal(15, 2)
+  lopDays     Int           @default(0)
+  status      PayrollStatus @default(DRAFT)
+  approvedBy  String?
+  approvedAt  DateTime?
+  lockedAt    DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   components PayrollComponent[]
 
   @@unique([employeeId, month, year])
   @@index([year, month])
+  @@index([employeeId])
+  @@index([status])
 }
 
 //////////////////////////////////////////
@@ -305,7 +320,8 @@ model PayrollComponentType {
   description String?
   type        ComponentType
   isActive    Boolean       @default(true)
-  percent     Float?
+  percent     Decimal?      @db.Decimal(7, 4)
+  deletedAt   DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -322,7 +338,10 @@ model PayrollComponent {
   payroll         Payroll              @relation(fields: [payrollId], references: [id], onDelete: Cascade)
   componentTypeId String
   componentType   PayrollComponentType @relation(fields: [componentTypeId], references: [id])
-  amount          Float                @default(0)
+  amount          Decimal              @default(0) @db.Decimal(15, 2)
+  snapshotName    String
+  snapshotType    ComponentType
+  snapshotPercent Decimal              @db.Decimal(7, 4)
 
   @@unique([payrollId, componentTypeId])
 }
