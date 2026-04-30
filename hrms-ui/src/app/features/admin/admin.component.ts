@@ -43,6 +43,7 @@ export class Admin implements OnInit {
   groupedPermissions: GroupedPermissions = {};
   resources: string[] = [];
 
+  activeTab = '0';
   showRoleDialog = false;
   editingRole: any | null = null;
   roleName = '';
@@ -58,6 +59,16 @@ export class Admin implements OnInit {
     this.loadUsers();
     this.loadRoles();
     this.loadPermissions();
+  }
+
+
+  onTabChange(tabValue: string | number | undefined) {
+    const nextTab = String(tabValue ?? '0');
+    this.activeTab = nextTab;
+
+    if (nextTab === '0' && this.users.length === 0 && !this.usersLoading) {
+      this.loadUsers();
+    }
   }
 
   // ===== Users =====
