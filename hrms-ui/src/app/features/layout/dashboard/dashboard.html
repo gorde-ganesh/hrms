@@ -211,14 +211,14 @@
           <p class="leave-away">{{ leave.away }}</p>
         </div>
         <p class="leave-empty" *ngIf="!upcomingLeaves?.length">No upcoming leaves scheduled</p>
-        <p-button label="Request Leave" size="small" [outlined]="true" styleClass="w-full mt-2" />
+        <p-button label="Request Leave" size="small" [outlined]="true" styleClass="w-full mt-2" (click)="onQuickAction('Request Leave')" />
       </div>
     </div>
 
   </div>
 
   <!-- Pending tasks + Performance goals -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" *ngIf="false">
 
     <div class="panel">
       <div class="panel-header">
@@ -263,7 +263,7 @@
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <button *ngFor="let action of quickActions"
-              class="quick-action flex items-center gap-3 px-4 py-3 rounded-lg text-left w-full">
+              class="quick-action flex items-center gap-3 px-4 py-3 rounded-lg text-left w-full" (click)="onQuickAction(action.label)">
         <i [class]="action.icon + ' quick-action-icon'"></i>
         <span class="quick-action-label">{{ action.label }}</span>
       </button>

@@ -1,5 +1,6 @@
 import { CommonModule, formatDate } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api-interface.service';
 import { AuthStateService } from '../../../services/auth-state.service';
@@ -99,7 +100,7 @@ export class Dashboard implements OnInit {
 
   dashboardStats: DashboardSummary = {};
 
-  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService) {}
+  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService, private router: Router) {}
 
   ngOnInit(): void {
     this.userInfo = this.authState.userInfo;
@@ -107,12 +108,16 @@ export class Dashboard implements OnInit {
       this.userInfo.role = this.userInfo.role.toUpperCase();
     }
 
-    this.initChartOptions();
-    this.loadUpcomingLeaves();
-    this.loadPerformanceGoals();
-    this.loadPendingTasks();
     this.loadQuickActions();
     this.loadDashboardStats();
+
+    if (['EMPLOYEE', 'MANAGER', 'HR'].includes(this.userInfo?.role) && this.userInfo?.employeeId) {
+      this.initChartOptions();
+    }
+
+    if (['ADMIN', 'HR', 'MANAGER'].includes(this.userInfo?.role)) {
+      this.loadUpcomingLeaves();
+    }
   }
 
 
@@ -142,13 +147,16 @@ export class Dashboard implements OnInit {
   todayStatus = '';
   attendenceSummary: any = {};
   async loadAttendenceSummary(month?: number, year?: number) {
+    if (!this.userInfo?.employeeId) return;
+
     const now = new Date();
     month = month || now.getMonth() + 1;
     year = year || now.getFullYear();
-    const summary: any = await this.serverApi.get(
-      `/api/attendance/summary/${this.userInfo.employeeId}`,
-      { month, year }
-    );
+    try {
+      const summary: any = await this.serverApi.get(
+        `/api/attendance/summary/${this.userInfo.employeeId}`,
+        { month, year }
+      );
     this.attendenceSummary = summary;
     this.todayWorkHours = summary.today.totalHours
       ? `${summary.today.totalHours.toFixed(2)}h`
@@ -172,20 +180,26 @@ export class Dashboard implements OnInit {
         },
       ],
     };
-    this.cdr.detectChanges();
-    
+      this.cdr.detectChanges();
+    } catch {
+      this.attendanceData = { labels: [], datasets: [] };
+    }
   }
 
   async loadUpcomingLeaves() {
-    const res: any = await this.serverApi.get('/api/leaves/upcoming');
-    this.upcomingLeaves = res?.content?.map((l: any) => ({
+    try {
+      const res: any = await this.serverApi.get('/api/leaves/upcoming');
+      this.upcomingLeaves = (res || []).map((l: any) => ({
       title: l.title,
       status: l.status,
       date: `${dayjs(l.startDate).format('MMM D')} - ${dayjs(l.endDate).format(
         'D'
       )}`,
       away: `${dayjs(l.startDate).diff(dayjs(), 'day')} days away`,
-    }));
+      }));
+    } catch {
+      this.upcomingLeaves = [];
+    }
   }
 
   async loadPerformanceGoals() {
@@ -245,6 +259,21 @@ export class Dashboard implements OnInit {
         color: 'text-orange-600',
       },
     ];
+  }
+
+
+  onQuickAction(actionLabel: string) {
+    const routeMap: Record<string, string> = {
+      'Request Leave': '/leaves',
+      'View Payslip': '/payroll',
+      'View Attendance': '/attendence',
+      'Performance Review': '/performance',
+    };
+
+    const targetRoute = routeMap[actionLabel];
+    if (targetRoute) {
+      this.router.navigate([targetRoute]);
+    }
   }
 
   async initChartOptions() {
