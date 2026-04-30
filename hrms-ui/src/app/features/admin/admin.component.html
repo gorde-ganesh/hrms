@@ -4,7 +4,7 @@
     <p class="text-sm text-gray-500 mt-1">Manage user access, roles, and system permissions</p>
   </div>
 
-  <p-tabs value="0">
+  <p-tabs [value]="activeTab" (valueChange)="onTabChange($event)">
     <p-tablist>
       <p-tab value="0">
         <i class="pi pi-users mr-2"></i>Users
