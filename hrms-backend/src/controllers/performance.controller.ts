@@ -3,10 +3,10 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { sendNotification } from '../utils/notification';
 import { prisma } from '../lib/prisma';
-
+import { successResponse } from '../utils/response-helper';
 
 export const addAppraisal = async (req: Request, res: Response) => {
-  const { employeeId, goals, rating, comments, managerComments } = req.body;
+  const { employeeId, goals, rating, comments, managerComments, reviewPeriod } = req.body;
 
   if (!employeeId || !goals) {
     throw new HttpError(
@@ -35,6 +35,8 @@ export const addAppraisal = async (req: Request, res: Response) => {
       rating,
       comments,
       managerComments,
+      status: 'DRAFT',
+      reviewPeriod: reviewPeriod ?? 'ANNUAL',
     },
   });
 
@@ -198,4 +200,158 @@ export const getTeamPerformance = async (req: Request, res: Response) => {
     statusCode: 200,
     code: SUCCESS_CODES.SUCCESS,
   });
+};
+
+// ----------------- Submit (DRAFT → SUBMITTED) -----------------
+export const submitAppraisal = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const currentUser = req.user;
+
+  const appraisal = await prisma.performance.findUnique({ where: { id } });
+  if (!appraisal) throw new HttpError(404, 'Appraisal not found', ERROR_CODES.NOT_FOUND);
+
+  if (appraisal.status !== 'DRAFT') {
+    throw new HttpError(400, `Cannot submit — current status is '${appraisal.status}'`, ERROR_CODES.VALIDATION_ERROR);
+  }
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== appraisal.employeeId) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  const updated = await prisma.performance.update({
+    where: { id },
+    data: { status: 'SUBMITTED' },
+  });
+
+  return successResponse(res, updated, 'Appraisal submitted for review', SUCCESS_CODES.SUCCESS, 200);
+};
+
+// ----------------- Review (SUBMITTED → REVIEWED) -----------------
+export const reviewAppraisal = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const { rating, managerComments } = req.body;
+
+  const appraisal = await prisma.performance.findUnique({ where: { id } });
+  if (!appraisal) throw new HttpError(404, 'Appraisal not found', ERROR_CODES.NOT_FOUND);
+
+  if (appraisal.status !== 'SUBMITTED') {
+    throw new HttpError(400, `Cannot review — current status is '${appraisal.status}'`, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const updated = await prisma.performance.update({
+    where: { id },
+    data: {
+      status: 'REVIEWED',
+      rating: rating ?? appraisal.rating,
+      managerComments: managerComments ?? appraisal.managerComments,
+      reviewDate: new Date(),
+    },
+  });
+
+  await sendNotification({
+    employeeIds: [appraisal.employeeId],
+    type: 'PERFORMANCE',
+    message: `Your appraisal has been reviewed. Rating: ${updated.rating ?? 'N/A'}`,
+  });
+
+  return successResponse(res, updated, 'Appraisal reviewed', SUCCESS_CODES.SUCCESS, 200);
+};
+
+// ----------------- Finalize (REVIEWED → FINALIZED) -----------------
+export const finalizeAppraisal = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+
+  const appraisal = await prisma.performance.findUnique({ where: { id } });
+  if (!appraisal) throw new HttpError(404, 'Appraisal not found', ERROR_CODES.NOT_FOUND);
+
+  if (appraisal.status !== 'REVIEWED') {
+    throw new HttpError(400, `Cannot finalize — current status is '${appraisal.status}'`, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const updated = await prisma.performance.update({
+    where: { id },
+    data: { status: 'FINALIZED' },
+  });
+
+  await sendNotification({
+    employeeIds: [appraisal.employeeId],
+    type: 'PERFORMANCE',
+    message: 'Your performance appraisal has been finalized.',
+  });
+
+  return successResponse(res, updated, 'Appraisal finalized', SUCCESS_CODES.SUCCESS, 200);
+};
+
+// ----------------- Delete (DRAFT only) -----------------
+export const deleteAppraisal = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const currentUser = req.user;
+
+  const appraisal = await prisma.performance.findUnique({ where: { id } });
+  if (!appraisal) throw new HttpError(404, 'Appraisal not found', ERROR_CODES.NOT_FOUND);
+
+  if (appraisal.status !== 'DRAFT') {
+    throw new HttpError(400, 'Only DRAFT appraisals can be deleted', ERROR_CODES.VALIDATION_ERROR);
+  }
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== appraisal.employeeId) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  await prisma.performance.delete({ where: { id } });
+  return successResponse(res, null, 'Appraisal deleted', SUCCESS_CODES.SUCCESS, 200);
+};
+
+// ----------------- Rating Trends for an Employee -----------------
+export const getPerformanceTrends = async (req: Request, res: Response) => {
+  const employeeId = String(req.params.employeeId);
+  const currentUser = req.user;
+
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== employeeId) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  const records = await prisma.performance.findMany({
+    where: { employeeId, status: 'FINALIZED', rating: { not: null } },
+    orderBy: { reviewDate: 'asc' },
+    select: { id: true, rating: true, reviewPeriod: true, reviewDate: true, createdAt: true },
+  });
+
+  return successResponse(res, records, 'Performance trends fetched', SUCCESS_CODES.SUCCESS, 200);
+};
+
+// ----------------- Team Performance Summary -----------------
+export const getTeamPerformanceSummary = async (req: Request, res: Response) => {
+  const managerId = String(req.params.managerId);
+
+  const teamMembers = await prisma.employee.findMany({
+    where: { managerId, status: 'ACTIVE' },
+    select: { id: true, user: { select: { name: true } } },
+  });
+
+  const teamIds = teamMembers.map((e) => e.id);
+  if (!teamIds.length) {
+    return successResponse(res, { teamSize: 0, averageRating: null, distribution: {} }, 'No team members', SUCCESS_CODES.SUCCESS, 200);
+  }
+
+  const finalized = await prisma.performance.findMany({
+    where: { employeeId: { in: teamIds }, status: 'FINALIZED', rating: { not: null } },
+    select: { employeeId: true, rating: true },
+  });
+
+  const totalRated = finalized.length;
+  const avgRating = totalRated > 0
+    ? finalized.reduce((sum, r) => sum + (r.rating ?? 0), 0) / totalRated
+    : null;
+
+  const distribution: Record<number, number> = {};
+  finalized.forEach((r) => {
+    const rating = r.rating!;
+    distribution[rating] = (distribution[rating] ?? 0) + 1;
+  });
+
+  return successResponse(res, {
+    teamSize: teamIds.length,
+    ratedCount: totalRated,
+    averageRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+    distribution,
+  }, 'Team performance summary fetched', SUCCESS_CODES.SUCCESS, 200);
 };

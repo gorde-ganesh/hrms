@@ -22,3 +22,8 @@ export const ChangePasswordSchema = z.object({
   userId: z.string().optional(),
   oldPassword: z.string().optional(),
 });
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1),
+  newPassword: passwordSchema,
+});

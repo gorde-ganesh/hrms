@@ -40,6 +40,8 @@ describe('AuthService.login', () => {
     roleId: 'role-1',
     userRole: { id: 'role-1', name: 'EMPLOYEE', permissions: [] },
     name: 'Test User',
+    failedLoginAttempts: 0,
+    lockedUntil: null,
   };
   const mockEmployee = { id: 'emp-1', status: 'ACTIVE' };
 
@@ -54,11 +56,51 @@ describe('AuthService.login', () => {
     await expect(svc.login('test@example.com', 'pass')).rejects.toThrow(HttpError);
   });
 
-  it('throws 400 for wrong password', async () => {
+  it('throws 400 for wrong password and increments failedLoginAttempts', async () => {
     (prisma.user.findUnique as any).mockResolvedValue(mockUser);
     (prisma.employee.findFirst as any).mockResolvedValue(mockEmployee);
     (bcrypt.compare as any).mockResolvedValue(false);
+    (prisma.user.update as any).mockResolvedValue({});
     await expect(svc.login('test@example.com', 'wrong')).rejects.toThrow(HttpError);
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ failedLoginAttempts: 1 }) })
+    );
+  });
+
+  it('locks account after 5 failed attempts', async () => {
+    const nearLockUser = { ...mockUser, failedLoginAttempts: 4 };
+    (prisma.user.findUnique as any).mockResolvedValue(nearLockUser);
+    (prisma.employee.findFirst as any).mockResolvedValue(mockEmployee);
+    (bcrypt.compare as any).mockResolvedValue(false);
+    (prisma.user.update as any).mockResolvedValue({});
+
+    await expect(svc.login('test@example.com', 'wrong')).rejects.toThrow(HttpError);
+    const updateCall = (prisma.user.update as any).mock.calls[0][0];
+    expect(updateCall.data.failedLoginAttempts).toBe(5);
+    expect(updateCall.data.lockedUntil).toBeInstanceOf(Date);
+  });
+
+  it('throws 403 when account is locked', async () => {
+    const lockedUser = {
+      ...mockUser,
+      lockedUntil: new Date(Date.now() + 15 * 60 * 1000), // locked for 15 more min
+    };
+    (prisma.user.findUnique as any).mockResolvedValue(lockedUser);
+    const err = await svc.login('test@example.com', 'pass').catch((e) => e);
+    expect(err).toBeInstanceOf(HttpError);
+    expect((err as HttpError).statusCode).toBe(403);
+  });
+
+  it('resets failedLoginAttempts and lockedUntil on successful login', async () => {
+    (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+    (prisma.employee.findFirst as any).mockResolvedValue(mockEmployee);
+    (bcrypt.compare as any).mockResolvedValue(true);
+    (prisma.user.update as any).mockResolvedValue({});
+
+    await svc.login('test@example.com', 'correct');
+    const resetCall = (prisma.user.update as any).mock.calls[0][0];
+    expect(resetCall.data.failedLoginAttempts).toBe(0);
+    expect(resetCall.data.lockedUntil).toBeNull();
   });
 
   it('returns tokens and user details on success', async () => {
@@ -71,7 +113,6 @@ describe('AuthService.login', () => {
     expect(result.accessToken).toBe('mock-token');
     expect(result.userDetails.email).toBe('test@example.com');
     expect(result.rawRefreshToken).toBeTruthy();
-    expect(prisma.user.update).toHaveBeenCalled();
   });
 });
 

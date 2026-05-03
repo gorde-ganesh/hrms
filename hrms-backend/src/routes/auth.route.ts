@@ -5,13 +5,14 @@ import {
   loginUser,
   registerUser,
   forgotPassword,
+  resetPassword,
   getCurrentUser,
   logoutUser,
   refreshAccessToken,
 } from '../controllers/auth.controller';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate';
-import { LoginSchema, ForgotPasswordSchema, ChangePasswordSchema } from '../schemas/auth.schema';
+import { LoginSchema, ForgotPasswordSchema, ChangePasswordSchema, ResetPasswordSchema } from '../schemas/auth.schema';
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -37,6 +38,7 @@ function registerRouters(app: express.Application) {
   app.post('/api/auth/logout', authenticate, logoutUser);
   app.get('/api/auth/me', authenticate, getCurrentUser);
   app.post('/api/auth/forgot-password', authLimiter, validate(ForgotPasswordSchema), forgotPassword);
+  app.post('/api/auth/reset-password', authLimiter, validate(ResetPasswordSchema), resetPassword);
   app.post('/api/auth/change-password', authenticate, validate(ChangePasswordSchema), changePassword);
 }
 
