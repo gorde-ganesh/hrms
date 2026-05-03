@@ -134,6 +134,12 @@ export const registerUser = async (req: Request, res: Response) => {
     throw new HttpError(400, 'Invalid role', ERROR_CODES.VALIDATION_ERROR);
   }
 
+  // Only ADMIN can create ADMIN or HR accounts
+  const callerRole = req.user?.role;
+  if ((role === 'ADMIN' || role === 'HR') && callerRole !== 'ADMIN') {
+    throw new HttpError(403, 'Only ADMIN can assign ADMIN or HR roles', ERROR_CODES.FORBIDDEN);
+  }
+
   // Validate manager exists if provided
   if (managerId) {
     const manager = await prisma.employee.findUnique({
