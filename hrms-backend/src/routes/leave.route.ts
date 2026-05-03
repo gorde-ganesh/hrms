@@ -5,6 +5,7 @@ import { CreateLeaveSchema, UpdateLeaveStatusSchema } from '../schemas/leave.sch
 
 import {
   applyLeave,
+  cancelLeave,
   getAllLeaves,
   getEmployeeLeaves,
   getTeamLeaves,
@@ -26,6 +27,18 @@ function registerRouters(app: express.Application) {
     validate(UpdateLeaveStatusSchema),
     updateLeaveStatus
   );
+  app.delete(
+    '/api/leaves/:id',
+    authenticate,
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE', 'MANAGER']),
+    cancelLeave
+  );
+  app.get(
+    '/api/leaves/upcoming',
+    authenticate,
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE', 'MANAGER']),
+    getUpcomingLeaves
+  );
   app.get(
     '/api/leaves/:employeeId',
     authenticate,
@@ -43,12 +56,6 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess(['HR', 'ADMIN', 'MANAGER']),
     getAllLeaves
-  );
-  app.get(
-    '/api/leaves/upcoming',
-    authenticate,
-    roleAccess(['HR', 'ADMIN', 'MANAGER']),
-    getUpcomingLeaves
   );
 }
 

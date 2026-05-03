@@ -221,12 +221,18 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
   const leaveYear = leave.startDate.getFullYear();
   const previousStatus = leave.status;
 
+  const { rejectionReason } = req.body;
+  const now = new Date();
+
   // Update leave status
   const updatedLeave = await prisma.leave.update({
     where: { id: id },
     data: {
       status,
       approvedById: approvedBy,
+      approvalDate: status === 'APPROVED' ? now : undefined,
+      rejectionDate: status === 'REJECTED' ? now : undefined,
+      rejectionReason: status === 'REJECTED' ? (rejectionReason ?? null) : undefined,
     },
   });
 
@@ -369,6 +375,47 @@ export const getAllLeaves = async (req: Request, res: Response) => {
     SUCCESS_CODES.SUCCESS,
     200
   );
+};
+
+// ----------------- Cancel Leave -----------------
+export const cancelLeave = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const currentUser = req.user;
+
+  const leave = await prisma.leave.findUnique({
+    where: { id },
+    include: { employee: { include: { user: true } } },
+  });
+
+  if (!leave) throw new HttpError(404, 'Leave not found', ERROR_CODES.NOT_FOUND);
+
+  // Employees can only cancel their own leaves
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== leave.employeeId) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  if (leave.status === 'CANCELLED') {
+    throw new HttpError(400, 'Leave is already cancelled', ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  if (leave.status === 'REJECTED') {
+    throw new HttpError(400, 'Cannot cancel a rejected leave', ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const wasApproved = leave.status === 'APPROVED';
+  const leaveDays = calculateLeaveDays(leave.startDate, leave.endDate);
+  const leaveYear = leave.startDate.getFullYear();
+
+  await prisma.leave.update({
+    where: { id },
+    data: { status: 'CANCELLED' },
+  });
+
+  if (wasApproved) {
+    await updateUsedLeaves(leave.employeeId, leaveYear, leave.leaveType, -leaveDays);
+  }
+
+  return successResponse(res, null, 'Leave cancelled successfully', SUCCESS_CODES.SUCCESS, 200);
 };
 
 // GET /api/leaves/upcoming

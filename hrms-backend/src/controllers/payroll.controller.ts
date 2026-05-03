@@ -81,7 +81,9 @@ export const generatePayroll = async (req: Request, res: Response) => {
       employeeId,
       month,
       year,
+      basicSalary: monthlySalary,
       netSalary,
+      status: 'DRAFT',
       components: {
         create: componentData,
       },
@@ -470,4 +472,44 @@ export const downloadPayslip = async (req: Request, res: Response) => {
     });
 
   doc.end();
+};
+
+// ----------------- Finalize Payroll -----------------
+export const finalizePayroll = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const payroll = await prisma.payroll.findUnique({ where: { id } });
+  if (!payroll) throw new HttpError(404, 'Payroll not found', ERROR_CODES.NOT_FOUND);
+  if (payroll.status !== 'DRAFT') {
+    throw new HttpError(400, `Cannot finalize payroll with status '${payroll.status}'`, ERROR_CODES.VALIDATION_ERROR);
+  }
+  const updated = await prisma.payroll.update({
+    where: { id },
+    data: { status: 'FINALIZED', processedById: req.user?.id as any },
+  });
+  await sendNotification({
+    employeeIds: [payroll.employeeId],
+    type: 'PAYROLL',
+    message: `Your payroll for ${payroll.month}/${payroll.year} has been finalized.`,
+  });
+  return successResponse(res, updated, 'Payroll finalized', SUCCESS_CODES.SUCCESS, 200);
+};
+
+// ----------------- Mark Payroll Paid -----------------
+export const markPayrollPaid = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const payroll = await prisma.payroll.findUnique({ where: { id } });
+  if (!payroll) throw new HttpError(404, 'Payroll not found', ERROR_CODES.NOT_FOUND);
+  if (payroll.status !== 'FINALIZED') {
+    throw new HttpError(400, `Cannot mark as paid — current status is '${payroll.status}'. Finalize first.`, ERROR_CODES.VALIDATION_ERROR);
+  }
+  const updated = await prisma.payroll.update({
+    where: { id },
+    data: { status: 'PAID', paidDate: new Date() },
+  });
+  await sendNotification({
+    employeeIds: [payroll.employeeId],
+    type: 'PAYROLL',
+    message: `Your salary for ${payroll.month}/${payroll.year} has been paid.`,
+  });
+  return successResponse(res, updated, 'Payroll marked as paid', SUCCESS_CODES.SUCCESS, 200);
 };

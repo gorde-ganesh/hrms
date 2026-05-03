@@ -7,6 +7,8 @@ import { ERROR_CODES } from '../utils/response-codes';
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const JWT_SECRET = process.env.JWT_KEY as string;
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
 export class AuthService {
   private hashToken(raw: string): string {
@@ -25,6 +27,16 @@ export class AuthService {
       throw new HttpError(400, 'Invalid credentials', ERROR_CODES.INVALID_CREDENTIALS);
     }
 
+    // Check account lockout
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      throw new HttpError(
+        403,
+        `Account locked. Try again in ${minutesLeft} minute(s).`,
+        ERROR_CODES.INVALID_CREDENTIALS
+      );
+    }
+
     const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
     if (!employee) {
       throw new HttpError(400, 'Invalid credentials', ERROR_CODES.INVALID_CREDENTIALS);
@@ -40,8 +52,27 @@ export class AuthService {
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      throw new HttpError(400, 'Invalid credentials', ERROR_CODES.INVALID_CREDENTIALS);
+      const attempts = user.failedLoginAttempts + 1;
+      const shouldLock = attempts >= MAX_FAILED_ATTEMPTS;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: attempts,
+          lockedUntil: shouldLock ? new Date(Date.now() + LOCKOUT_DURATION_MS) : null,
+        },
+      });
+      const remaining = MAX_FAILED_ATTEMPTS - attempts;
+      const msg = shouldLock
+        ? 'Account locked for 30 minutes due to too many failed attempts.'
+        : `Invalid credentials. ${remaining} attempt(s) remaining.`;
+      throw new HttpError(400, msg, ERROR_CODES.INVALID_CREDENTIALS);
     }
+
+    // Successful login — reset lockout counters
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginAttempts: 0, lockedUntil: null },
+    });
 
     const accessToken = jwt.sign(
       { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee.id },
@@ -167,8 +198,11 @@ export class AuthService {
       where: { id: user.id },
       data: {
         password: await bcrypt.hash(newPassword, 10),
-        resetToken: token ? null : undefined,
-        resetTokenExp: token ? null : undefined,
+        // Invalidate all active sessions so stolen tokens stop working
+        refreshToken: null,
+        refreshTokenExp: null,
+        resetToken: null,
+        resetTokenExp: null,
       },
     });
   }

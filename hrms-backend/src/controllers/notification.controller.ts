@@ -69,6 +69,30 @@ export const listNotifications = async (req: Request, res: Response) => {
   });
 };
 
+export const markNotificationAsRead = async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const currentUser = req.user;
+
+  const notification = await prisma.notification.findUnique({ where: { id } });
+  if (!notification) throw new HttpError(404, 'Notification not found', ERROR_CODES.NOT_FOUND);
+
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== notification.employeeId) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  const updated = await prisma.notification.update({
+    where: { id },
+    data: { readStatus: true, readAt: new Date() },
+  });
+
+  return res.status(200).json({
+    message: 'Notification marked as read',
+    data: updated,
+    statusCode: 200,
+    code: SUCCESS_CODES.SUCCESS,
+  });
+};
+
 export const sendBulkNotification = async (req: Request, res: Response) => {
   const { employeeIds, type, message } = req.body;
 
