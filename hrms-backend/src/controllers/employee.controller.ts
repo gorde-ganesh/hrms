@@ -29,7 +29,17 @@ export const restoreEmployee = async (req: Request, res: Response) => {
 };
 
 export const getEmployee = async (req: Request, res: Response) => {
-  const employee = await employeeService.findById((req.params.id as string));
+  const id = req.params.id as string;
+  const { role, employeeId } = req.user;
+
+  // Employees can only fetch their own record
+  if (role === 'EMPLOYEE' && employeeId !== id) {
+    const { HttpError } = await import('../utils/http-error');
+    const { ERROR_CODES } = await import('../utils/response-codes');
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  const employee = await employeeService.findById(id);
   return successResponse(res, employee, 'Details fetched', SUCCESS_CODES.EMPLOYEE_FETCHED, 200);
 };
 
