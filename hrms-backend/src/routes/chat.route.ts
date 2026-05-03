@@ -15,30 +15,31 @@ import {
   uploadFile,
   upload,
 } from '../controllers/chat.controller';
+import { authenticate } from '../middlewares/auth.middleware';
 
 function registerRouters(app: express.Application) {
   // Existing routes
-  app.get('/api/chats/users', getAllUsers);
-  app.get('/api/chats/:userId/conversations', getUserConversations);
-  app.get('/api/chats/messages/:conversationId', getMessages);
-  app.post('/api/chats/messages', sendMessage);
-  app.post('/api/chats/start', startConversation);
+  app.get('/api/chats/users', authenticate, getAllUsers);
+  app.get('/api/chats/:userId/conversations', authenticate, getUserConversations);
+  app.get('/api/chats/messages/:conversationId', authenticate, getMessages);
+  app.post('/api/chats/messages', authenticate, sendMessage);
+  app.post('/api/chats/start', authenticate, startConversation);
 
   // Group chat routes
-  app.post('/api/chats/groups', createGroupChat);
+  app.post('/api/chats/groups', authenticate, createGroupChat);
 
   // Channel routes
-  app.post('/api/chats/channels', createChannel);
-  app.get('/api/chats/channels/public', getPublicChannels);
-  app.post('/api/chats/channels/:channelId/join', joinChannel);
-  app.post('/api/chats/channels/:channelId/leave', leaveChannel);
+  app.post('/api/chats/channels', authenticate, createChannel);
+  app.get('/api/chats/channels/public', authenticate, getPublicChannels);
+  app.post('/api/chats/channels/:channelId/join', authenticate, joinChannel);
+  app.post('/api/chats/channels/:channelId/leave', authenticate, leaveChannel);
 
   // Member management
-  app.post('/api/chats/:conversationId/members', addMember);
-  app.delete('/api/chats/:conversationId/members/:userId', removeMember);
+  app.post('/api/chats/:conversationId/members', authenticate, addMember);
+  app.delete('/api/chats/:conversationId/members/:userId', authenticate, removeMember);
 
   // File upload
-  app.post('/api/chats/upload', upload.single('file'), uploadFile);
+  app.post('/api/chats/upload', authenticate, upload.single('file'), uploadFile);
 }
 
 export default registerRouters;

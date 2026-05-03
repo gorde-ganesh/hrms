@@ -11,6 +11,18 @@ import { prisma } from '../lib/prisma';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 
 
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf',
+  'video/mp4', 'video/webm',
+  'audio/mpeg', 'audio/ogg', 'audio/webm',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -22,7 +34,17 @@ const storage = multer.diskStorage({
   },
 });
 
-export const upload = multer({ storage });
+export const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type '${file.mimetype}' is not allowed`));
+    }
+  },
+});
 
 export const getUserConversations = async (req: Request, res: Response) => {
   try {

@@ -68,6 +68,13 @@ export const routes: Routes = [
           import('./features/layout/chat/chat').then((m) => m.Chat),
       },
       {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/layout/notification/notification').then(
+            (m) => m.Notification
+          ),
+      },
+      {
         path: 'admin',
         loadComponent: () =>
           import('./features/admin/admin.component').then((m) => m.Admin),

@@ -1,10 +1,12 @@
 // main.ts
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import https, { Server } from 'https';
 import fs from 'fs';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './src/middlewares/error-handler.middleware';
 import { Server as SocketIOServer } from 'socket.io';
@@ -12,6 +14,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
 import { logger } from './src/utils/logger';
 import rateLimit from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
 const swaggerDocument = require('./src/docs/swagger.json');
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { success: false, statusCode: 429, message: 'Too many requests, please try again later.' } });
@@ -75,23 +78,42 @@ if (process.env.REDIS_URL) {
   }
 }
 
+// Verify JWT on Socket.IO handshake
+io.use((socket, next) => {
+  const token =
+    socket.handshake.auth?.token ||
+    socket.handshake.headers?.authorization?.replace('Bearer ', '');
+  const JWT_SECRET = process.env.JWT_KEY;
+  if (!token || !JWT_SECRET) {
+    return next(new Error('Unauthorized: missing token'));
+  }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { id: number; role: string };
+    (socket as any).userId = String(payload.id);
+  } catch {
+    return next(new Error('Unauthorized: invalid token'));
+  }
+  next();
+});
+
 // Track online users and their rooms (in-memory fallback)
 const onlineUsers: Record<string, string> = {};
 const userRooms: Record<string, Set<string>> = {}; // userId -> Set of conversationIds
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  let currentUserId: string | null = null;
+  // Use verified identity from JWT, not client-supplied userId
+  let currentUserId: string = (socket as any).userId;
+  onlineUsers[currentUserId] = socket.id;
+  logger.info(`User ${currentUserId} connected with socket ${socket.id}`);
+
+  // Broadcast user online status on connect
+  io.emit('user-online', currentUserId);
 
   // ==================== User Registration ====================
-
-  socket.on('register', (userId: string) => {
-    currentUserId = userId;
-    onlineUsers[userId] = socket.id;
-    console.log(`User ${userId} registered with socket ${socket.id}`);
-
-    // Broadcast user online status
-    io.emit('user-online', userId);
+  // 'register' event kept for backwards compatibility but identity
+  // is always sourced from the verified JWT, not the payload.
+  socket.on('register', (_userId: string) => {
+    // currentUserId is already set from JWT — ignore client-supplied value
   });
 
   // ==================== Chat Messages ====================
@@ -171,7 +193,7 @@ io.on('connection', (socket) => {
       const targetSocketId = onlineUsers[data.target];
       if (targetSocketId) {
         io.to(targetSocketId).emit('huddle-ice-candidate', {
-          from: data.target,
+          from: currentUserId,
           candidate: data.candidate,
         });
       }
@@ -268,6 +290,7 @@ io.on('connection', (socket) => {
 
 export { io, onlineUsers };
 // ----------------- Middlewares -----------------
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -293,8 +316,24 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files — requires valid JWT
+app.get('/uploads/:filename', (req: Request, res: Response) => {
+  const JWT_SECRET = process.env.JWT_KEY;
+  const cookieToken = (req as any).cookies?.authToken;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const token = cookieToken || bearerToken;
+  if (!token || !JWT_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+  const safeName = path.basename(String(req.params.filename));
+  res.sendFile(path.join(__dirname, 'uploads', safeName));
+});
 
 // ----------------- Root route -----------------
 app.get('/', (req: Request, res: Response) => {
