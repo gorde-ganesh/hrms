@@ -58,3 +58,6 @@ jobs:
 
       - name: Production build
         run: npm run build -- --configuration production
+
+      - name: Run frontend tests
+        run: npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --no-progress

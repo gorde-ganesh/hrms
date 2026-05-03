@@ -7,6 +7,7 @@ import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
 import { sendPasswordReset } from '../services/mail.service';
 import { authService } from '../services/auth.service';
+import { auditLog } from '../utils/audit';
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -132,6 +133,12 @@ export const registerUser = async (req: Request, res: Response) => {
   const userRole = await prisma.userRole.findUnique({ where: { name: role } });
   if (!userRole) {
     throw new HttpError(400, 'Invalid role', ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  // Only ADMIN can create ADMIN or HR accounts
+  const callerRole = req.user?.role;
+  if ((role === 'ADMIN' || role === 'HR') && callerRole !== 'ADMIN') {
+    throw new HttpError(403, 'Only ADMIN can assign ADMIN or HR roles', ERROR_CODES.FORBIDDEN);
   }
 
   // Validate manager exists if provided
@@ -317,6 +324,14 @@ export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const result = await authService.login(email, password);
   setAuthCookies(res, result.accessToken, result.rawRefreshToken);
+  auditLog({
+    action: 'LOGIN',
+    entity: 'User',
+    entityId: result.userDetails.id,
+    performedBy: result.userDetails.id,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
   return successResponse(res, { user_details: result.userDetails }, 'Successfully logged in', SUCCESS_CODES.USER_LOGGED_IN, 200);
 };
 
@@ -334,7 +349,11 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
-  if (req.user?.id) await authService.logout(req.user.id);
+  const userId = req.user?.id;
+  if (userId) {
+    await authService.logout(userId);
+    auditLog({ action: 'LOGOUT', entity: 'User', entityId: userId, performedBy: userId, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  }
   res.clearCookie('authToken', { httpOnly: true, secure: true, sameSite: 'none' });
   res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'none', path: '/api/auth/refresh' });
   return successResponse(res, null, 'Logged out successfully', SUCCESS_CODES.USER_LOGGED_IN, 200);

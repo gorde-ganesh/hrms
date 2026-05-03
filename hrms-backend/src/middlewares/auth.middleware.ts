@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { ApiResponse } from '../model/response.model';
 import { ERROR_CODES } from '../utils/response-codes';
 import { errorResponse } from '../utils/response-helper';
+import { prisma } from '../lib/prisma';
 
 const JWT_SECRET = process.env.JWT_KEY;
 if (!JWT_SECRET) {
@@ -31,9 +32,22 @@ export const authenticate = async (
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as {
-      id: number;
+      id: string;
       role: string;
+      tv?: number;
     };
+
+    // Validate tokenVersion to immediately invalidate tokens after logout/password-change
+    if (decoded.tv !== undefined) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { tokenVersion: true },
+      });
+      if (!dbUser || dbUser.tokenVersion !== decoded.tv) {
+        return errorResponse(res, 'Session has been invalidated', ERROR_CODES.UNAUTHORIZED, 401);
+      }
+    }
+
     req.user = decoded;
     next();
   } catch (err) {

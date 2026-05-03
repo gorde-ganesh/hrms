@@ -122,7 +122,7 @@ describe('AuthService.logout', () => {
     await svc.logout('user-1');
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
-      data: { refreshToken: null, refreshTokenExp: null },
+      data: { refreshToken: null, refreshTokenExp: null, tokenVersion: { increment: 1 } },
     });
   });
 });

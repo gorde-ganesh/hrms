@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import xss from 'xss';
 import {
   successResponse,
   createdResponse,
@@ -160,7 +161,8 @@ export const getMessages = async (req: Request, res: Response) => {
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
-    const { senderId, conversationId, messageText, messageType } = req.body;
+    const { senderId, conversationId, messageType } = req.body;
+    const messageText = typeof req.body.messageText === 'string' ? xss(req.body.messageText) : req.body.messageText;
 
     // ✅ Validate required fields
     if (!senderId || !conversationId || !messageText) {

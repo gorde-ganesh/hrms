@@ -1,12 +1,15 @@
 import { EmployeeStatus } from '../../generated/prisma';
 import { Request, Response } from 'express';
-import { SUCCESS_CODES } from '../utils/response-codes';
+import { SUCCESS_CODES, ERROR_CODES } from '../utils/response-codes';
+import { HttpError } from '../utils/http-error';
 import {
   successResponse,
   createdResponse,
   noContentResponse,
 } from '../utils/response-helper';
 import { employeeService } from '../services/employee.service';
+import { prisma } from '../lib/prisma';
+import { auditLog } from '../utils/audit';
 
 export const addEmployee = async (req: Request, res: Response) => {
   const result = await employeeService.create(req.body);
@@ -66,4 +69,65 @@ export const fetchLastEmployeeCode = async (_req: Request, res: Response) => {
 export const getEmployeeSummary = async (_req: Request, res: Response) => {
   const summary = await employeeService.getSummary();
   return successResponse(res, summary, 'Employee summary fetched', SUCCESS_CODES.SUCCESS, 200);
+};
+
+export const offboardEmployee = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { reason } = req.body;
+
+  const employee = await prisma.employee.findUnique({ where: { id } });
+  if (!employee) throw new HttpError(404, 'Employee not found', ERROR_CODES.NOT_FOUND);
+  if (employee.status === EmployeeStatus.TERMINATED) {
+    throw new HttpError(400, 'Employee is already terminated', ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const updated = await prisma.employee.update({
+    where: { id },
+    data: { status: EmployeeStatus.TERMINATED },
+  });
+
+  auditLog({
+    action: 'OFFBOARD',
+    entity: 'Employee',
+    entityId: id,
+    performedBy: req.user.id,
+    before: { status: employee.status },
+    after: { status: EmployeeStatus.TERMINATED, reason },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string,
+  });
+
+  return successResponse(res, { employee: updated, reason }, 'Employee offboarded successfully', SUCCESS_CODES.SUCCESS, 200);
+};
+
+export const getEmployeeHierarchy = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  const employee = await prisma.employee.findUnique({
+    where: { id },
+    include: {
+      user: { select: { name: true, email: true } },
+      manager: {
+        include: {
+          user: { select: { name: true, email: true } },
+          manager: {
+            include: {
+              user: { select: { name: true, email: true } },
+              manager: {
+                include: { user: { select: { name: true, email: true } } },
+              },
+            },
+          },
+        },
+      },
+      subordinates: {
+        where: { deletedAt: null },
+        include: { user: { select: { name: true, email: true } } },
+      },
+    },
+  });
+
+  if (!employee) throw new HttpError(404, 'Employee not found', ERROR_CODES.NOT_FOUND);
+
+  return successResponse(res, employee, 'Hierarchy fetched', SUCCESS_CODES.SUCCESS, 200);
 };

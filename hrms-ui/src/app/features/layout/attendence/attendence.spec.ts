@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { Attendence } from './attendence';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('Attendence', () => {
   let component: Attendence;
@@ -8,9 +9,9 @@ describe('Attendence', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Attendence]
-    })
-    .compileComponents();
+      imports: [Attendence, NoopAnimationsModule],
+      providers: [provideHttpClientTesting()],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(Attendence);
     component = fixture.componentInstance;

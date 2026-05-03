@@ -7,6 +7,8 @@ import {
   getEmployees,
   updateEmployee,
   getEmployeeSummary,
+  offboardEmployee,
+  getEmployeeHierarchy,
 } from '../controllers/employee.controller';
 import express from 'express';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
@@ -63,6 +65,18 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess(['HR', 'ADMIN', 'MANAGER']),
     getEmployees
+  );
+  app.post(
+    '/api/employees/:id/offboard',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    offboardEmployee
+  );
+  app.get(
+    '/api/employees/:id/hierarchy',
+    authenticate,
+    roleAccess(['HR', 'ADMIN', 'MANAGER']),
+    getEmployeeHierarchy
   );
 }
 

@@ -75,7 +75,7 @@ export class AuthService {
     });
 
     const accessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee.id },
+      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee.id, tv: user.tokenVersion },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -124,7 +124,7 @@ export class AuthService {
     const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
 
     const newAccessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee?.id },
+      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee?.id, tv: user.tokenVersion },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -144,7 +144,7 @@ export class AuthService {
   async logout(userId: string) {
     await prisma.user.update({
       where: { id: userId },
-      data: { refreshToken: null, refreshTokenExp: null },
+      data: { refreshToken: null, refreshTokenExp: null, tokenVersion: { increment: 1 } },
     });
   }
 
@@ -198,11 +198,11 @@ export class AuthService {
       where: { id: user.id },
       data: {
         password: await bcrypt.hash(newPassword, 10),
-        // Invalidate all active sessions so stolen tokens stop working
         refreshToken: null,
         refreshTokenExp: null,
         resetToken: null,
         resetTokenExp: null,
+        tokenVersion: { increment: 1 },
       },
     });
   }
