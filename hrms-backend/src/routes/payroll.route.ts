@@ -4,6 +4,8 @@ import {
   downloadPayslip,
   generatePayroll,
   getPayroll,
+  finalizePayroll,
+  markPayrollPaid,
 } from '../controllers/payroll.controller';
 import { getAllPayrollComponents } from '../controllers/payroll-components.controller';
 import { validate } from '../middlewares/validate';
@@ -29,6 +31,18 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess(['HR', 'ADMIN', 'EMPLOYEE']),
     downloadPayslip
+  );
+  app.post(
+    '/api/payroll/:id/finalize',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    finalizePayroll
+  );
+  app.post(
+    '/api/payroll/:id/mark-paid',
+    authenticate,
+    roleAccess(['ADMIN']),
+    markPayrollPaid
   );
 }
 

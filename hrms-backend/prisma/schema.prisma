@@ -109,11 +109,13 @@ model User {
   userRole        UserRole  @relation(fields: [roleId], references: [id])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  resetToken      String?
-  resetTokenExp   DateTime?
-  refreshToken    String?
-  refreshTokenExp DateTime?
-  deletedAt       DateTime?
+  resetToken           String?
+  resetTokenExp        DateTime?
+  refreshToken         String?
+  refreshTokenExp      DateTime?
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil          DateTime?
+  deletedAt            DateTime?
 
   employee             Employee?
   leavesApproved       Leave[]              @relation("LeaveApprovedBy")
