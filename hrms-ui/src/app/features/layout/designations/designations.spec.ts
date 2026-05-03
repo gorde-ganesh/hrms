@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Designations } from './designations';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('Designations Component', () => {
   let component: Designations;
@@ -7,7 +9,8 @@ describe('Designations Component', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Designations],
+      imports: [Designations, NoopAnimationsModule],
+      providers: [provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Designations);
@@ -19,4 +22,3 @@ describe('Designations Component', () => {
     expect(component).toBeTruthy();
   });
 });
-
