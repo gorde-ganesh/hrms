@@ -9,6 +9,7 @@ import {
 } from '../utils/response-helper';
 import { employeeService } from '../services/employee.service';
 import { prisma } from '../lib/prisma';
+import { auditLog } from '../utils/audit';
 
 export const addEmployee = async (req: Request, res: Response) => {
   const result = await employeeService.create(req.body);
@@ -83,6 +84,17 @@ export const offboardEmployee = async (req: Request, res: Response) => {
   const updated = await prisma.employee.update({
     where: { id },
     data: { status: EmployeeStatus.TERMINATED },
+  });
+
+  auditLog({
+    action: 'OFFBOARD',
+    entity: 'Employee',
+    entityId: id,
+    performedBy: req.user.id,
+    before: { status: employee.status },
+    after: { status: EmployeeStatus.TERMINATED, reason },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string,
   });
 
   return successResponse(res, { employee: updated, reason }, 'Employee offboarded successfully', SUCCESS_CODES.SUCCESS, 200);

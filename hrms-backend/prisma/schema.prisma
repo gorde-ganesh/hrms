@@ -126,6 +126,7 @@ model User {
   callsReceived        CallLog[]            @relation("Receiver")
   conversationsCreated Conversation[]       @relation("CreatedBy")
   payrollsProcessed    Payroll[]            @relation("PayrollProcessedBy")
+  auditLogs            AuditLog[]
 }
 
 //////////////////////////////////////////
@@ -490,4 +491,26 @@ model HolidayCalendar {
 
   @@index([year])
   @@index([date])
+}
+
+//////////////////////////////////////////
+// AUDIT LOG MODEL
+//////////////////////////////////////////
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, PASSWORD_RESET
+  entity      String   // Employee, Leave, Payroll, User, etc.
+  entityId    String?
+  performedBy String
+  user        User     @relation(fields: [performedBy], references: [id])
+  before      Json?
+  after       Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([performedBy])
+  @@index([entity, entityId])
+  @@index([createdAt])
 }
