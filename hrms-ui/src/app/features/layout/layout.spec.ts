@@ -3,7 +3,17 @@ import { Layout } from './layout';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
+import { AuthStateService } from '../../services/auth-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
+const mockUser = {
+  id: 'test-id',
+  name: 'Test User',
+  email: 'test@test.com',
+  role: 'EMPLOYEE',
+  permissions: {},
+  employeeId: 'emp-1',
+};
 
 describe('Layout', () => {
   let component: Layout;
@@ -16,6 +26,7 @@ describe('Layout', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: NotificationService, useValue: { connect: () => {}, disconnect: () => {}, notifications$: { subscribe: () => ({ unsubscribe: () => {} }) } } },
+        { provide: AuthStateService, useValue: { userInfo: mockUser, isLoggedIn: () => true, userInfo$: { subscribe: () => ({ unsubscribe: () => {} }) } } },
       ],
     }).compileComponents();
 

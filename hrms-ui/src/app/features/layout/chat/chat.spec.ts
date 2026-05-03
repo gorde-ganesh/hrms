@@ -4,8 +4,11 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChatService } from '../../../services/chat.service';
 import { HuddleService } from '../../../services/huddle.service';
 import { CallService } from '../../../services/call.service';
+import { AuthStateService } from '../../../services/auth-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
+
+const mockUser = { id: 'test-id', name: 'Test User', role: 'EMPLOYEE', email: 'test@test.com', employeeId: 'emp-1' };
 
 describe('Chat', () => {
   let component: Chat;
@@ -17,6 +20,10 @@ describe('Chat', () => {
       providers: [
         provideHttpClientTesting(),
         {
+          provide: AuthStateService,
+          useValue: { userInfo: mockUser },
+        },
+        {
           provide: ChatService,
           useValue: {
             messages$: of([]),
@@ -26,6 +33,8 @@ describe('Chat', () => {
             listenForMessages: () => {},
             listenForTyping: () => {},
             listenForOnlineStatus: () => {},
+            getUserConversations: () => Promise.resolve([]),
+            getAllUsers: () => Promise.resolve([]),
             sendMessage: () => {},
             disconnect: () => {},
           },
