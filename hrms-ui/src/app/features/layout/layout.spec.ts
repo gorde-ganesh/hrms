@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
 import { AuthStateService } from '../../services/auth-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { of } from 'rxjs';
 
 const mockUser = {
   id: 'test-id',
@@ -25,7 +26,7 @@ describe('Layout', () => {
       providers: [
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: NotificationService, useValue: { connect: () => {}, disconnect: () => {}, notifications$: { subscribe: () => ({ unsubscribe: () => {} }) } } },
+        { provide: NotificationService, useValue: { connect: () => {}, disconnect: () => {}, fetchNotifications: () => {}, markAsRead: () => {}, sendNotification: () => {}, notifications$: of([]) } },
         { provide: AuthStateService, useValue: { userInfo: mockUser, isLoggedIn: () => true, userInfo$: { subscribe: () => ({ unsubscribe: () => {} }) } } },
       ],
     }).compileComponents();
