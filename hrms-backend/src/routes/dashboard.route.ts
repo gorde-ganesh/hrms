@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getDashboardSummary, getDashboardStats } from '../controllers/dashboard.controller';
-import { authenticate } from '../middlewares/auth.middleware';
+import { getDashboardAlerts, getDashboardSummary, getDashboardStats } from '../controllers/dashboard.controller';
+import { authenticate, roleAccess } from '../middlewares/auth.middleware';
 
 const router = Router();
 
@@ -9,4 +9,5 @@ export default (app: Router) => {
 
   router.get('/summary', authenticate, getDashboardSummary);
   router.get('/stats', authenticate, getDashboardStats);
+  router.get('/alerts', authenticate, roleAccess(['ADMIN', 'HR']), getDashboardAlerts);
 };

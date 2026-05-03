@@ -380,3 +380,12 @@ export const changePassword = async (req: Request, res: Response) => {
   await authService.changePassword(req.body);
   return successResponse(res, null, 'Password changed successfully', SUCCESS_CODES.PASSWORD_CHANGED, 200);
 };
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    throw new HttpError(400, 'token and newPassword are required', ERROR_CODES.VALIDATION_ERROR);
+  }
+  await authService.changePassword({ token, newPassword });
+  return successResponse(res, null, 'Password reset successfully', SUCCESS_CODES.PASSWORD_CHANGED, 200);
+};

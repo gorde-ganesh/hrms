@@ -29,9 +29,10 @@ const getTodayPresentCount = async (employeeIds?: string[]) => {
 };
 
 const getAdminStats = async () => {
-  const [totalEmployees, totalDepartments, pendingLeaves, todayAttendance, recentJoiners] =
+  const currentDate = new Date();
+  const [statusCounts, totalDepartments, pendingLeaves, todayAttendance, recentJoiners, payrollStats] =
     await Promise.all([
-      prisma.employee.count({ where: { status: 'ACTIVE' } }),
+      prisma.employee.groupBy({ by: ['status'], _count: true }),
       prisma.department.count(),
       prisma.leave.count({ where: { status: 'PENDING' } }),
       getTodayPresentCount(),
@@ -44,26 +45,42 @@ const getAdminStats = async () => {
           designation: { select: { name: true } },
         },
       }),
+      prisma.payroll.groupBy({
+        by: ['status'],
+        _count: true,
+        where: { month: currentDate.getUTCMonth() + 1, year: currentDate.getUTCFullYear() },
+      }),
     ]);
 
-  return { totalEmployees, totalDepartments, pendingLeaves, todayAttendance, recentJoiners };
+  const headcount = statusCounts.reduce((acc: any, row) => {
+    acc[row.status.toLowerCase()] = row._count;
+    acc.total = (acc.total ?? 0) + row._count;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const payrollSummary = payrollStats.reduce((acc: any, row) => {
+    acc[row.status.toLowerCase()] = row._count;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return { headcount, totalDepartments, pendingLeaves, todayAttendance, recentJoiners, payrollSummary };
 };
 
 const getHrStats = async () => {
   const currentDate = new Date();
-  const [totalEmployees, pendingLeaves, todayAttendance, processedPayrollsForCurrentMonth] =
+  const month = currentDate.getUTCMonth() + 1;
+  const year = currentDate.getUTCFullYear();
+  const [activeEmployeeIds, pendingLeaves, todayAttendance, processedPayrollsForCurrentMonth] =
     await Promise.all([
-      prisma.employee.count({ where: { status: 'ACTIVE' } }),
+      prisma.employee.findMany({ where: { status: 'ACTIVE' }, select: { id: true } }),
       prisma.leave.count({ where: { status: 'PENDING' } }),
       getTodayPresentCount(),
       prisma.payroll.count({
-        where: {
-          month: currentDate.getUTCMonth() + 1,
-          year: currentDate.getUTCFullYear(),
-        },
+        where: { month, year },
       }),
     ]);
 
+  const totalEmployees = activeEmployeeIds.length;
   const pendingPayrolls = Math.max(totalEmployees - processedPayrollsForCurrentMonth, 0);
 
   return { totalEmployees, pendingLeaves, todayAttendance, pendingPayrolls };
@@ -107,6 +124,44 @@ const getEmployeeStats = async (employeeId: string) => {
   ]);
 
   return { leaveBalance, attendanceSummary };
+};
+
+export const getDashboardAlerts = async (_req: Request, res: Response) => {
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  const [stalePendingLeaves, expiringContracts, unfinalizedPayrolls] = await Promise.all([
+    prisma.leave.count({
+      where: { status: 'PENDING', createdAt: { lte: threeDaysAgo } },
+    }),
+    prisma.employee.count({
+      where: {
+        status: 'ACTIVE',
+        contractEndDate: { gte: new Date(), lte: thirtyDaysFromNow },
+      },
+    }),
+    prisma.payroll.count({
+      where: {
+        status: { in: ['DRAFT', 'FINALIZED'] },
+        month: new Date().getUTCMonth() + 1,
+        year: new Date().getUTCFullYear(),
+      },
+    }),
+  ]);
+
+  const alerts: { type: string; message: string; count: number }[] = [];
+
+  if (stalePendingLeaves > 0) {
+    alerts.push({ type: 'LEAVE', message: `${stalePendingLeaves} leave request(s) pending for over 3 days`, count: stalePendingLeaves });
+  }
+  if (expiringContracts > 0) {
+    alerts.push({ type: 'CONTRACT', message: `${expiringContracts} employee contract(s) expiring within 30 days`, count: expiringContracts });
+  }
+  if (unfinalizedPayrolls > 0) {
+    alerts.push({ type: 'PAYROLL', message: `${unfinalizedPayrolls} payroll record(s) not yet paid this month`, count: unfinalizedPayrolls });
+  }
+
+  return successResponse(res, { alerts }, 'Alerts fetched', SUCCESS_CODES.SUCCESS, 200);
 };
 
 export const getDashboardSummary = async (req: Request, res: Response) => {

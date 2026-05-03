@@ -338,6 +338,18 @@ app.get('/uploads/:filename', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, 'uploads', safeName));
 });
 
+// ----------------- Health check -----------------
+app.get('/api/health', async (_req: Request, res: Response) => {
+  let dbStatus = 'connected';
+  try {
+    await import('./src/lib/prisma').then(({ prisma }) => prisma.$queryRaw`SELECT 1`);
+  } catch {
+    dbStatus = 'disconnected';
+  }
+  const pkg = require('./package.json');
+  res.status(200).json({ status: 'ok', db: dbStatus, version: pkg.version ?? '0.0.0' });
+});
+
 // ----------------- Root route -----------------
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to HRMS' });
