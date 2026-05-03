@@ -32,6 +32,11 @@ jobs:
       - name: TypeScript type check
         run: bunx tsc --noEmit
 
+      - name: Run backend tests
+        run: bun run test
+        env:
+          DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
   frontend-build:
     name: Frontend — Production build
     runs-on: ubuntu-latest

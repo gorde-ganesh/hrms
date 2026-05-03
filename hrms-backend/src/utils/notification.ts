@@ -1,5 +1,5 @@
 import { NotificationType } from '../../generated/prisma';
-import { io, onlineUsers } from '../../main';
+import { getIo, getOnlineUsers } from '../lib/socket-state';
 import { prisma } from '../lib/prisma';
 
 export const sendNotification = async (options: {
@@ -51,12 +51,16 @@ export const sendNotification = async (options: {
     });
 
     // Emit to online users
-    notificationsData.forEach((n) => {
-      const socketId = onlineUsers[n.userId];
-      if (socketId) {
-        io.to(socketId).emit('notification', { type: n.type, message: n.message });
-      }
-    });
+    const io = getIo();
+    const onlineUsers = getOnlineUsers();
+    if (io) {
+      notificationsData.forEach((n) => {
+        const socketId = onlineUsers[n.userId];
+        if (socketId) {
+          io.to(socketId).emit('notification', { type: n.type, message: n.message });
+        }
+      });
+    }
   }
 
   return notificationsData.length;

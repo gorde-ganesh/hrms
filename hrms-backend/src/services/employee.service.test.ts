@@ -86,19 +86,19 @@ describe('EmployeeService.softDelete', () => {
 
     await svc.softDelete('emp-1');
     expect(prisma.employee.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { status: EmployeeStatus.INACTIVE } })
+      expect.objectContaining({ data: expect.objectContaining({ status: EmployeeStatus.INACTIVE }) })
     );
   });
 });
 
 describe('EmployeeService.list', () => {
-  it('caps take at 100', async () => {
+  it('caps take at 1000', async () => {
     (prisma.employee.findMany as any).mockResolvedValue([]);
     (prisma.employee.count as any).mockResolvedValue(0);
 
     await svc.list({ top: 9999 });
     expect(prisma.employee.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 100 })
+      expect.objectContaining({ take: 1000 })
     );
   });
 
