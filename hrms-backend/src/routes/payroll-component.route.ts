@@ -6,7 +6,7 @@ import {
   deletePayrollComponent,
   getAllPayrollComponents,
 } from '../controllers/payroll-components.controller';
-import { authenticate, roleAccess } from '../middlewares/auth.middleware';
+import { authenticate, roleAccess, checkPermission } from '../middlewares/auth.middleware';
 
 
 function registerRouters(app: express.Application) {
@@ -32,12 +32,13 @@ function registerRouters(app: express.Application) {
     '/api/payroll/components/:id',
     authenticate,
     roleAccess(['ADMIN', 'HR']),
+    checkPermission('payroll', 'edit'),
     updatePayrollComponent
   );
   app.delete(
     '/api/payroll/components/:id',
     authenticate,
-    roleAccess(['ADMIN', 'HR']),
+    roleAccess(['ADMIN']),
     deletePayrollComponent
   );
 }

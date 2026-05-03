@@ -71,3 +71,25 @@ export const roleAccess = (allowedRoles: string[]) => {
     next();
   };
 };
+
+/**
+ * Verify the authenticated user has permission for a given module action.
+ * Falls back gracefully if the role isn't in the matrix (treats as no access).
+ */
+export const checkPermission = (module: string, action: string) => {
+  return (req: Request<any>, res: Response, next: NextFunction) => {
+    const { rolePermissions } = require('../utils/permission.utils');
+    const user = req.user;
+
+    if (!user) {
+      return errorResponse(res, 'Unauthorized', ERROR_CODES.UNAUTHORIZED, 401);
+    }
+
+    const rolePerms: string[] = rolePermissions[user.role]?.[module] ?? [];
+    if (!rolePerms.includes(action)) {
+      return errorResponse(res, 'Forbidden: insufficient permissions', ERROR_CODES.FORBIDDEN, 403);
+    }
+
+    next();
+  };
+};
