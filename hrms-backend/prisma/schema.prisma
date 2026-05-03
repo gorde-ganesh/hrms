@@ -115,6 +115,7 @@ model User {
   refreshTokenExp      DateTime?
   failedLoginAttempts  Int       @default(0)
   lockedUntil          DateTime?
+  tokenVersion         Int       @default(0)
   deletedAt            DateTime?
 
   employee             Employee?
