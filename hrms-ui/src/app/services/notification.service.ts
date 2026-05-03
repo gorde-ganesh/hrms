@@ -58,14 +58,17 @@ export class NotificationService {
   }
 
   markAsRead(notificationId: number) {
-    // return this.serverApi
-    //   .patch(`${this.baseUrl}/notifications/${notificationId}/read`, {})
-    //   .subscribe(() => {
-    //     const updated = this.notificationsSubject.value.map((n) =>
-    //       n.id === notificationId ? { ...n, read: true } : n
-    //     );
-    //     this.notificationsSubject.next(updated);
-    //   });
+    this.serverApi
+      .patch(`/api/notifications/${notificationId}/read`, {})
+      .then(() => {
+        const updated = this.notificationsSubject.value.map((n) =>
+          n.id === notificationId ? { ...n, read: true } : n
+        );
+        this.notificationsSubject.next(updated);
+      })
+      .catch(() => {
+        // Silently ignore — optimistic update already applied in UI
+      });
   }
 
   sendNotification(notification: Notification) {

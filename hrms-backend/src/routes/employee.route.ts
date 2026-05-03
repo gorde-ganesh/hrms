@@ -15,12 +15,12 @@ import { UpdateEmployeeSchema } from '../schemas/employee.schema';
 
 
 function registerRouters(app: express.Application) {
-  // app.post(
-  //   '/api/employees',
-  //   authenticate,
-  //   roleAccess(['HR', 'ADMIN']),
-  //   addEmployee
-  // );
+  app.post(
+    '/api/employees',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    addEmployee
+  );
   app.put(
     '/api/employees/:id',
     authenticate,

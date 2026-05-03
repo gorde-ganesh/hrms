@@ -9,7 +9,7 @@ import {
 function registerRouters(app: express.Application) {
   app.post('/api/notifications', authenticate, sendNotification);
   app.get('/api/notifications', authenticate, listNotifications);
-  app.post('/api/notifications/bulk', sendBulkNotification);
+  app.post('/api/notifications/bulk', authenticate, roleAccess(['HR', 'ADMIN']), sendBulkNotification);
 }
 
 export default registerRouters;
