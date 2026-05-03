@@ -63,6 +63,33 @@ enum LeaveType {
   UNPAID
 }
 
+enum PayrollStatus {
+  DRAFT
+  FINALIZED
+  PAID
+  ON_HOLD
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+}
+
+enum PerformanceStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  FINALIZED
+}
+
+enum PerformanceReviewPeriod {
+  QUARTERLY
+  HALF_YEARLY
+  ANNUAL
+}
+
 //////////////////////////////////////////
 // USER MODEL
 //////////////////////////////////////////
@@ -96,6 +123,7 @@ model User {
   callsMade            CallLog[]            @relation("Caller")
   callsReceived        CallLog[]            @relation("Receiver")
   conversationsCreated Conversation[]       @relation("CreatedBy")
+  payrollsProcessed    Payroll[]            @relation("PayrollProcessedBy")
 }
 
 //////////////////////////////////////////
@@ -194,6 +222,14 @@ model Employee {
   emergencyContactPerson String
   emergencyContactNumber String
   status                 EmployeeStatus
+  employmentType         EmploymentType @default(FULL_TIME)
+  probationEndDate       DateTime?
+  contractEndDate        DateTime?
+  bankAccountNumber      String?
+  bankName               String?
+  ifscCode               String?
+  panNumber              String?
+  profileImageUrl        String?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   deletedAt              DateTime?
@@ -233,9 +269,15 @@ model Leave {
   approvedBy        User?   @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
   managerApprovalId String?
   managerApproval   User?   @relation("LeaveManagerApproval", fields: [managerApprovalId], references: [id])
+  rejectionReason   String?
+  approvalDate      DateTime?
+  rejectionDate     DateTime?
+  halfDay           Boolean @default(false)
+  halfDayPeriod     String?
 
   @@index([employeeId])
   @@index([status])
+  @@index([status, startDate])
 }
 
 //////////////////////////////////////////
@@ -280,19 +322,25 @@ model Attendance {
 //////////////////////////////////////////
 
 model Payroll {
-  id         String   @id @default(uuid())
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  month      Int
-  year       Int
-  netSalary  Float    @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String        @id @default(uuid())
+  employeeId      String
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month           Int
+  year            Int
+  netSalary       Float         @default(0)
+  basicSalary     Float         @default(0)
+  status          PayrollStatus @default(DRAFT)
+  paidDate        DateTime?
+  processedById   String?
+  processedBy     User?         @relation("PayrollProcessedBy", fields: [processedById], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   components PayrollComponent[]
 
   @@unique([employeeId, month, year])
   @@index([year, month])
+  @@index([employeeId, createdAt])
 }
 
 //////////////////////////////////////////
@@ -332,15 +380,20 @@ model PayrollComponent {
 //////////////////////////////////////////
 
 model Performance {
-  id              String   @id @default(uuid())
+  id              String                  @id @default(uuid())
   employeeId      String
-  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee        Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   goals           String
   rating          Int?
   comments        String?
   managerComments String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  status          PerformanceStatus       @default(DRAFT)
+  reviewPeriod    PerformanceReviewPeriod @default(ANNUAL)
+  reviewDate      DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([employeeId])
 }
 
 //////////////////////////////////////////
@@ -354,9 +407,11 @@ model Notification {
   type       NotificationType
   message    String
   readStatus Boolean          @default(false)
+  readAt     DateTime?
   createdAt  DateTime         @default(now())
 
   @@index([employeeId])
+  @@index([employeeId, readStatus])
 }
 
 //////////////////////////////////////////
@@ -417,4 +472,20 @@ model CallLog {
 
   caller   User @relation("Caller", fields: [callerId], references: [id])
   receiver User @relation("Receiver", fields: [receiverId], references: [id])
+}
+
+//////////////////////////////////////////
+// HOLIDAY CALENDAR MODEL
+//////////////////////////////////////////
+
+model HolidayCalendar {
+  id        String   @id @default(uuid())
+  name      String
+  date      DateTime
+  type      String   @default("PUBLIC")
+  year      Int
+  createdAt DateTime @default(now())
+
+  @@index([year])
+  @@index([date])
 }

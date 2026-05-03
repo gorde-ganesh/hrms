@@ -37,8 +37,8 @@ describe('AuthService.login', () => {
     email: 'test@example.com',
     password: 'hashed',
     role: 'EMPLOYEE',
-    roleId: null,
-    userRole: null,
+    roleId: 'role-1',
+    userRole: { id: 'role-1', name: 'EMPLOYEE', permissions: [] },
     name: 'Test User',
   };
   const mockEmployee = { id: 'emp-1', status: 'ACTIVE' };
