@@ -1,11 +1,152 @@
-::ng-deep .leave-day {
-  color: #d32f2f !important; /* Red for leave days */
-  font-weight: bold;
-  border-radius: 50%;
-  display: inline-block;
-  width: 2rem;
-  height: 2rem;
-  line-height: 2rem;
+/* ── Page header ── */
+.lv-page-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.lv-page-subtitle {
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+  margin-top: 3px;
+}
+
+/* ── Balance cards ── */
+.lv-balance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.lv-balance-card {
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  border-radius: 8px;
+  padding: 16px 20px;
+  transition: box-shadow 150ms ease-out;
+}
+
+.lv-balance-card:hover {
+  box-shadow: 0 2px 8px oklch(0 0 0 / 0.06);
+}
+
+.lv-balance-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.lv-balance-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--p-text-muted-color);
+  margin-bottom: 5px;
+}
+
+.lv-balance-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.lv-balance-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lv-balance-unit {
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+.lv-balance-icon {
+  font-size: 1rem;
+  color: var(--p-surface-400);
+  margin-top: 2px;
+}
+
+/* ── Progress bar ── */
+.lv-progress-track {
+  height: 4px;
+  background: var(--p-surface-200);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.lv-progress-fill {
+  height: 100%;
+  background: var(--p-primary-500);
+  border-radius: 2px;
+  transition: width 300ms ease-out;
+}
+
+.lv-balance-foot {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+/* ── Table cells ── */
+.lv-reason-cell {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lv-employee-cell {
+  font-weight: 500;
+  color: var(--p-text-color);
+}
+
+/* ── Empty state ── */
+.lv-empty-cell {
+  padding: 40px 0 !important;
   text-align: center;
-  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.lv-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.lv-empty-icon {
+  font-size: 1.5rem;
+  color: var(--p-surface-400);
+  margin-bottom: 2px;
+}
+
+.lv-empty-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--p-text-color);
+}
+
+.lv-empty-hint {
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+/* ── Calendar leave marker ── */
+::ng-deep .leave-day {
+  color: var(--p-red-600, #dc2626) !important;
+  font-weight: 600;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background-color: color-mix(in oklch, var(--p-red-500, #ef4444) 12%, transparent);
 }
