@@ -14,21 +14,33 @@ import { TagModule } from 'primeng/tag';
 import dayjs from 'dayjs';
 
 interface DashboardSummary {
+  // HR / normalized ADMIN
   totalEmployees?: number;
   totalDepartments?: number;
   pendingLeaves?: number;
   todayAttendance?: number;
   pendingPayrolls?: number;
-  teamSize?: number;
-  teamLeaves?: number;
-  teamAttendance?: number;
-  leaveBalance?: { totalLeaves: number; usedLeaves: number } | null;
-  attendanceSummary?: number;
+  // ADMIN raw
+  headcount?: { total: number; active: number; inactive: number };
+  payrollSummary?: { draft?: number; finalized?: number; paid?: number };
   recentJoiners?: Array<{
     user: { name: string; email: string };
     designation?: { name: string } | null;
     joiningDate?: string;
   }>;
+  // MANAGER
+  teamSize?: number;
+  teamLeaves?: number;
+  teamAttendance?: number;
+  // EMPLOYEE
+  leaveBalance?: { totalLeaves: number; usedLeaves: number } | null;
+  attendanceSummary?: number;
+}
+
+interface DashboardAlert {
+  type: string;
+  message: string;
+  count: number;
 }
 
 
@@ -99,6 +111,7 @@ export class Dashboard implements OnInit {
   userInfo: any;
 
   dashboardStats: DashboardSummary = {};
+  alerts: DashboardAlert[] = [];
 
   constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService, private router: Router) {}
 
@@ -118,6 +131,10 @@ export class Dashboard implements OnInit {
     if (['ADMIN', 'HR', 'MANAGER'].includes(this.userInfo?.role)) {
       this.loadUpcomingLeaves();
     }
+
+    if (['ADMIN', 'HR'].includes(this.userInfo?.role)) {
+      this.loadAlerts();
+    }
   }
 
 
@@ -128,11 +145,33 @@ export class Dashboard implements OnInit {
   async loadDashboardStats() {
     try {
       const res = await this.serverApi.get<DashboardSummary>('/api/dashboard/summary');
+      // Normalize ADMIN headcount so templates use the same field name across roles
+      if (res.headcount) {
+        res.totalEmployees = res.headcount.total;
+      }
       this.dashboardStats = res;
     } catch (error) {
       console.error('Failed to load dashboard stats', error);
     }
     this.cdr.detectChanges();
+  }
+
+  async loadAlerts() {
+    try {
+      const res: any = await this.serverApi.get('/api/dashboard/alerts', undefined, false);
+      this.alerts = res?.alerts ?? [];
+    } catch {
+      this.alerts = [];
+    }
+    this.cdr.detectChanges();
+  }
+
+  alertSeverity(type: string): string {
+    return ({ LEAVE: 'warn', CONTRACT: 'danger', PAYROLL: 'info' } as any)[type] ?? 'secondary';
+  }
+
+  alertIcon(type: string): string {
+    return ({ LEAVE: 'pi pi-calendar-times', CONTRACT: 'pi pi-file', PAYROLL: 'pi pi-dollar' } as any)[type] ?? 'pi pi-bell';
   }
 
   async clockInOut() {

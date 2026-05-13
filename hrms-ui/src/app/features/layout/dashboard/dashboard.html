@@ -7,12 +7,14 @@
       <p class="page-date">{{ currentDate | date: 'EEEE, MMMM d, y' }}</p>
     </div>
     <div class="clock-action flex items-center gap-4">
-      <div class="text-right" *ngIf="todayStatus && todayStatus !== '-'">
-        <p class="clock-status-label">Today</p>
-        <p class="clock-status-value">
-          {{ todayStatus === 'PRESENT' ? 'In since ' + todayCheckInTime : todayStatus }}
-        </p>
-      </div>
+      @if (todayStatus && todayStatus !== '-') {
+        <div class="text-right">
+          <p class="clock-status-label">Today</p>
+          <p class="clock-status-value">
+            {{ todayStatus === 'PRESENT' ? 'In since ' + todayCheckInTime : todayStatus }}
+          </p>
+        </div>
+      }
       <p-button
         [label]="attendenceSummary?.today?.isCheckedIn ? 'Clock Out' : 'Clock In'"
         [icon]="attendenceSummary?.today?.isCheckedIn ? 'pi pi-stop-circle' : 'pi pi-play-circle'"
@@ -22,17 +24,33 @@
     </div>
   </div>
 
+  <!-- Alerts strip (ADMIN / HR) -->
+  @if (alerts.length > 0) {
+    <div class="flex flex-col gap-2 mb-6">
+      @for (alert of alerts; track alert.type) {
+        <div class="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm"
+             [class]="alert.type === 'CONTRACT' ? 'bg-red-50 border-red-200 text-red-700'
+                    : alert.type === 'LEAVE'    ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
+                    : 'bg-blue-50 border-blue-200 text-blue-700'">
+          <i [class]="alertIcon(alert.type) + ' text-base'"></i>
+          <span>{{ alert.message }}</span>
+        </div>
+      }
+    </div>
+  }
+
   <!-- Stat strip -->
   <div class="stat-grid grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
     <!-- ADMIN -->
-    <ng-container *ngIf="userInfo.role === 'ADMIN'">
+    @if (userInfo.role === 'ADMIN') {
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Total Employees</span>
           <i class="pi pi-users stat-icon"></i>
         </div>
-        <p class="stat-value">{{ dashboardStats.totalEmployees || 0 }}</p>
+        <p class="stat-value">{{ dashboardStats.headcount?.total || 0 }}</p>
+        <p class="stat-unit">{{ dashboardStats.headcount?.active || 0 }} active</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
@@ -55,10 +73,10 @@
         </div>
         <p class="stat-value">{{ dashboardStats.todayAttendance || 0 }}</p>
       </div>
-    </ng-container>
+    }
 
     <!-- HR -->
-    <ng-container *ngIf="userInfo.role === 'HR'">
+    @if (userInfo.role === 'HR') {
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Total Employees</span>
@@ -75,7 +93,7 @@
       </div>
       <div class="stat-cell">
         <div class="stat-header">
-          <span class="stat-label">Attendance Today</span>
+          <span class="stat-label">Present Today</span>
           <i class="pi pi-check-circle stat-icon"></i>
         </div>
         <p class="stat-value">{{ dashboardStats.todayAttendance || 0 }}</p>
@@ -87,10 +105,10 @@
         </div>
         <p class="stat-value">{{ dashboardStats.pendingPayrolls || 0 }}</p>
       </div>
-    </ng-container>
+    }
 
     <!-- MANAGER -->
-    <ng-container *ngIf="userInfo.role === 'MANAGER'">
+    @if (userInfo.role === 'MANAGER') {
       <div class="stat-cell">
         <div class="stat-header">
           <span class="stat-label">Team Size</span>
@@ -112,16 +130,16 @@
         </div>
         <p class="stat-value">{{ dashboardStats.teamAttendance || 0 }}</p>
       </div>
-    </ng-container>
+    }
 
     <!-- EMPLOYEE -->
-    <ng-container *ngIf="userInfo.role === 'EMPLOYEE'">
+    @if (userInfo.role === 'EMPLOYEE') {
       <div class="stat-cell">
         <div class="stat-header">
-          <span class="stat-label">Hours This Month</span>
+          <span class="stat-label">Days This Month</span>
           <i class="pi pi-clock stat-icon"></i>
         </div>
-        <p class="stat-value">168</p>
+        <p class="stat-value">{{ dashboardStats.attendanceSummary ?? '—' }}</p>
       </div>
       <div class="stat-cell">
         <div class="stat-header">
@@ -132,54 +150,72 @@
           {{ leaveBalanceDaysRemaining }}<span class="stat-unit"> days</span>
         </p>
       </div>
-    </ng-container>
-
-    <!-- EMPLOYEE + MANAGER shared -->
-    <ng-container *ngIf="['EMPLOYEE', 'MANAGER'].includes(userInfo.role)">
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Monthly Salary</span>
-          <i class="pi pi-dollar stat-icon"></i>
-        </div>
-        <p class="stat-value">$4,500</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Performance</span>
-          <i class="pi pi-chart-line stat-icon"></i>
-        </div>
-        <p class="stat-value">92<span class="stat-unit">%</span></p>
-      </div>
-    </ng-container>
+    }
 
   </div>
+
+  <!-- Payroll summary row (ADMIN only) -->
+  @if (userInfo.role === 'ADMIN' && dashboardStats.payrollSummary) {
+    <div class="panel mb-6">
+      <div class="panel-header">
+        <h2 class="panel-title">This Month's Payroll</h2>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="stat-cell">
+          <div class="stat-header">
+            <span class="stat-label">Draft</span>
+            <i class="pi pi-file-edit stat-icon text-gray-400"></i>
+          </div>
+          <p class="stat-value">{{ dashboardStats.payrollSummary.draft || 0 }}</p>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-header">
+            <span class="stat-label">Finalized</span>
+            <i class="pi pi-check stat-icon text-yellow-500"></i>
+          </div>
+          <p class="stat-value">{{ dashboardStats.payrollSummary.finalized || 0 }}</p>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-header">
+            <span class="stat-label">Paid</span>
+            <i class="pi pi-dollar stat-icon text-green-600"></i>
+          </div>
+          <p class="stat-value">{{ dashboardStats.payrollSummary.paid || 0 }}</p>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Recent Joiners (Admin only) -->
-  <div *ngIf="userInfo.role === 'ADMIN'" class="panel mb-6">
-    <div class="panel-header">
-      <h2 class="panel-title">Recent Joiners</h2>
+  @if (userInfo.role === 'ADMIN' && dashboardStats.recentJoiners?.length) {
+    <div class="panel mb-6">
+      <div class="panel-header">
+        <h2 class="panel-title">Recent Joiners</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table w-full">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Designation</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (employee of dashboardStats.recentJoiners; track employee.user.email) {
+              <tr>
+                <td class="font-medium">{{ employee.user.name }}</td>
+                <td>{{ employee.user.email }}</td>
+                <td>{{ employee.designation?.name || 'N/A' }}</td>
+                <td>{{ employee.joiningDate | date }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="data-table w-full">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Designation</th>
-            <th>Joined</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let employee of dashboardStats.recentJoiners">
-            <td class="font-medium">{{ employee.user.name }}</td>
-            <td>{{ employee.user.email }}</td>
-            <td>{{ employee.designation?.name || 'N/A' }}</td>
-            <td>{{ employee.joiningDate | date }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  }
 
   <!-- Attendance chart + Upcoming leaves -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -202,55 +238,20 @@
         </div>
       </div>
       <div class="flex flex-col gap-2">
-        <div *ngFor="let leave of upcomingLeaves" class="leave-item">
-          <div class="flex items-start justify-between gap-2 mb-1">
-            <p class="leave-title">{{ leave.title }}</p>
-            <p-tag [value]="leave.status" severity="success" [style]="{ fontSize: '0.7rem', padding: '2px 8px' }"></p-tag>
+        @for (leave of upcomingLeaves; track leave.date) {
+          <div class="leave-item">
+            <div class="flex items-start justify-between gap-2 mb-1">
+              <p class="leave-title">{{ leave.title }}</p>
+              <p-tag [value]="leave.status" severity="success" [style]="{ fontSize: '0.7rem', padding: '2px 8px' }"></p-tag>
+            </div>
+            <p class="leave-date">{{ leave.date }}</p>
+            <p class="leave-away">{{ leave.away }}</p>
           </div>
-          <p class="leave-date">{{ leave.date }}</p>
-          <p class="leave-away">{{ leave.away }}</p>
-        </div>
-        <p class="leave-empty" *ngIf="!upcomingLeaves?.length">No upcoming leaves scheduled</p>
+        }
+        @if (!upcomingLeaves?.length) {
+          <p class="leave-empty">No upcoming leaves scheduled</p>
+        }
         <p-button label="Request Leave" size="small" [outlined]="true" styleClass="w-full mt-2" (click)="onQuickAction('Request Leave')" />
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Pending tasks + Performance goals -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" *ngIf="false">
-
-    <div class="panel">
-      <div class="panel-header">
-        <h2 class="panel-title">Pending Tasks</h2>
-      </div>
-      <ul class="flex flex-col gap-2 list-none m-0 p-0">
-        <li *ngFor="let task of pendingTasks" class="task-item flex items-start justify-between gap-4">
-          <div class="min-w-0">
-            <p class="task-title">{{ task.title }}</p>
-            <p class="task-due">Due {{ task.due }}</p>
-          </div>
-          <p-tag [value]="task.priority" [severity]="task.severity"
-                 [style]="{ fontSize: '0.7rem', padding: '2px 8px', whiteSpace: 'nowrap' }"></p-tag>
-        </li>
-      </ul>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h2 class="panel-title">Performance Goals</h2>
-          <p class="panel-subtitle">Current quarter</p>
-        </div>
-      </div>
-      <div class="flex flex-col gap-5">
-        <div *ngFor="let goal of performanceGoals">
-          <div class="flex items-center justify-between mb-2">
-            <span class="goal-title">{{ goal.title }}</span>
-            <span class="goal-label">{{ goal.progressLabel }}</span>
-          </div>
-          <p-progressBar [value]="goal.progress" [showValue]="false" [style]="{ height: '5px' }"></p-progressBar>
-        </div>
       </div>
     </div>
 
@@ -262,11 +263,12 @@
       <h2 class="panel-title">Quick Actions</h2>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <button *ngFor="let action of quickActions"
-              class="quick-action flex items-center gap-3 px-4 py-3 rounded-lg text-left w-full" (click)="onQuickAction(action.label)">
-        <i [class]="action.icon + ' quick-action-icon'"></i>
-        <span class="quick-action-label">{{ action.label }}</span>
-      </button>
+      @for (action of quickActions; track action.label) {
+        <button class="quick-action flex items-center gap-3 px-4 py-3 rounded-lg text-left w-full" (click)="onQuickAction(action.label)">
+          <i [class]="action.icon + ' quick-action-icon'"></i>
+          <span class="quick-action-label">{{ action.label }}</span>
+        </button>
+      }
     </div>
   </div>
 
