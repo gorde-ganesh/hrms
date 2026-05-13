@@ -24,6 +24,24 @@
     </div>
   </div>
 
+  <section class="command-strip mb-7">
+    <div class="command-copy">
+      <span class="eyebrow">Workforce pulse</span>
+      <strong>Daily operating view</strong>
+      <span>Approvals, attendance, and pay movement in one place.</span>
+    </div>
+    <div class="command-metrics">
+      <div>
+        <span>Role</span>
+        <strong>{{ userInfo.role }}</strong>
+      </div>
+      <div>
+        <span>Status</span>
+        <strong>{{ todayStatus || 'Ready' }}</strong>
+      </div>
+    </div>
+  </section>
+
   <!-- Alerts strip (ADMIN / HR) -->
   @if (alerts.length > 0) {
     <div class="flex flex-col gap-2 mb-6">

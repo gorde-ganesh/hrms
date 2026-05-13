@@ -1,17 +1,19 @@
-/* ===== Layout shell ===== */
 .auth-shell {
   display: grid;
-  grid-template-columns: 400px 1fr;
-  min-height: 100vh;
+  grid-template-columns: minmax(360px, 44vw) 1fr;
+  min-height: 100dvh;
+  background: #f7f8f5;
 }
 
-/* ===== Brand panel (always dark) ===== */
 .brand-panel {
   display: flex;
   flex-direction: column;
-  background-color: oklch(18% 0.014 248);
-  padding: 44px 48px;
+  position: relative;
   overflow: hidden;
+  padding: 44px 52px;
+  background:
+    radial-gradient(circle at 16% 16%, oklch(63% 0.14 154 / 0.25), transparent 18rem),
+    linear-gradient(145deg, #20241f 0%, #283026 48%, #171a16 100%);
 }
 
 .brand-top {
@@ -21,18 +23,19 @@
 }
 
 .brand-mark {
-  width: 36px;
-  height: 36px;
-  background-color: oklch(26% 0.018 248);
-  border-radius: 9px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, oklch(70% 0.145 154), oklch(48% 0.105 158));
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.28);
 }
 
 .brand-mark i {
-  color: oklch(78% 0.01 255);
+  color: #ffffff;
   font-size: 16px;
 }
 
@@ -45,15 +48,15 @@
 .brand-name {
   font-size: 14px;
   font-weight: 700;
-  color: oklch(93% 0.006 255);
-  letter-spacing: 0.07em;
+  color: #f7fbf5;
+  letter-spacing: 0;
   line-height: 1;
 }
 
 .brand-tagline-small {
   font-size: 10px;
-  color: oklch(48% 0.008 255);
-  letter-spacing: 0.05em;
+  color: oklch(86% 0.025 145 / 0.52);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1;
 }
@@ -65,104 +68,130 @@
 }
 
 .brand-headline {
-  font-size: 26px;
+  max-width: 11ch;
+  margin: 0 0 20px;
+  color: #f7fbf5;
+  font-size: clamp(2rem, 4vw, 4.35rem);
   font-weight: 700;
-  line-height: 1.28;
-  color: oklch(94% 0.005 255);
-  margin: 0 0 16px;
-  letter-spacing: -0.01em;
+  line-height: 0.94;
+  letter-spacing: 0;
 }
 
 .brand-desc {
-  font-size: 13.5px;
-  line-height: 1.72;
-  color: oklch(55% 0.008 255);
-  margin: 0 0 36px;
+  max-width: 31rem;
+  margin: 0 0 28px;
+  color: oklch(88% 0.02 145 / 0.68);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.signal-card {
+  width: min(100%, 20rem);
+  margin-bottom: 30px;
+  padding: 18px 20px;
+  border: 1px solid oklch(100% 0 0 / 0.12);
+  border-radius: 8px;
+  background: oklch(100% 0 0 / 0.08);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.12);
+  color: #f8fbf6;
+  backdrop-filter: blur(16px);
+}
+
+.signal-label,
+.signal-note {
+  display: block;
+  color: oklch(86% 0.02 145 / 0.62);
+  font-size: 0.75rem;
+}
+
+.signal-card strong {
+  display: block;
+  margin: 5px 0 3px;
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .brand-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .brand-features li {
   display: flex;
   align-items: center;
   gap: 12px;
+  color: oklch(86% 0.02 145 / 0.68);
   font-size: 13px;
-  color: oklch(60% 0.008 255);
   line-height: 1;
 }
 
 .feature-dot {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
-  background-color: oklch(26% 0.018 248);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border-radius: 50%;
+  background-color: oklch(100% 0 0 / 0.08);
 }
 
 .feature-dot i {
+  color: oklch(76% 0.145 154);
   font-size: 9px;
-  color: oklch(66% 0.13 155);
 }
 
 .brand-foot {
+  color: oklch(86% 0.02 145 / 0.38);
   font-size: 11.5px;
-  color: oklch(36% 0.008 255);
 }
 
-/* ===== Form panel ===== */
 .form-panel {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 32px;
-  background-color: oklch(98.5% 0.004 88);
-}
-
-:where([data-theme=dark]) .form-panel {
-  background-color: oklch(13% 0.01 255);
+  padding: 56px 32px;
+  background:
+    linear-gradient(180deg, oklch(99% 0.004 120), oklch(96% 0.01 130));
 }
 
 .form-inner {
   width: 100%;
-  max-width: 368px;
+  max-width: 392px;
+  padding: 34px;
+  border: 1px solid oklch(87% 0.018 130 / 0.86);
+  border-radius: 12px;
+  background: oklch(100% 0 0 / 0.72);
+  box-shadow: 0 24px 70px -48px oklch(25% 0.03 145 / 0.55);
+  backdrop-filter: blur(18px);
 }
 
-/* ===== Form header ===== */
 .form-head {
   margin-bottom: 32px;
 }
 
 .form-title {
-  font-size: 21px;
-  font-weight: 700;
-  color: oklch(20% 0.01 255);
   margin: 0 0 8px;
+  color: #20241f;
+  font-size: 1.55rem;
+  font-weight: 700;
   line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-:where([data-theme=dark]) .form-title {
-  color: oklch(92% 0.006 255);
+  letter-spacing: 0;
 }
 
 .form-subtitle {
-  font-size: 13.5px;
-  color: oklch(50% 0.008 255);
   margin: 0;
+  color: oklch(45% 0.018 145);
+  font-size: 13.5px;
   line-height: 1.5;
 }
 
-/* ===== Auth form ===== */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -176,14 +205,10 @@
 }
 
 .field-label {
+  color: #273026;
   font-size: 13px;
   font-weight: 500;
-  color: oklch(26% 0.01 255);
   line-height: 1;
-}
-
-:where([data-theme=dark]) .field-label {
-  color: oklch(80% 0.008 255);
 }
 
 .label-row {
@@ -193,25 +218,24 @@
 }
 
 .soft-link {
+  color: var(--p-primary-700);
+  cursor: pointer;
   font-size: 12.5px;
   font-weight: 500;
-  color: oklch(50% 0.16 259);
-  cursor: pointer;
   text-decoration: none;
-  transition: color 0.15s ease-out;
+  transition: color 0.2s ease-out;
 }
 
 .soft-link:hover {
-  color: oklch(38% 0.18 259);
+  color: var(--p-primary-800);
 }
 
 .field-error {
-  font-size: 12px;
-  color: oklch(46% 0.18 25);
   display: block;
+  color: oklch(46% 0.18 25);
+  font-size: 12px;
 }
 
-/* ===== Checkbox row ===== */
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -220,83 +244,43 @@
 }
 
 .checkbox-label {
-  font-size: 13px;
-  color: oklch(44% 0.008 255);
+  color: oklch(42% 0.018 145);
   cursor: pointer;
+  font-size: 13px;
   user-select: none;
 }
 
-/* ===== Error notice (no side-stripe) ===== */
 .error-notice {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  background-color: oklch(97.5% 0.018 25);
   border: 1px solid oklch(89% 0.055 25);
   border-radius: 8px;
-  font-size: 13px;
+  background-color: oklch(97.5% 0.018 25);
   color: oklch(40% 0.18 25);
+  font-size: 13px;
   line-height: 1.5;
 }
 
 .error-notice i {
   flex-shrink: 0;
-  font-size: 13px;
   margin-top: 1px;
+  font-size: 13px;
 }
 
-/* ===== Hint text ===== */
 .hint-text {
-  font-size: 13px;
-  color: oklch(50% 0.008 255);
   margin: 0;
+  color: oklch(45% 0.018 145);
+  font-size: 13px;
   line-height: 1.65;
 }
 
-/* ===== Button pair (back + action) ===== */
 .button-pair {
   display: flex;
   gap: 10px;
 }
 
-/* ===== Password hints popover ===== */
-.pw-hints {
-  padding: 4px 10px 10px;
-}
-
-.pw-hints p {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--p-text-color);
-  margin: 0 0 8px;
-}
-
-.pw-hints ul {
-  margin: 0;
-  padding-left: 16px;
-  font-size: 12px;
-  color: var(--p-text-muted-color);
-  line-height: 1.9;
-}
-
-/* ===== Fade-in ===== */
-@keyframes fadein {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadein {
-  animation: fadein 0.22s ease-out;
-}
-
-/* ===== Responsive: hide brand panel on small screens ===== */
 @media (max-width: 720px) {
   .auth-shell {
     grid-template-columns: 1fr;
@@ -307,6 +291,10 @@
   }
 
   .form-panel {
-    padding: 40px 24px;
+    padding: 28px 18px;
+  }
+
+  .form-inner {
+    padding: 26px 20px;
   }
 }

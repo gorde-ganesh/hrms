@@ -58,13 +58,13 @@
 /* Semantic icon colors — intentionally hue-distinct from primary */
 .metric-icon.icon-blue   { background: oklch(94% 0.04 240); color: oklch(46% 0.16 240); }
 .metric-icon.icon-green  { background: oklch(94% 0.06 145); color: oklch(42% 0.17 145); }
-.metric-icon.icon-indigo { background: oklch(93% 0.04 270); color: oklch(46% 0.16 270); }
+.metric-icon.icon-emerald { background: oklch(94% 0.06 145); color: oklch(42% 0.17 145); }
 .metric-icon.icon-violet { background: oklch(93% 0.05 295); color: oklch(46% 0.16 295); }
 
 /* Dark mode overrides */
 .my-app-dark .metric-icon.icon-blue   { background: oklch(22% 0.04 240); color: oklch(72% 0.13 240); }
 .my-app-dark .metric-icon.icon-green  { background: oklch(22% 0.05 145); color: oklch(68% 0.15 145); }
-.my-app-dark .metric-icon.icon-indigo { background: oklch(22% 0.04 270); color: oklch(70% 0.13 270); }
+.my-app-dark .metric-icon.icon-emerald { background: oklch(22% 0.05 145); color: oklch(68% 0.15 145); }
 .my-app-dark .metric-icon.icon-violet { background: oklch(22% 0.04 295); color: oklch(70% 0.13 295); }
 
 /* ── Table filter bar ── */

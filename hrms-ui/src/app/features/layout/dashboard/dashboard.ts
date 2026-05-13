@@ -100,7 +100,7 @@ export class Dashboard implements OnInit {
     {
       label: 'Performance',
       icon: 'pi pi-chart-line',
-      color: 'text-purple-600',
+      color: 'text-emerald-700',
     },
     { label: 'Timesheet', icon: 'pi pi-clock', color: 'text-orange-600' },
   ];
@@ -290,7 +290,7 @@ export class Dashboard implements OnInit {
         icon: 'pi pi-calendar',
         color: 'text-green-600',
       },
-      { label: 'View Payslip', icon: 'pi pi-dollar', color: 'text-purple-600' },
+      { label: 'View Payslip', icon: 'pi pi-dollar', color: 'text-emerald-700' },
       { label: 'View Attendance', icon: 'pi pi-clock', color: 'text-blue-600' },
       {
         label: 'Performance Review',

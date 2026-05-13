@@ -1,4 +1,4 @@
-<div class="layout-shell flex flex-col lg:flex-row h-screen overflow-hidden" [class.sidebar-open]="sidebarOpen">
+<div class="layout-shell flex flex-col lg:flex-row min-h-[100dvh] overflow-hidden" [class.sidebar-open]="sidebarOpen">
 
   <!-- Mobile backdrop -->
   <div class="sidebar-backdrop" (click)="closeSidebar()" [class.backdrop-visible]="sidebarOpen"></div>
@@ -7,19 +7,22 @@
   <aside class="sidebar flex flex-col shrink-0">
 
     <!-- Brand -->
-    <div class="brand-bar flex items-center gap-2.5 px-5">
-      <div class="brand-mark flex items-center justify-center w-6 h-6 rounded-lg shrink-0">
-        <i class="pi pi-th-large" style="font-size: 0.75rem; color: white"></i>
+    <div class="brand-bar flex items-center gap-3 px-5">
+      <div class="brand-mark flex items-center justify-center w-8 h-8 rounded-lg shrink-0">
+        <i class="pi pi-th-large" style="font-size: 0.8rem; color: white"></i>
       </div>
-      <span class="brand-name text-sm font-semibold">PeopleOS</span>
+      <div class="brand-stack min-w-0">
+        <span class="brand-name block text-sm font-semibold">PeopleOS</span>
+        <span class="brand-subtitle block">HR command center</span>
+      </div>
     </div>
 
     <!-- Nav -->
     <nav class="flex-1 overflow-y-auto px-3 py-3" role="navigation" aria-label="Main navigation">
-      <ul class="flex flex-col gap-0.5 list-none m-0 p-0">
+      <ul class="flex flex-col gap-1.5 list-none m-0 p-0">
         <li *ngFor="let item of items">
           <a pRipple
-             class="nav-link flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer select-none"
+             class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer select-none"
              (click)="navigate(item)"
              [class.nav-link-active]="activeRoute === item['route']"
              [attr.aria-current]="activeRoute === item['route'] ? 'page' : null">
@@ -32,9 +35,9 @@
     </nav>
 
     <!-- User -->
-    <div class="user-bar px-4 py-3">
+    <div class="user-bar px-4 py-4">
       <div class="flex items-center gap-3">
-        <div class="user-avatar flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold text-white shrink-0">
+        <div class="user-avatar flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold text-white shrink-0">
           {{ userDetails.initials }}
         </div>
         <div class="flex-1 min-w-0">
@@ -56,20 +59,22 @@
   <div class="main-column flex-1 flex flex-col min-w-0 overflow-hidden">
 
     <!-- Topbar -->
-    <header class="topbar flex items-center justify-between px-4 lg:px-6">
+    <header class="topbar flex items-center justify-between px-4 lg:px-7">
       <div class="flex items-center gap-3">
         <button class="menu-btn flex items-center justify-center w-8 h-8 rounded-md"
                 (click)="toggleSidebar()"
                 aria-label="Open navigation">
           <i class="pi pi-bars" style="font-size: 0.9rem"></i>
         </button>
-        <span class="topbar-page-label">{{ activePageLabel }}</span>
+        <div class="topbar-title-block">
+          <span class="topbar-page-label">{{ activePageLabel }}</span>
+          <span class="topbar-context">Live workforce view</span>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <app-notification></app-notification>
-        <button class="avatar-btn block rounded-full overflow-hidden" title="Profile" aria-label="User profile">
-          <img src="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
-               class="block w-full h-full object-cover" alt="" />
+        <button class="avatar-btn flex items-center justify-center overflow-hidden" title="Profile" aria-label="User profile">
+          <span>{{ userDetails.initials || 'PO' }}</span>
         </button>
       </div>
     </header>

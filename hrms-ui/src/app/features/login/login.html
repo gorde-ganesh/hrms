@@ -1,40 +1,43 @@
 <div class="auth-shell">
 
-  <!-- Brand panel -->
   <aside class="brand-panel">
     <div class="brand-top">
       <div class="brand-mark">
-        <i class="pi pi-building"></i>
+        <i class="pi pi-th-large"></i>
       </div>
       <div class="brand-wordmark">
-        <span class="brand-name">HRMS</span>
-        <span class="brand-tagline-small">Workspace</span>
+        <span class="brand-name">PeopleOS</span>
+        <span class="brand-tagline-small">Workforce desk</span>
       </div>
     </div>
 
     <div class="brand-body">
-      <h2 class="brand-headline">People operations,<br>made effortless.</h2>
-      <p class="brand-desc">Everything your team needs — attendance, leaves, payroll, and performance — in one place.</p>
+      <h2 class="brand-headline">Run payroll, attendance, and leave work from one clear desk.</h2>
+      <p class="brand-desc">A focused workspace for HR teams that need records, approvals, and daily movement close at hand.</p>
+      <div class="signal-card">
+        <span class="signal-label">Today</span>
+        <strong>47 check-ins</strong>
+        <span class="signal-note">12 leave decisions pending</span>
+      </div>
       <ul class="brand-features">
         <li>
           <span class="feature-dot"><i class="pi pi-check"></i></span>
-          Smart attendance tracking
+          Attendance patterns by shift
         </li>
         <li>
           <span class="feature-dot"><i class="pi pi-check"></i></span>
-          Automated payroll processing
+          Payroll checks before release
         </li>
         <li>
           <span class="feature-dot"><i class="pi pi-check"></i></span>
-          Real-time performance insights
+          Role-aware approvals
         </li>
       </ul>
     </div>
 
-    <footer class="brand-foot">© 2026 HRMS</footer>
+    <footer class="brand-foot">PeopleOS 2026</footer>
   </aside>
 
-  <!-- Form panel -->
   <main class="form-panel">
     <div class="form-inner">
 
@@ -51,7 +54,6 @@
         </p>
       </header>
 
-      <!-- Sign in form -->
       @if(!isForwordPassword) {
       <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
@@ -118,7 +120,6 @@
       </form>
       }
 
-      <!-- Forgot password form -->
       @else if(isForwordPassword && !tempToken) {
       <form class="auth-form" [formGroup]="forgotPasswordForm" (ngSubmit)="onForgotPassword()">
 
@@ -175,7 +176,6 @@
       </form>
       }
 
-      <!-- Reset password form -->
       @else if(isForwordPassword && tempToken) {
       <form class="auth-form" [formGroup]="changePasswordForm" (ngSubmit)="onChangePassword()">
 
