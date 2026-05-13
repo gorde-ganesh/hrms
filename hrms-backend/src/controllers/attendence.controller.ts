@@ -502,6 +502,47 @@ export const updateAttendance = async (req: Request, res: Response) => {
 };
 
 /**
+ * Auto-close open attendance records from previous days (HR/Admin only)
+ * Sets checkOut to checkIn + 9 hours for any record with no checkOut before today.
+ */
+export const autoCloseAttendance = async (req: Request, res: Response) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const openRecords = await prisma.attendance.findMany({
+    where: {
+      checkIn: { not: null },
+      checkOut: null,
+      attendanceDate: { lt: todayStart },
+    },
+  });
+
+  if (openRecords.length === 0) {
+    return successResponse(res, { closed: 0 }, 'No open records found', SUCCESS_CODES.SUCCESS, 200);
+  }
+
+  const updates = openRecords.map((r) => {
+    const checkIn = new Date(r.checkIn!);
+    const checkOut = new Date(checkIn.getTime() + 9 * 60 * 60 * 1000);
+    const totalHours = 9;
+    return prisma.attendance.update({
+      where: { id: r.id },
+      data: { checkOut, totalHours },
+    });
+  });
+
+  await Promise.all(updates);
+
+  return successResponse(
+    res,
+    { closed: openRecords.length },
+    `Auto-closed ${openRecords.length} open attendance record(s)`,
+    SUCCESS_CODES.SUCCESS,
+    200
+  );
+};
+
+/**
  * Bulk Mark Attendance (HR/Admin only)
  * Marks multiple employees as present/absent/leave for a specific date
  */

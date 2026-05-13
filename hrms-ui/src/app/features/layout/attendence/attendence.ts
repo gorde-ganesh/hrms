@@ -393,6 +393,24 @@ export class Attendence implements OnInit {
     }
   }
 
+  async autoClose() {
+    try {
+      const result: any = await this.serverApi.post('/api/attendance/auto-close', {});
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Done',
+        detail: result?.message ?? `Closed ${result?.closed ?? 0} open record(s)`,
+      });
+      this.loadAllAttendence();
+    } catch (error: any) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: error.message || 'Auto-close failed',
+      });
+    }
+  }
+
   async exportReport() {
     try {
       const now = new Date();

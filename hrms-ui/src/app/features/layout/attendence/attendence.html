@@ -4,11 +4,22 @@
       <h1 class="text-3xl text-gray-900">Attendance</h1>
       <p class="text-gray-600 mt-1">Track and manage attendance records</p>
     </div>
-    <p-button
-      label="Export Report"
-      icon="pi pi-download"
-      (click)="exportReport()"
-    />
+    <div class="flex gap-2">
+      @if (showAllEmployeesTab) {
+        <p-button
+          label="Auto-close Open"
+          icon="pi pi-lock"
+          severity="secondary"
+          [outlined]="true"
+          (click)="autoClose()"
+        />
+      }
+      <p-button
+        label="Export Report"
+        icon="pi pi-download"
+        (click)="exportReport()"
+      />
+    </div>
   </div>
 
   <p-card class="bg-blue-50 border border-blue-200">

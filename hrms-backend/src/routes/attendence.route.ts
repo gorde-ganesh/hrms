@@ -10,6 +10,7 @@ import {
   updateAttendance,
   bulkMarkAttendance,
   getAttendanceReport,
+  autoCloseAttendance,
 } from '../controllers/attendence.controller';
 
 
@@ -86,6 +87,14 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess(['HR', 'ADMIN']),
     bulkMarkAttendance
+  );
+
+  // Auto-close open attendance from previous days (HR/Admin only)
+  app.post(
+    '/api/attendance/auto-close',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    autoCloseAttendance
   );
 }
 
