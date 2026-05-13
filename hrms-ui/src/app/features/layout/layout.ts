@@ -94,16 +94,16 @@ export class Layout implements OnInit {
     },
     payroll: { label: 'Payroll', icon: 'pi pi-money-bill', route: '/payroll' },
     leaves: { label: 'Leaves', icon: 'pi pi-calendar-times', route: '/leaves' },
-    performance: {
-      label: 'Performance',
-      icon: 'pi pi-star',
-      route: '/performance',
-    },
-    chat: {
-      label: 'Chat',
-      icon: 'pi pi-comments',
-      route: '/chat',
-    },
+    // performance: {
+    //   label: 'Performance',
+    //   icon: 'pi pi-star',
+    //   route: '/performance',
+    // },
+    // chat: {
+    //   label: 'Chat',
+    //   icon: 'pi pi-comments',
+    //   route: '/chat',
+    // },
     notifications: {
       label: 'Notifications',
       icon: 'pi pi-bell',
@@ -189,7 +189,10 @@ export class Layout implements OnInit {
 
   get activePageLabel(): string {
     const found = this.items?.find(
-      (i) => i['route'] && (this.activeRoute === i['route'] || this.activeRoute.startsWith(i['route'] + '/'))
+      (i) =>
+        i['route'] &&
+        (this.activeRoute === i['route'] ||
+          this.activeRoute.startsWith(i['route'] + '/'))
     );
     return found?.label || 'PeopleOS';
   }
