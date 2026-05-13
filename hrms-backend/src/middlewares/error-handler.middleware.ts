@@ -37,6 +37,18 @@ export const errorHandler = (
       default:
         message = 'Database operation failed';
     }
+  } else if (err instanceof Prisma.PrismaClientValidationError) {
+    statusCode = 400;
+    code = 'VALIDATION_ERROR';
+    message = 'Invalid data provided';
+  } else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+    statusCode = 500;
+    code = 'DATABASE_ERROR';
+    message = 'An unexpected database error occurred';
+  } else if (err instanceof Prisma.PrismaClientInitializationError) {
+    statusCode = 503;
+    code = 'DATABASE_UNAVAILABLE';
+    message = 'Database connection failed';
   }
 
   // 🧩 Validation Error (e.g. Zod or Joi)

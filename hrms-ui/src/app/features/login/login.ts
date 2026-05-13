@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
   Validators,
   FormBuilder,
@@ -6,7 +6,7 @@ import {
   ReactiveFormsModule,
   ValidationErrors,
 } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -42,7 +42,7 @@ import { AuthStateService } from '../../services/auth-state.service';
   styleUrl: './login.css',
   standalone: true,
 })
-export class Login {
+export class Login implements OnInit {
   error: string | null = null;
   isForwordPassword: boolean = false;
   tempToken: boolean = false;
@@ -57,6 +57,7 @@ export class Login {
     private fb: FormBuilder,
     private serverApi: ApiService,
     private router: Router,
+    private route: ActivatedRoute,
     private validationService: ValidationService,
     private authState: AuthStateService
   ) {
@@ -86,6 +87,15 @@ export class Login {
     if (rememberData?.username) {
       this.loginForm.controls['username'].setValue(rememberData.username);
       this.loginForm.controls['remember'].setValue(true);
+    }
+  }
+
+  ngOnInit(): void {
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if (token) {
+      sessionStorage.setItem('tempToken', token);
+      this.isForwordPassword = true;
+      this.tempToken = true;
     }
   }
 
@@ -176,7 +186,7 @@ export class Login {
     try {
       const { confirmPassword } = this.changePasswordForm.value;
 
-      await this.serverApi.post('/api/auth/change-password', {
+      await this.serverApi.post('/api/auth/reset-password', {
         token: sessionStorage.getItem('tempToken'),
         newPassword: confirmPassword,
       });

@@ -89,7 +89,12 @@ export class AuthService {
       },
     });
 
+    if (!user.userRole) {
+      throw new HttpError(500, 'User role not configured', ERROR_CODES.SERVER_ERROR);
+    }
+
     const permissions = user.userRole.permissions.reduce((acc: any, rp) => {
+      if (!rp.permission) return acc;
       const { resource, action } = rp.permission;
       if (!acc[resource]) acc[resource] = [];
       acc[resource].push(action);
@@ -159,16 +164,17 @@ export class AuthService {
 
     const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
 
-    const permissions = user.userRole.permissions.reduce((acc: any, rp) => {
+    const permissions = user.userRole?.permissions.reduce((acc: any, rp) => {
+      if (!rp.permission) return acc;
       const { resource, action } = rp.permission;
       if (!acc[resource]) acc[resource] = [];
       acc[resource].push(action);
       return acc;
-    }, {});
+    }, {}) ?? {};
 
     return {
       id: user.id, name: user.name, email: user.email,
-      role: user.userRole.name, roleId: user.roleId,
+      role: user.userRole?.name, roleId: user.roleId,
       employeeId: employee?.id, permissions,
     };
   }

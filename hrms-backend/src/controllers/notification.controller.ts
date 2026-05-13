@@ -46,8 +46,6 @@ export const listNotifications = async (req: Request, res: Response) => {
     ? employeeId[0]
     : (employeeId as string);
 
-  console.log(employeeId, currentUser);
-
   // Employees can only view their own notifications
   if (
     currentUser.role === 'EMPLOYEE' &&
@@ -111,10 +109,8 @@ export const sendBulkNotification = async (req: Request, res: Response) => {
     );
   }
 
-  // Prepare notifications
   const notificationsData = employeeIds.map((id: string) => ({
     employeeId: id,
-    userId: id, // assuming employeeId = userId, adjust if different
     type,
     message,
   }));

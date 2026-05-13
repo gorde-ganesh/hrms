@@ -25,12 +25,12 @@ export class Notification {
 
     this.notificationService.notifications$.subscribe((data) => {
       this.notifications = data;
-      this.unreadCount = this.notifications.filter((n) => !n.read).length;
+      this.unreadCount = this.notifications.filter((n) => !n.readStatus).length;
     });
   }
 
   markRead(notification: any) {
-    if (!notification.read && notification.id) {
+    if (!notification.readStatus && notification.id) {
       this.notificationService.markAsRead(notification.id);
     }
   }

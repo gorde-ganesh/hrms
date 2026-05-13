@@ -17,7 +17,7 @@
     <li
       *ngFor="let notification of notifications"
       class="notification-item"
-      [class.unread]="!notification.read"
+      [class.unread]="!notification.readStatus"
       (click)="markRead(notification)"
     >
       <div class="notification-header">

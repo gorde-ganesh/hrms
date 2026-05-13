@@ -7,12 +7,13 @@ import { environment } from '../../environment/environment';
 import { MessageService } from 'primeng/api';
 
 export interface Notification {
-  id?: number;
+  id?: string;
   employeeId: string;
   type: string;
   message: string;
   createdAt?: string;
-  read?: boolean;
+  readStatus?: boolean;
+  readAt?: string;
 }
 
 @Injectable({
@@ -57,12 +58,12 @@ export class NotificationService {
     this.notificationsSubject.next(notification);
   }
 
-  markAsRead(notificationId: number) {
+  markAsRead(notificationId: string) {
     this.serverApi
       .patch(`/api/notifications/${notificationId}/read`, {})
       .then(() => {
         const updated = this.notificationsSubject.value.map((n) =>
-          n.id === notificationId ? { ...n, read: true } : n
+          n.id === notificationId ? { ...n, readStatus: true, readAt: new Date().toISOString() } : n
         );
         this.notificationsSubject.next(updated);
       })
