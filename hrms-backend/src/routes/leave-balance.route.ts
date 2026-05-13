@@ -6,6 +6,7 @@ import {
   getLeaveBalanceSummary,
   updateLeaveBalance,
   initializeLeaveBalances,
+  accrueLeaveBalances,
 } from '../controllers/leave-balance.controller';
 
 function registerRouters(app: express.Application) {
@@ -39,6 +40,14 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess(['HR', 'ADMIN']),
     initializeLeaveBalances
+  );
+
+  // Accrue leave balances for all active employees (HR/Admin only)
+  app.post(
+    '/api/leave-balance/accrue',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    accrueLeaveBalances
   );
 }
 

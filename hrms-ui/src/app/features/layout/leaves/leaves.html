@@ -6,9 +6,14 @@
       <h1 class="lv-page-title">Leaves</h1>
       <p class="lv-page-subtitle">Manage your leave requests and balances</p>
     </div>
-    @if(hasPermission('apply')) {
-      <p-button label="Apply Leave" icon="pi pi-calendar-minus" (click)="onApplyLeave()" />
-    }
+    <div class="flex gap-2">
+      @if(hasPermission('accrue')) {
+        <p-button label="Accrue Leaves" icon="pi pi-sync" severity="secondary" [outlined]="true" (click)="accrueLeaves()" />
+      }
+      @if(hasPermission('apply')) {
+        <p-button label="Apply Leave" icon="pi pi-calendar-minus" (click)="onApplyLeave()" />
+      }
+    </div>
   </div>
 
   @if(leaveBalances.length > 0) {

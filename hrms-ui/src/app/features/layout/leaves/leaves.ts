@@ -1,10 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -95,6 +90,7 @@ export class Leaves implements OnInit, OnDestroy {
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay',
     },
+    height: 'auto',
     events: [],
     eventClick: (arg) => this.handleEventClick(arg),
   };
@@ -132,14 +128,22 @@ export class Leaves implements OnInit, OnDestroy {
     this.searchControl.valueChanges
       .pipe(debounceTime(350), takeUntil(this.destroy$))
       .subscribe((val) => {
-        this.apiParams = { ...this.apiParams, pageno: 0, search: val || undefined };
+        this.apiParams = {
+          ...this.apiParams,
+          pageno: 0,
+          search: val || undefined,
+        };
         this.loadLeaves(this.apiParams);
       });
 
     this.teamSearchControl.valueChanges
       .pipe(debounceTime(350), takeUntil(this.destroy$))
       .subscribe((val) => {
-        this.teamApiParams = { ...this.teamApiParams, pageno: 0, search: val || undefined };
+        this.teamApiParams = {
+          ...this.teamApiParams,
+          pageno: 0,
+          search: val || undefined,
+        };
         this.loadTeamLeaves(this.teamApiParams);
       });
   }
@@ -189,14 +193,20 @@ export class Leaves implements OnInit, OnDestroy {
       color: this.getEventColor(l.status),
     }));
     this.calendarOptions = { ...this.calendarOptions, events };
+
+    this.cdr.detectChanges();
   }
 
   getEventColor(status: string): string {
     switch (status) {
-      case 'APPROVED': return '#22c55e';
-      case 'PENDING':  return '#eab308';
-      case 'REJECTED': return '#ef4444';
-      default:         return '#3b82f6';
+      case 'APPROVED':
+        return '#22c55e';
+      case 'PENDING':
+        return '#eab308';
+      case 'REJECTED':
+        return '#ef4444';
+      default:
+        return '#3b82f6';
     }
   }
 
@@ -205,12 +215,20 @@ export class Leaves implements OnInit, OnDestroy {
   }
 
   pageChange(event: any) {
-    this.apiParams = { ...this.apiParams, pageno: event.first, top: event.rows };
+    this.apiParams = {
+      ...this.apiParams,
+      pageno: event.first,
+      top: event.rows,
+    };
     this.loadLeaves(this.apiParams);
   }
 
   teamPageChange(event: any) {
-    this.teamApiParams = { ...this.teamApiParams, pageno: event.first, top: event.rows };
+    this.teamApiParams = {
+      ...this.teamApiParams,
+      pageno: event.first,
+      top: event.rows,
+    };
     this.loadTeamLeaves(this.teamApiParams);
   }
 
@@ -226,8 +244,27 @@ export class Leaves implements OnInit, OnDestroy {
     this.loadTeamLeaves(this.teamApiParams);
   }
 
+  async accrueLeaves() {
+    try {
+      const result: any = await this.serverApi.post('/api/leave-balance/accrue', {
+        year: new Date().getFullYear(),
+      });
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Accrual Complete',
+        detail: result?.message ?? `${result?.created ?? 0} balance(s) created`,
+      });
+      this.loadLeaveBalances();
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message ?? 'Accrual failed' });
+    }
+  }
+
   async onApplyLeave() {
-    const fromtos = this.leaves.map((l) => ({ from: l.startDate, to: l.endDate }));
+    const fromtos = this.leaves.map((l) => ({
+      from: l.startDate,
+      to: l.endDate,
+    }));
     this.leaveDates = this.getAllLeaveDates(fromtos);
     this.applyLeaveDialog = true;
   }
@@ -239,12 +276,20 @@ export class Leaves implements OnInit, OnDestroy {
     const userInfo = this.authState.userInfo;
     const { date, reason, leaveType } = this.applyLeaveForm.value;
 
-    const selectedBalance = this.leaveBalances.find((b) => b.leaveType === leaveType);
+    const selectedBalance = this.leaveBalances.find(
+      (b) => b.leaveType === leaveType
+    );
     const start = new Date(date[0]);
     const end = new Date(date[1] ?? date[0]);
-    const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays =
+      Math.ceil(
+        Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
 
-    if (selectedBalance && selectedBalance.totalLeaves - selectedBalance.usedLeaves < diffDays) {
+    if (
+      selectedBalance &&
+      selectedBalance.totalLeaves - selectedBalance.usedLeaves < diffDays
+    ) {
       this.messageService.add({
         severity: 'error',
         summary: 'Insufficient Balance',
@@ -303,7 +348,11 @@ export class Leaves implements OnInit, OnDestroy {
   getAllLeaveDates(arr: { from: string; to: string }[]): Date[] {
     const dates: Date[] = [];
     arr.forEach(({ from, to }) => {
-      for (const d = new Date(from); d <= new Date(to); d.setDate(d.getDate() + 1)) {
+      for (
+        const d = new Date(from);
+        d <= new Date(to);
+        d.setDate(d.getDate() + 1)
+      ) {
         dates.push(new Date(d));
       }
     });
@@ -312,7 +361,10 @@ export class Leaves implements OnInit, OnDestroy {
 
   isLeaveDate(day: number, month: number, year: number): boolean {
     return this.leaveDates.some(
-      (d) => d.getDate() === day && d.getMonth() === month && d.getFullYear() === year
+      (d) =>
+        d.getDate() === day &&
+        d.getMonth() === month &&
+        d.getFullYear() === year
     );
   }
 
@@ -323,7 +375,10 @@ export class Leaves implements OnInit, OnDestroy {
   // ── Display helpers ──────────────────────────────────────────────────────
 
   formatLeaveType(type: string): string {
-    return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+    return type
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   formatStatus(status: string): string {
@@ -332,17 +387,22 @@ export class Leaves implements OnInit, OnDestroy {
 
   leaveTypeIcon(type: string): string {
     const t = type.toUpperCase();
-    if (t.includes('SICK'))                              return 'pi pi-heart';
+    if (t.includes('SICK')) return 'pi pi-heart';
     if (t.includes('ANNUAL') || t.includes('VACATION')) return 'pi pi-sun';
-    if (t.includes('MATERNITY') || t.includes('PATERNITY')) return 'pi pi-heart-fill';
-    if (t.includes('CASUAL'))                            return 'pi pi-calendar-clock';
+    if (t.includes('MATERNITY') || t.includes('PATERNITY'))
+      return 'pi pi-heart-fill';
+    if (t.includes('CASUAL')) return 'pi pi-calendar-clock';
     return 'pi pi-calendar';
   }
 
   leaveDuration(leave: any): number {
     const start = new Date(leave.startDate);
     const end = new Date(leave.endDate);
-    return Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return (
+      Math.ceil(
+        Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1
+    );
   }
 
   getUsedPercent(balance: any): number {

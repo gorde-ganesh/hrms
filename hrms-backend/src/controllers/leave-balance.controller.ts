@@ -217,6 +217,45 @@ export const initializeLeaveBalances = async (req: Request, res: Response) => {
   );
 };
 
+// POST /api/leave-balance/accrue
+// Ensures all active employees have leave balances for the target year.
+// Creates missing balances with default allocations; skips existing ones.
+// HR triggers this at year-start or when onboarding new employees in bulk.
+export const accrueLeaveBalances = async (req: Request, res: Response) => {
+  const targetYear = req.body.year ? parseInt(req.body.year) : new Date().getFullYear();
+
+  const leaveTypes: LeaveType[] = ['ANNUAL', 'SICK', 'PERSONAL', 'CASUAL', 'MATERNITY', 'PATERNITY', 'UNPAID'];
+
+  const activeEmployees = await prisma.employee.findMany({
+    where: { status: 'ACTIVE' },
+    select: { id: true },
+  });
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const emp of activeEmployees) {
+    for (const leaveType of leaveTypes) {
+      const existing = await prisma.leaveBalance.findUnique({
+        where: { employeeId_year_leaveType: { employeeId: emp.id, year: targetYear, leaveType } },
+      });
+      if (existing) { skipped++; continue; }
+      await prisma.leaveBalance.create({
+        data: { employeeId: emp.id, year: targetYear, leaveType, totalLeaves: getDefaultLeaveCount(leaveType) },
+      });
+      created++;
+    }
+  }
+
+  return successResponse(
+    res,
+    { year: targetYear, employees: activeEmployees.length, created, skipped },
+    `Accrual complete: ${created} balance(s) created, ${skipped} already existed`,
+    SUCCESS_CODES.SUCCESS,
+    200
+  );
+};
+
 // Helper function to update leave balance (used by leave controller)
 export const updateUsedLeaves = async (
   employeeId: string,
