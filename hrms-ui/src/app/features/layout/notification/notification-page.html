@@ -1,0 +1,93 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-wrap gap-3 items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-color leading-tight mb-1">Notifications</h1>
+      <p class="text-sm text-muted-color">
+        {{ totalRecords }} total &mdash;
+        <span [class.font-semibold]="unreadCount > 0">{{ unreadCount }} unread</span>
+      </p>
+    </div>
+    <div class="flex gap-2 items-center">
+      <p-selectbutton
+        [(ngModel)]="unreadOnly"
+        [options]="filterOptions"
+        optionLabel="label"
+        optionValue="value"
+        (onChange)="onFilterChange()"
+      />
+      @if (unreadCount > 0) {
+        <p-button
+          label="Mark all read"
+          icon="pi pi-check-circle"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="markAllRead()"
+        />
+      }
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="bg-card text-card-foreground rounded-xl border border-surface shadow-sm overflow-hidden">
+    @if (loading) {
+      <div class="flex items-center justify-center py-16 text-muted-color">
+        <i class="pi pi-spin pi-spinner text-2xl mr-3"></i> Loading…
+      </div>
+    } @else if (notifications.length === 0) {
+      <div class="empty-notifications">
+        <i class="pi pi-bell-slash"></i>
+        <p>{{ unreadOnly ? 'No unread notifications' : 'No notifications yet' }}</p>
+      </div>
+    } @else {
+      <ul class="notification-list p-4">
+        @for (n of notifications; track n.id) {
+          <li
+            class="notification-item"
+            [class.unread]="!n.readStatus"
+            (click)="markRead(n)"
+          >
+            <div class="notification-header">
+              <div class="notification-icon" [ngClass]="getNotificationIconClass(n.type)">
+                <i [class]="getNotificationIcon(n.type)"></i>
+              </div>
+              <div class="flex-1">
+                <div class="notification-type">{{ n.type }}</div>
+              </div>
+              @if (!n.readStatus) {
+                <span class="text-xs text-primary-500 font-semibold">New</span>
+              }
+            </div>
+            <div class="notification-message">{{ n.message }}</div>
+            <div class="notification-time">{{ n.createdAt | date: 'MMM d, y · h:mm a' }}</div>
+          </li>
+        }
+      </ul>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="flex items-center justify-between px-4 py-3 border-t border-surface">
+          <span class="text-sm text-muted-color">Page {{ currentPage }} of {{ totalPages }}</span>
+          <div class="flex gap-2">
+            <p-button
+              icon="pi pi-chevron-left"
+              [rounded]="true"
+              [text]="true"
+              severity="secondary"
+              [disabled]="skip === 0"
+              (onClick)="prevPage()"
+            />
+            <p-button
+              icon="pi pi-chevron-right"
+              [rounded]="true"
+              [text]="true"
+              severity="secondary"
+              [disabled]="skip + top >= totalRecords"
+              (onClick)="nextPage()"
+            />
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

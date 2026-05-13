@@ -30,38 +30,35 @@ export const sendNotification = async (req: Request, res: Response) => {
 };
 
 export const listNotifications = async (req: Request, res: Response) => {
-  const { employeeId } = req.query;
+  const { employeeId, skip = '0', top = '20', unreadOnly } = req.query;
   const currentUser = req.user;
 
   if (!employeeId) {
-    throw new HttpError(
-      400,
-      'employeeId required',
-      ERROR_CODES.VALIDATION_ERROR
-    );
+    throw new HttpError(400, 'employeeId required', ERROR_CODES.VALIDATION_ERROR);
   }
 
-  // Ensure employeeId is a string
-  const employeeIdStr = Array.isArray(employeeId)
-    ? employeeId[0]
-    : (employeeId as string);
+  const employeeIdStr = Array.isArray(employeeId) ? employeeId[0] : (employeeId as string);
 
-  // Employees can only view their own notifications
-  if (
-    currentUser.role === 'EMPLOYEE' &&
-    currentUser.employeeId !== employeeIdStr
-  ) {
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== employeeIdStr) {
     throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
   }
 
-  const notifications = await prisma.notification.findMany({
-    where: { employeeId: employeeIdStr },
-    orderBy: { createdAt: 'desc' },
-  });
+  const where: any = { employeeId: employeeIdStr };
+  if (unreadOnly === 'true') where.readStatus = false;
+
+  const [notifications, totalRecords] = await Promise.all([
+    prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: Number(skip),
+      take: Number(top),
+    }),
+    prisma.notification.count({ where }),
+  ]);
 
   return res.status(200).json({
     message: 'Notifications fetched successfully',
-    data: notifications,
+    data: { content: notifications, totalRecords },
     statusCode: 200,
     code: SUCCESS_CODES.SUCCESS,
   });
@@ -86,6 +83,28 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
   return res.status(200).json({
     message: 'Notification marked as read',
     data: updated,
+    statusCode: 200,
+    code: SUCCESS_CODES.SUCCESS,
+  });
+};
+
+export const markAllNotificationsAsRead = async (req: Request, res: Response) => {
+  const { employeeId } = req.body;
+  const currentUser = req.user;
+
+  if (!employeeId) throw new HttpError(400, 'employeeId required', ERROR_CODES.VALIDATION_ERROR);
+  if (currentUser.role === 'EMPLOYEE' && currentUser.employeeId !== employeeId) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+
+  const { count } = await prisma.notification.updateMany({
+    where: { employeeId, readStatus: false },
+    data: { readStatus: true, readAt: new Date() },
+  });
+
+  return res.status(200).json({
+    message: `${count} notification(s) marked as read`,
+    data: { count },
     statusCode: 200,
     code: SUCCESS_CODES.SUCCESS,
   });

@@ -74,8 +74,8 @@ export const routes: Routes = [
       {
         path: 'notifications',
         loadComponent: () =>
-          import('./features/layout/notification/notification').then(
-            (m) => m.Notification
+          import('./features/layout/notification/notification-page').then(
+            (m) => m.NotificationPage
           ),
       },
       {

@@ -52,10 +52,20 @@ export class NotificationService {
   }
 
   async fetchNotifications(employeeId: string) {
-    const notification: Notification[] = await this.serverApi.get(
-      `/api/notifications?employeeId=${employeeId}`
+    const res: any = await this.serverApi.get(
+      `/api/notifications?employeeId=${employeeId}&top=50`
     );
-    this.notificationsSubject.next(notification);
+    this.notificationsSubject.next(res?.content ?? []);
+  }
+
+  async markAllAsRead(employeeId: string) {
+    await this.serverApi.patch('/api/notifications/read-all', { employeeId });
+    const updated = this.notificationsSubject.value.map((n) => ({
+      ...n,
+      readStatus: true,
+      readAt: new Date().toISOString(),
+    }));
+    this.notificationsSubject.next(updated);
   }
 
   markAsRead(notificationId: string) {

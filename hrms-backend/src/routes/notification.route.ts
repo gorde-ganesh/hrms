@@ -5,6 +5,7 @@ import {
   sendNotification,
   listNotifications,
   markNotificationAsRead,
+  markAllNotificationsAsRead,
   sendBulkNotification,
 } from '../controllers/notification.controller';
 
@@ -20,6 +21,7 @@ function registerRouters(app: express.Application) {
   app.post('/api/notifications', authenticate, sendNotification);
   app.get('/api/notifications', authenticate, listNotifications);
   app.patch('/api/notifications/:id/read', authenticate, markNotificationAsRead);
+  app.patch('/api/notifications/read-all', authenticate, markAllNotificationsAsRead);
   app.post('/api/notifications/bulk', authenticate, roleAccess(['HR', 'ADMIN']), bulkNotificationLimiter, sendBulkNotification);
 }
 
