@@ -156,6 +156,32 @@ export class ApiService {
     }
   }
 
+  async downloadFile(url: string, fallbackFilename: string): Promise<void> {
+    try {
+      const blob: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}${url}`, {
+          headers: this.getHeaders(),
+          responseType: 'blob',
+          observe: 'response',
+        })
+      );
+      let filename = fallbackFilename;
+      const cd = blob.headers?.get('Content-Disposition');
+      if (cd) {
+        const m = cd.match(/filename="?([^"]+)"?/);
+        if (m?.[1]) filename = m[1];
+      }
+      const objUrl = window.URL.createObjectURL(blob?.body);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(objUrl);
+    } catch (error) {
+      console.error('Download failed', error);
+    }
+  }
+
   async downloadPayslip(payrollId: number): Promise<void> {
     try {
       const blob: any = await firstValueFrom(

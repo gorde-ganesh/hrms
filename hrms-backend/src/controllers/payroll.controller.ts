@@ -435,24 +435,28 @@ export const getPayroll = async (req: Request, res: Response) => {
   const { employeeId, month, year, skip, pageno, top } = req.query;
   const skipValue = Number(skip ?? pageno) || 0;
 
+  const where = {
+    employeeId: employeeId ? String(employeeId) : undefined,
+    month: month ? Number(month) : undefined,
+    year: year ? Number(year) : undefined,
+  };
+
   const [payroll, totalRecords] = await Promise.all([
     prisma.payroll.findMany({
-      where: {
-        employeeId: employeeId ? String(employeeId) : undefined,
-        month: month ? Number(month) : undefined,
-        year: year ? Number(year) : undefined,
+      where,
+      include: {
+        employee: {
+          select: {
+            employeeCode: true,
+            user: { select: { name: true } },
+          },
+        },
       },
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
       skip: skipValue,
       take: top ? Number(top) : 10,
     }),
-    prisma.payroll.count({
-      where: {
-        employeeId: employeeId ? String(employeeId) : undefined,
-        month: month ? Number(month) : undefined,
-        year: year ? Number(year) : undefined,
-      },
-    }),
+    prisma.payroll.count({ where }),
   ]);
 
   return successResponse(res, { content: payroll, totalRecords }, 'Data fetched successfully', SUCCESS_CODES.SUCCESS, 200);
