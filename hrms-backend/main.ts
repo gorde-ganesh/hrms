@@ -377,6 +377,7 @@ const MODULES: string[] = [
   'dashboard',
   'admin',
   'audit',
+  'salary-structure',
 ];
 
 async function startServer() {

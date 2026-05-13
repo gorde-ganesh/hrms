@@ -124,7 +124,8 @@ async function main() {
 
   console.log('Creating departments...');
   for (const dept of departments) {
-    await prisma.department.upsert({ where: { name: dept.name }, update: {}, create: dept });
+    const existing = await prisma.department.findFirst({ where: { name: dept.name, companyId: null } });
+    if (!existing) await prisma.department.create({ data: dept });
   }
 
   // 4. Create Designations
@@ -199,10 +200,49 @@ async function main() {
 
   console.log('Creating designations...');
   for (const desig of designations) {
-    await prisma.designation.upsert({ where: { name: desig.name }, update: {}, create: desig });
+    const existing = await prisma.designation.findFirst({ where: { name: desig.name, companyId: null } });
+    if (!existing) await prisma.designation.create({ data: desig });
   }
 
-  // 5. Create Test Users
+  // 5. Seed statutory PayrollComponentType records (system-wide, companyId: null)
+  // These are looked up by the payroll engine when persisting component lines.
+  console.log('Creating statutory payroll component types...');
+  const statutoryComponents = [
+    { name: 'Basic Salary',       type: 'ALLOWANCE', statutoryType: 'BASIC',             description: 'Basic monthly salary' },
+    { name: 'HRA',                type: 'ALLOWANCE', statutoryType: 'HRA',               description: 'House Rent Allowance' },
+    { name: 'Special Allowance',  type: 'ALLOWANCE', statutoryType: 'SPECIAL_ALLOWANCE', description: 'Special/flexible allowance' },
+    { name: 'Conveyance',         type: 'ALLOWANCE', statutoryType: 'CONVEYANCE',        description: 'Conveyance allowance' },
+    { name: 'Medical Allowance',  type: 'ALLOWANCE', statutoryType: 'MEDICAL',           description: 'Medical allowance' },
+    { name: 'Bonus',              type: 'ALLOWANCE', statutoryType: 'BONUS',             description: 'Statutory/performance bonus' },
+    { name: 'PF (Employee)',      type: 'DEDUCTION', statutoryType: 'PF_EMPLOYEE',       description: 'EPF employee contribution (12%)' },
+    { name: 'PF (Employer)',      type: 'DEDUCTION', statutoryType: 'PF_EMPLOYER',       description: 'EPF employer contribution (12%)' },
+    { name: 'ESI (Employee)',     type: 'DEDUCTION', statutoryType: 'ESI_EMPLOYEE',      description: 'ESI employee contribution (0.75%)' },
+    { name: 'ESI (Employer)',     type: 'DEDUCTION', statutoryType: 'ESI_EMPLOYER',      description: 'ESI employer contribution (3.25%)' },
+    { name: 'TDS (Income Tax)',   type: 'DEDUCTION', statutoryType: 'TDS',              description: 'TDS deducted under Section 192' },
+    { name: 'Professional Tax',   type: 'DEDUCTION', statutoryType: 'PROFESSIONAL_TAX', description: 'State professional tax' },
+    { name: 'LOP',                type: 'DEDUCTION', statutoryType: 'LOP',              description: 'Loss of Pay for absent days' },
+    { name: 'Advance Deduction',  type: 'DEDUCTION', statutoryType: 'ADVANCE',          description: 'Recovery of salary advance' },
+  ] as const;
+
+  for (const comp of statutoryComponents) {
+    const existing = await prisma.payrollComponentType.findFirst({
+      where: { statutoryType: comp.statutoryType as any, companyId: null },
+    });
+    if (!existing) {
+      await prisma.payrollComponentType.create({
+        data: {
+          name: comp.name,
+          type: comp.type as any,
+          statutoryType: comp.statutoryType as any,
+          description: comp.description,
+          isActive: true,
+          companyId: null,
+        },
+      });
+    }
+  }
+
+  // 6. Create Test Users
   console.log('Creating test users...');
 
   const bcrypt = require('bcryptjs');
@@ -213,25 +253,25 @@ async function main() {
   const managerRole  = await prisma.userRole.findUniqueOrThrow({ where: { name: 'MANAGER' } });
   const employeeRole = await prisma.userRole.findUniqueOrThrow({ where: { name: 'EMPLOYEE' } });
 
-  const engineeringDept = await prisma.department.findUniqueOrThrow({ where: { name: 'Engineering' } });
-  const hrDept          = await prisma.department.findUniqueOrThrow({ where: { name: 'Human Resources' } });
-  const productDept     = await prisma.department.findUniqueOrThrow({ where: { name: 'Product' } });
-  const salesDept       = await prisma.department.findUniqueOrThrow({ where: { name: 'Sales' } });
-  const marketingDept   = await prisma.department.findUniqueOrThrow({ where: { name: 'Marketing' } });
-  const supportDept     = await prisma.department.findUniqueOrThrow({ where: { name: 'Customer Support' } });
+  const engineeringDept = await prisma.department.findFirstOrThrow({ where: { name: 'Engineering', companyId: null } });
+  const hrDept          = await prisma.department.findFirstOrThrow({ where: { name: 'Human Resources', companyId: null } });
+  const productDept     = await prisma.department.findFirstOrThrow({ where: { name: 'Product', companyId: null } });
+  const salesDept       = await prisma.department.findFirstOrThrow({ where: { name: 'Sales', companyId: null } });
+  const marketingDept   = await prisma.department.findFirstOrThrow({ where: { name: 'Marketing', companyId: null } });
+  const supportDept     = await prisma.department.findFirstOrThrow({ where: { name: 'Customer Support', companyId: null } });
 
-  const ceoDesig            = await prisma.designation.findUniqueOrThrow({ where: { name: 'Chief Executive Officer (CEO)' } });
-  const ctoDesig            = await prisma.designation.findUniqueOrThrow({ where: { name: 'Chief Technology Officer (CTO)' } });
-  const engManagerDesig     = await prisma.designation.findUniqueOrThrow({ where: { name: 'Engineering Manager' } });
-  const seniorEngDesig      = await prisma.designation.findUniqueOrThrow({ where: { name: 'Senior Software Engineer' } });
-  const engDesig            = await prisma.designation.findUniqueOrThrow({ where: { name: 'Software Engineer' } });
-  const juniorEngDesig      = await prisma.designation.findUniqueOrThrow({ where: { name: 'Junior Software Engineer' } });
-  const hrManagerDesig      = await prisma.designation.findUniqueOrThrow({ where: { name: 'HR Manager' } });
-  const hrSpecialistDesig   = await prisma.designation.findUniqueOrThrow({ where: { name: 'HR Specialist' } });
-  const productManagerDesig = await prisma.designation.findUniqueOrThrow({ where: { name: 'Product Manager' } });
-  const salesManagerDesig   = await prisma.designation.findUniqueOrThrow({ where: { name: 'Sales Manager' } });
-  const marketingManagerDesig = await prisma.designation.findUniqueOrThrow({ where: { name: 'Marketing Manager' } });
-  const supportManagerDesig = await prisma.designation.findUniqueOrThrow({ where: { name: 'Support Manager' } });
+  const ceoDesig            = await prisma.designation.findFirstOrThrow({ where: { name: 'Chief Executive Officer (CEO)', companyId: null } });
+  const ctoDesig            = await prisma.designation.findFirstOrThrow({ where: { name: 'Chief Technology Officer (CTO)', companyId: null } });
+  const engManagerDesig     = await prisma.designation.findFirstOrThrow({ where: { name: 'Engineering Manager', companyId: null } });
+  const seniorEngDesig      = await prisma.designation.findFirstOrThrow({ where: { name: 'Senior Software Engineer', companyId: null } });
+  const engDesig            = await prisma.designation.findFirstOrThrow({ where: { name: 'Software Engineer', companyId: null } });
+  const juniorEngDesig      = await prisma.designation.findFirstOrThrow({ where: { name: 'Junior Software Engineer', companyId: null } });
+  const hrManagerDesig      = await prisma.designation.findFirstOrThrow({ where: { name: 'HR Manager', companyId: null } });
+  const hrSpecialistDesig   = await prisma.designation.findFirstOrThrow({ where: { name: 'HR Specialist', companyId: null } });
+  const productManagerDesig = await prisma.designation.findFirstOrThrow({ where: { name: 'Product Manager', companyId: null } });
+  const salesManagerDesig   = await prisma.designation.findFirstOrThrow({ where: { name: 'Sales Manager', companyId: null } });
+  const marketingManagerDesig = await prisma.designation.findFirstOrThrow({ where: { name: 'Marketing Manager', companyId: null } });
+  const supportManagerDesig = await prisma.designation.findFirstOrThrow({ where: { name: 'Support Manager', companyId: null } });
 
   const testUsers = [
     // ADMIN

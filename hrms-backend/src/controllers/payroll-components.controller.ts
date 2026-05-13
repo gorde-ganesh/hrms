@@ -29,7 +29,7 @@ export const getPayrollComponents = async (req: Request, res: Response) => {
     );
   }
 
-  const salary = employee.salary / 12;
+  const salary = Number(employee.salary) / 12;
 
   const componentTypes = await prisma.payrollComponentType.findMany({
     where: { isActive: true },
@@ -40,7 +40,7 @@ export const getPayrollComponents = async (req: Request, res: Response) => {
     id: ct.id,
     name: ct.name,
     type: ct.type,
-    amount: Number((((ct.percent ?? 0) * salary) / 100).toFixed(2)),
+    amount: Number(((Number(ct.percent ?? 0) * salary) / 100).toFixed(2)),
   }));
 
   return successResponse(res, components, 'Data fetched', SUCCESS_CODES.SUCCESS, 200);

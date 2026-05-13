@@ -90,6 +90,70 @@ enum PerformanceReviewPeriod {
   ANNUAL
 }
 
+enum TaxRegime {
+  OLD
+  NEW
+}
+
+// Identifies which statutory line item a component represents.
+// Used by the payroll engine and challan generation to locate PF/ESI/TDS rows
+// without relying on component names (which vary per company).
+enum StatutoryComponentType {
+  BASIC
+  HRA
+  SPECIAL_ALLOWANCE
+  CONVEYANCE
+  MEDICAL
+  PF_EMPLOYEE
+  PF_EMPLOYER
+  ESI_EMPLOYEE
+  ESI_EMPLOYER
+  TDS
+  PROFESSIONAL_TAX
+  LOP
+  BONUS
+  GRATUITY
+  ADVANCE
+  CUSTOM
+}
+
+enum BankTransferStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
+}
+
+//////////////////////////////////////////
+// COMPANY MODEL
+//////////////////////////////////////////
+
+model Company {
+  id          String    @id @default(uuid())
+  name        String
+  gstin       String?
+  pan         String?
+  cin         String?
+  address     String?
+  city        String?
+  state       String?   // Used as default professionalTaxState for employees
+  pincode     String?
+  phone       String?
+  email       String?
+  logoUrl     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  users                User[]
+  departments          Department[]
+  designations         Designation[]
+  payrollComponentTypes PayrollComponentType[]
+  holidayCalendars     HolidayCalendar[]
+  bankTransferBatches  BankTransferBatch[]
+}
+
 //////////////////////////////////////////
 // USER MODEL
 //////////////////////////////////////////
@@ -107,6 +171,8 @@ model User {
   zipCode         String
   roleId          String
   userRole        UserRole  @relation(fields: [roleId], references: [id])
+  companyId       String?
+  company         Company?  @relation(fields: [companyId], references: [id])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   resetToken           String?
@@ -128,6 +194,8 @@ model User {
   conversationsCreated Conversation[]       @relation("CreatedBy")
   payrollsProcessed    Payroll[]            @relation("PayrollProcessedBy")
   auditLogs            AuditLog[]
+
+  @@index([companyId])
 }
 
 //////////////////////////////////////////
@@ -177,13 +245,18 @@ model RolePermission {
 
 model Department {
   id          String    @id @default(uuid())
-  name        String    @unique
+  name        String
   description String?
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
   employees Employee[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
 }
 
 //////////////////////////////////////////
@@ -192,14 +265,19 @@ model Department {
 
 model Designation {
   id             String    @id @default(uuid())
-  name           String    @unique
+  name           String
   description    String?
   classification String?
+  companyId      String?
+  company        Company?  @relation(fields: [companyId], references: [id])
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
   employees Employee[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
 }
 
 //////////////////////////////////////////
@@ -219,7 +297,7 @@ model Employee {
   designation   Designation? @relation(fields: [designationId], references: [id])
 
   joiningDate            DateTime?
-  salary                 Float?
+  salary                 Decimal?  @db.Decimal(12, 2) // Annual CTC
   dob                    DateTime
   personalEmail          String
   bloodGroup             String
@@ -234,23 +312,57 @@ model Employee {
   ifscCode               String?
   panNumber              String?
   profileImageUrl        String?
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
-  deletedAt              DateTime?
+
+  // Statutory fields
+  uan                  String?   // Universal Account Number (PF)
+  pfNumber             String?   // PF member ID at the establishment
+  esiNumber            String?   // ESI insurance number (IP number)
+  professionalTaxState String?   // State code for PT slab lookup (e.g. "MH", "KA")
+  taxRegime            TaxRegime @default(NEW)
+  pfOptOut             Boolean   @default(false) // Voluntary opt-out when basic > ₹15k
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   managerId    String?
   manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
   subordinates Employee[] @relation("EmployeeManager")
 
-  leaves        Leave[]
-  attendance    Attendance[]
-  payrolls      Payroll[]
-  performance   Performance[]
-  notifications Notification[]
-  leaveBalance  LeaveBalance[]
+  leaves          Leave[]
+  attendance      Attendance[]
+  payrolls        Payroll[]
+  performance     Performance[]
+  notifications   Notification[]
+  leaveBalance    LeaveBalance[]
+  salaryStructures SalaryStructure[]
 
   @@index([departmentId])
   @@index([managerId])
+}
+
+//////////////////////////////////////////
+// SALARY STRUCTURE MODEL
+//////////////////////////////////////////
+
+// Effective-dated CTC breakdown. On each payroll run the engine picks the
+// structure whose effectiveFrom <= payroll month and effectiveTo is null or >=
+// payroll month. Needed for mid-year raises and Form 16 accuracy.
+model SalaryStructure {
+  id            String    @id @default(uuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date  // null = currently active
+
+  ctcAnnual     Decimal   @db.Decimal(12, 2)
+  basicPct      Decimal   @db.Decimal(5, 2) // basic as % of gross monthly (e.g. 40.00)
+  hraPct        Decimal   @db.Decimal(5, 2) // HRA as % of basic (e.g. 50.00 for metro)
+
+  createdAt     DateTime  @default(now())
+  createdById   String?
+
+  @@index([employeeId, effectiveFrom])
 }
 
 //////////////////////////////////////////
@@ -310,7 +422,7 @@ model Attendance {
   id             String           @id @default(uuid())
   employeeId     String
   employee       Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  attendanceDate DateTime
+  attendanceDate DateTime         @db.Date
   checkIn        DateTime?
   checkOut       DateTime?
   totalHours     Float?
@@ -331,20 +443,46 @@ model Payroll {
   employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   month           Int
   year            Int
-  netSalary       Float         @default(0)
-  basicSalary     Float         @default(0)
+  grossSalary     Decimal       @db.Decimal(12, 2) @default(0)
+  basicSalary     Decimal       @db.Decimal(12, 2) @default(0)
+  netSalary       Decimal       @db.Decimal(12, 2) @default(0)
+  lopDays         Int           @default(0)   // Loss of Pay days this month
+  workingDays     Int           @default(26)  // Payable working days this month
   status          PayrollStatus @default(DRAFT)
   paidDate        DateTime?
   processedById   String?
   processedBy     User?         @relation("PayrollProcessedBy", fields: [processedById], references: [id])
+  idempotencyKey  String?       // Set on batch generation to prevent double-run
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   components PayrollComponent[]
+  payslip    Payslip?
+  bankTransferItem BankTransferItem?
 
   @@unique([employeeId, month, year])
   @@index([year, month])
   @@index([employeeId, createdAt])
+  @@index([idempotencyKey])
+}
+
+//////////////////////////////////////////
+// PAYSLIP MODEL
+//////////////////////////////////////////
+
+// Immutable record of the PDF generated at finalize time. Serves as the
+// legal copy. If the payslip is regenerated, a new row replaces the old one
+// (old row is soft-deleted via supersededAt).
+model Payslip {
+  id           String    @id @default(uuid())
+  payrollId    String    @unique
+  payroll      Payroll   @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  fileUrl      String    // Path on disk or S3 URL
+  fileHash     String    // SHA-256 of PDF bytes — detect tampering
+  generatedAt  DateTime  @default(now())
+  supersededAt DateTime? // Non-null if a newer PDF was generated
+
+  @@index([payrollId])
 }
 
 //////////////////////////////////////////
@@ -352,16 +490,23 @@ model Payroll {
 //////////////////////////////////////////
 
 model PayrollComponentType {
-  id          String        @id @default(uuid())
-  name        String        @unique
-  description String?
-  type        ComponentType
-  isActive    Boolean       @default(true)
-  percent     Float?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             String                 @id @default(uuid())
+  name           String
+  description    String?
+  type           ComponentType
+  statutoryType  StatutoryComponentType? // null = custom non-statutory component
+  isActive       Boolean                @default(true)
+  percent        Decimal?               @db.Decimal(5, 2) // Default % for seeded components
+  companyId      String?                // null = system-wide component available to all companies
+  company        Company?               @relation(fields: [companyId], references: [id])
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 
   components PayrollComponent[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@index([statutoryType])
 }
 
 //////////////////////////////////////////
@@ -374,9 +519,44 @@ model PayrollComponent {
   payroll         Payroll              @relation(fields: [payrollId], references: [id], onDelete: Cascade)
   componentTypeId String
   componentType   PayrollComponentType @relation(fields: [componentTypeId], references: [id])
-  amount          Float                @default(0)
+  amount          Decimal              @db.Decimal(12, 2) @default(0)
 
   @@unique([payrollId, componentTypeId])
+}
+
+//////////////////////////////////////////
+// BANK TRANSFER MODELS
+//////////////////////////////////////////
+
+model BankTransferBatch {
+  id          String             @id @default(uuid())
+  month       Int
+  year        Int
+  companyId   String
+  company     Company            @relation(fields: [companyId], references: [id])
+  status      BankTransferStatus @default(PENDING)
+  fileUrl     String?            // NEFT/bank CSV download URL
+  createdAt   DateTime           @default(now())
+  createdById String?
+
+  items BankTransferItem[]
+
+  @@index([companyId, year, month])
+}
+
+model BankTransferItem {
+  id              String            @id @default(uuid())
+  batchId         String
+  batch           BankTransferBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  payrollId       String            @unique
+  payroll         Payroll           @relation(fields: [payrollId], references: [id])
+  amount          Decimal           @db.Decimal(12, 2)
+  accountNumber   String
+  ifscCode        String
+  beneficiaryName String
+  status          BankTransferStatus @default(PENDING)
+
+  @@index([batchId])
 }
 
 //////////////////////////////////////////
@@ -485,13 +665,16 @@ model CallLog {
 model HolidayCalendar {
   id        String   @id @default(uuid())
   name      String
-  date      DateTime
+  date      DateTime @db.Date
   type      String   @default("PUBLIC")
   year      Int
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
 
   @@index([year])
   @@index([date])
+  @@index([companyId, year])
 }
 
 //////////////////////////////////////////
