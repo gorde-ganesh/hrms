@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate, roleAccess } from '../middlewares/auth.middleware';
+import { authenticate, roleAccess, checkPermission } from '../middlewares/auth.middleware';
 import {
   downloadPayslip,
   generatePayroll,
@@ -30,6 +30,7 @@ function registerRouters(app: express.Application) {
     '/api/payroll',
     authenticate,
     roleAccess(['HR', 'ADMIN']),
+    checkPermission('payroll', 'generate'),
     validate(GeneratePayrollSchema),
     generatePayroll
   );
@@ -37,6 +38,7 @@ function registerRouters(app: express.Application) {
     '/api/payroll/batch',
     authenticate,
     roleAccess(['HR', 'ADMIN']),
+    checkPermission('payroll', 'generate'),
     generateBatchPayroll
   );
   app.get(

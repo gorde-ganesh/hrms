@@ -23,7 +23,7 @@ function registerRouters(app: express.Application) {
   app.patch(
     '/api/leaves/:id/status',
     authenticate,
-    roleAccess(['HR', 'ADMIN', 'EMPLOYEE', 'MANAGER']),
+    roleAccess(['HR', 'ADMIN', 'MANAGER']),
     validate(UpdateLeaveStatusSchema),
     updateLeaveStatus
   );
