@@ -206,6 +206,11 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
     throw new HttpError(404, 'Leave not found', ERROR_CODES.NOT_FOUND);
   }
 
+  // MANAGER can only approve/reject leaves of their direct reports
+  if (req.user.role === 'MANAGER' && leave.employee.managerId !== req.user.employeeId) {
+    throw new HttpError(403, 'Forbidden: you can only manage leaves of your direct reports', ERROR_CODES.FORBIDDEN);
+  }
+
   const approvedByUser = await prisma.user.findUnique({
     where: {
       id: approvedBy,

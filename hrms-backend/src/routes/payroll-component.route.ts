@@ -25,7 +25,7 @@ function registerRouters(app: express.Application) {
   app.post(
     '/api/payroll/components',
     authenticate,
-    roleAccess(['ADMIN', 'HR']),
+    roleAccess(['ADMIN']),
     createPayrollComponent
   );
   app.put(
