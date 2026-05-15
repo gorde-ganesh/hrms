@@ -13,16 +13,25 @@ import { successResponse } from '../utils/response-helper';
 
 // ----------------- Helper Functions -----------------
 
-// Calculate number of leave days (excluding weekends)
-export const calculateLeaveDays = (startDate: Date, endDate: Date): number => {
+// Calculate number of leave days (excluding weekends and public holidays)
+export const calculateLeaveDays = async (startDate: Date, endDate: Date): Promise<number> => {
+  const year = startDate.getFullYear();
+  const holidays = await prisma.holidayCalendar.findMany({
+    where: { year, type: 'PUBLIC' },
+    select: { date: true },
+  });
+  const holidaySet = new Set(
+    holidays.map((h: { date: Date }) => h.date.toISOString().slice(0, 10))
+  );
+
   let count = 0;
   const current = new Date(startDate);
   const end = new Date(endDate);
 
   while (current <= end) {
     const dayOfWeek = current.getDay();
-    // Exclude Saturday (6) and Sunday (0)
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+    const dateStr = current.toISOString().slice(0, 10);
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidaySet.has(dateStr)) {
       count++;
     }
     current.setDate(current.getDate() + 1);
@@ -114,6 +123,24 @@ export const applyLeave = async (req: Request, res: Response) => {
     throw new HttpError(404, 'Employee not found', ERROR_CODES.NOT_FOUND);
   }
 
+  // Enforce leave policy if one exists for this leave type
+  const policy = await prisma.leavePolicy.findUnique({ where: { leaveType: leaveType as LeaveType } });
+  if (policy) {
+    // Gender restriction (e.g. MATERNITY → FEMALE only); skip if gender not set on profile
+    if (policy.genderRestriction && employee.user.gender && employee.user.gender !== policy.genderRestriction) {
+      throw new HttpError(403, `${leaveType} leave is only available to ${policy.genderRestriction} employees`, ERROR_CODES.FORBIDDEN);
+    }
+    // Minimum notice days
+    if (policy.minNoticeDays > 0) {
+      const minStart = new Date();
+      minStart.setDate(minStart.getDate() + policy.minNoticeDays);
+      minStart.setHours(0, 0, 0, 0);
+      if (start < minStart) {
+        throw new HttpError(400, `${leaveType} leave requires at least ${policy.minNoticeDays} days notice`, ERROR_CODES.VALIDATION_ERROR);
+      }
+    }
+  }
+
   // Check for overlapping leaves
   const hasOverlap = await checkOverlappingLeaves(employeeId, start, end);
   if (hasOverlap) {
@@ -125,7 +152,7 @@ export const applyLeave = async (req: Request, res: Response) => {
   }
 
   // Calculate leave days
-  const leaveDays = calculateLeaveDays(start, end);
+  const leaveDays = await calculateLeaveDays(start, end);
 
   if (leaveDays === 0) {
     throw new HttpError(
@@ -222,7 +249,7 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
   }
 
   // Calculate leave days
-  const leaveDays = calculateLeaveDays(leave.startDate, leave.endDate);
+  const leaveDays = await calculateLeaveDays(leave.startDate, leave.endDate);
   const leaveYear = leave.startDate.getFullYear();
   const previousStatus = leave.status;
 
@@ -408,7 +435,7 @@ export const cancelLeave = async (req: Request, res: Response) => {
   }
 
   const wasApproved = leave.status === 'APPROVED';
-  const leaveDays = calculateLeaveDays(leave.startDate, leave.endDate);
+  const leaveDays = await calculateLeaveDays(leave.startDate, leave.endDate);
   const leaveYear = leave.startDate.getFullYear();
 
   await prisma.leave.update({

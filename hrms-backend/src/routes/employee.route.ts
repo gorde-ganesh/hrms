@@ -9,6 +9,9 @@ import {
   getEmployeeSummary,
   offboardEmployee,
   getEmployeeHierarchy,
+  inviteEmployee,
+  getOnboardingStatus,
+  updateOnboardingTask,
 } from '../controllers/employee.controller';
 import express from 'express';
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
@@ -77,6 +80,26 @@ function registerRouters(app: express.Application) {
     authenticate,
     roleAccess(['HR', 'ADMIN', 'MANAGER']),
     getEmployeeHierarchy
+  );
+
+  // Onboarding
+  app.post(
+    '/api/employees/:employeeId/invite',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    inviteEmployee
+  );
+  app.get(
+    '/api/employees/:employeeId/onboarding',
+    authenticate,
+    roleAccess(['HR', 'ADMIN', 'EMPLOYEE', 'MANAGER']),
+    getOnboardingStatus
+  );
+  app.patch(
+    '/api/employees/:employeeId/onboarding/tasks/:taskId',
+    authenticate,
+    roleAccess(['HR', 'ADMIN']),
+    updateOnboardingTask
   );
 }
 

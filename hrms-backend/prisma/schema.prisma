@@ -175,6 +175,7 @@ model User {
   company         Company?  @relation(fields: [companyId], references: [id])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  gender               String?   // MALE | FEMALE | OTHER
   resetToken           String?
   resetTokenExp        DateTime?
   refreshToken         String?
@@ -329,13 +330,16 @@ model Employee {
   manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
   subordinates Employee[] @relation("EmployeeManager")
 
-  leaves          Leave[]
-  attendance      Attendance[]
-  payrolls        Payroll[]
-  performance     Performance[]
-  notifications   Notification[]
-  leaveBalance    LeaveBalance[]
+  onboardingStatus OnboardingStatus @default(COMPLETED)
+
+  leaves           Leave[]
+  attendance       Attendance[]
+  payrolls         Payroll[]
+  performance      Performance[]
+  notifications    Notification[]
+  leaveBalance     LeaveBalance[]
   salaryStructures SalaryStructure[]
+  onboardingTasks  OnboardingTask[]
 
   @@index([departmentId])
   @@index([managerId])
@@ -697,4 +701,47 @@ model AuditLog {
   @@index([performedBy])
   @@index([entity, entityId])
   @@index([createdAt])
+}
+
+//////////////////////////////////////////
+// LEAVE POLICY MODEL
+//////////////////////////////////////////
+
+model LeavePolicy {
+  id                   String    @id @default(uuid())
+  leaveType            LeaveType @unique
+  maxDays              Int
+  carryForwardDays     Int       @default(0)
+  requiresCertificate  Boolean   @default(false)
+  minNoticeDays        Int       @default(0)
+  genderRestriction    String?   // MALE | FEMALE | null means no restriction
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+//////////////////////////////////////////
+// ONBOARDING MODELS
+//////////////////////////////////////////
+
+enum OnboardingStatus {
+  INVITED
+  PROFILE_PENDING
+  DOCUMENTS_PENDING
+  IT_SETUP_PENDING
+  COMPLETED
+}
+
+model OnboardingTask {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  category    String    // DOCUMENTS | IT_SETUP | POLICIES | PAYROLL
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([employeeId])
+  @@index([employeeId, completed])
 }
