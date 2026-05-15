@@ -110,7 +110,7 @@ export const getSalaryStructures = async (req: Request, res: Response) => {
 // ─── Get by ID ───────────────────────────────────────────────────────────────
 
 export const getSalaryStructureById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const structure = await prisma.salaryStructure.findUnique({ where: { id } });
   if (!structure) throw new HttpError(404, 'Salary structure not found', ERROR_CODES.NOT_FOUND);
 
@@ -120,7 +120,7 @@ export const getSalaryStructureById = async (req: Request, res: Response) => {
 // ─── Update ──────────────────────────────────────────────────────────────────
 
 export const updateSalaryStructure = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { ctcAnnual, basicPct, hraPct } = req.body;
 
   const structure = await prisma.salaryStructure.findUnique({ where: { id } });
@@ -160,7 +160,7 @@ export const updateSalaryStructure = async (req: Request, res: Response) => {
 // ─── Delete ──────────────────────────────────────────────────────────────────
 
 export const deleteSalaryStructure = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   const structure = await prisma.salaryStructure.findUnique({ where: { id } });
   if (!structure) throw new HttpError(404, 'Salary structure not found', ERROR_CODES.NOT_FOUND);
@@ -212,7 +212,7 @@ export const deleteSalaryStructure = async (req: Request, res: Response) => {
         entityId: id,
         performedBy: req.user!.id,
         before: { employeeId: structure.employeeId, effectiveFrom: structure.effectiveFrom },
-        after: null,
+        after: undefined,
       },
     });
   });

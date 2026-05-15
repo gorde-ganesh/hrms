@@ -26,7 +26,7 @@ const MONTH_NAMES = [
  * Account Type: SB = Savings (default; most salary accounts are savings)
  */
 function buildNeftCsv(
-  items: { accountNumber: string; ifscCode: string; beneficiaryName: string; amount: bigint | number | string }[],
+  items: { accountNumber: string; ifscCode: string; beneficiaryName: string; amount: any }[],
   month: number,
   year: number,
 ): string {
@@ -176,7 +176,7 @@ export const getBankTransferBatches = async (req: Request, res: Response) => {
 
 // ─── Download NEFT CSV ───────────────────────────────────────────────────────
 export const downloadBankTransferCsv = async (req: Request, res: Response) => {
-  const { batchId } = req.params;
+  const batchId = req.params.batchId as string;
 
   const batch = await prisma.bankTransferBatch.findUnique({
     where: { id: batchId },
@@ -207,7 +207,7 @@ export const downloadBankTransferCsv = async (req: Request, res: Response) => {
 
 // ─── Mark Batch Submitted ────────────────────────────────────────────────────
 export const markBatchSubmitted = async (req: Request, res: Response) => {
-  const { batchId } = req.params;
+  const batchId = req.params.batchId as string;
 
   const batch = await prisma.bankTransferBatch.findUnique({ where: { id: batchId } });
   if (!batch) throw new HttpError(404, 'Bank transfer batch not found', ERROR_CODES.NOT_FOUND);

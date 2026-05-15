@@ -131,3 +131,75 @@ export const getEmployeeHierarchy = async (req: Request, res: Response) => {
 
   return successResponse(res, employee, 'Hierarchy fetched', SUCCESS_CODES.SUCCESS, 200);
 };
+
+const DEFAULT_ONBOARDING_TASKS = [
+  { title: 'Upload signed offer letter', category: 'DOCUMENTS' },
+  { title: 'Submit government-issued ID proof', category: 'DOCUMENTS' },
+  { title: 'Submit PAN card copy', category: 'DOCUMENTS' },
+  { title: 'Provide bank account details for payroll', category: 'PAYROLL' },
+  { title: 'Read and acknowledge HR policy document', category: 'POLICIES' },
+  { title: 'IT account setup confirmation', category: 'IT_SETUP' },
+  { title: 'Asset assignment (laptop/equipment)', category: 'IT_SETUP' },
+];
+
+export const inviteEmployee = async (req: Request, res: Response) => {
+  const employeeId = req.params.employeeId as string;
+
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    include: { user: { select: { name: true, email: true } } },
+  });
+  if (!employee) throw new HttpError(404, 'Employee not found', ERROR_CODES.NOT_FOUND);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.employee.update({
+      where: { id: employeeId },
+      data: { onboardingStatus: 'INVITED' as any },
+    });
+
+    const existing = await tx.onboardingTask.count({ where: { employeeId } });
+    if (existing === 0) {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 7);
+      await tx.onboardingTask.createMany({
+        data: DEFAULT_ONBOARDING_TASKS.map((t) => ({ ...t, employeeId, dueDate })),
+      });
+    }
+  });
+
+  return successResponse(res, { employeeId, status: 'INVITED' }, 'Employee invited and onboarding tasks created', SUCCESS_CODES.SUCCESS, 200);
+};
+
+export const getOnboardingStatus = async (req: Request, res: Response) => {
+  const employeeId = req.params.employeeId as string;
+
+  const [employee, tasks] = await Promise.all([
+    prisma.employee.findUnique({ where: { id: employeeId }, select: { onboardingStatus: true } }),
+    prisma.onboardingTask.findMany({ where: { employeeId }, orderBy: { category: 'asc' } }),
+  ]);
+  if (!employee) throw new HttpError(404, 'Employee not found', ERROR_CODES.NOT_FOUND);
+
+  const completed = tasks.filter((t) => t.completed).length;
+  return successResponse(res, { status: employee.onboardingStatus, tasks, progress: { completed, total: tasks.length } }, 'Onboarding status fetched', SUCCESS_CODES.SUCCESS, 200);
+};
+
+export const updateOnboardingTask = async (req: Request, res: Response) => {
+  const employeeId = req.params.employeeId as string;
+  const taskId = req.params.taskId as string;
+  const { completed } = req.body;
+
+  const task = await prisma.onboardingTask.findFirst({ where: { id: taskId, employeeId } });
+  if (!task) throw new HttpError(404, 'Task not found', ERROR_CODES.NOT_FOUND);
+
+  const updated = await prisma.onboardingTask.update({
+    where: { id: taskId },
+    data: { completed, completedAt: completed ? new Date() : null },
+  });
+
+  const remaining = await prisma.onboardingTask.count({ where: { employeeId, completed: false } });
+  if (remaining === 0) {
+    await prisma.employee.update({ where: { id: employeeId }, data: { onboardingStatus: 'COMPLETED' as any } });
+  }
+
+  return successResponse(res, updated, 'Task updated', SUCCESS_CODES.SUCCESS, 200);
+};
