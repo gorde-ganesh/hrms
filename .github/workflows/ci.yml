@@ -79,7 +79,7 @@ jobs:
         run: npm ci
 
       - name: Run unit tests
-        run: npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
+        run: npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --karmaConfig=karma.conf.js --code-coverage
 
       - name: Check coverage thresholds
         run: |
