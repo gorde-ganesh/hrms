@@ -54,8 +54,8 @@ describe('Department', () => {
     expect(component.dialogVisible).toBeFalse();
   });
 
-  it('openAddDialog sets dialogVisible to true', () => {
-    component.openAddDialog();
+  it('openCreateDialog sets dialogVisible to true', () => {
+    component.openCreateDialog();
     expect(component.dialogVisible).toBeTrue();
   });
 });

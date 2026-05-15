@@ -41,8 +41,8 @@ describe('Designations Component', () => {
     expect(component.designations).toEqual([]);
   });
 
-  it('designationForm has required controls', () => {
-    expect(component.designationForm.get('title')).toBeTruthy();
+  it('designationForm has name control', () => {
+    expect(component.designationForm.get('name')).toBeTruthy();
   });
 
   it('designationForm is invalid when empty', () => {
@@ -54,8 +54,8 @@ describe('Designations Component', () => {
     expect(component.dialogVisible).toBeFalse();
   });
 
-  it('openAddDialog sets dialogVisible to true', () => {
-    component.openAddDialog();
+  it('openCreateDialog sets dialogVisible to true', () => {
+    component.openCreateDialog();
     expect(component.dialogVisible).toBeTrue();
   });
 });

@@ -143,7 +143,7 @@ const DEFAULT_ONBOARDING_TASKS = [
 ];
 
 export const inviteEmployee = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
 
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
@@ -154,7 +154,7 @@ export const inviteEmployee = async (req: Request, res: Response) => {
   await prisma.$transaction(async (tx) => {
     await tx.employee.update({
       where: { id: employeeId },
-      data: { onboardingStatus: 'INVITED' },
+      data: { onboardingStatus: 'INVITED' as any },
     });
 
     const existing = await tx.onboardingTask.count({ where: { employeeId } });
@@ -171,7 +171,7 @@ export const inviteEmployee = async (req: Request, res: Response) => {
 };
 
 export const getOnboardingStatus = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const employeeId = req.params.employeeId as string;
 
   const [employee, tasks] = await Promise.all([
     prisma.employee.findUnique({ where: { id: employeeId }, select: { onboardingStatus: true } }),
@@ -184,7 +184,8 @@ export const getOnboardingStatus = async (req: Request, res: Response) => {
 };
 
 export const updateOnboardingTask = async (req: Request, res: Response) => {
-  const { employeeId, taskId } = req.params;
+  const employeeId = req.params.employeeId as string;
+  const taskId = req.params.taskId as string;
   const { completed } = req.body;
 
   const task = await prisma.onboardingTask.findFirst({ where: { id: taskId, employeeId } });
@@ -195,10 +196,9 @@ export const updateOnboardingTask = async (req: Request, res: Response) => {
     data: { completed, completedAt: completed ? new Date() : null },
   });
 
-  // Auto-advance onboarding status when all tasks are complete
   const remaining = await prisma.onboardingTask.count({ where: { employeeId, completed: false } });
   if (remaining === 0) {
-    await prisma.employee.update({ where: { id: employeeId }, data: { onboardingStatus: 'COMPLETED' } });
+    await prisma.employee.update({ where: { id: employeeId }, data: { onboardingStatus: 'COMPLETED' as any } });
   }
 
   return successResponse(res, updated, 'Task updated', SUCCESS_CODES.SUCCESS, 200);

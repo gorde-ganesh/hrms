@@ -25,7 +25,7 @@ jobs:
         run: bun install
 
       - name: Generate Prisma client
-        run: bunx prisma generate
+        run: bun run generate
         env:
           DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
