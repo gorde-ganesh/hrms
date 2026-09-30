@@ -60,6 +60,15 @@ import { TabsModule } from 'primeng/tabs';
 })
 export class Chat implements OnInit {
   @ViewChild('messageInput') messageInput!: ElementRef;
+  @ViewChild('messagesContainer') messagesContainer?: ElementRef<HTMLElement>;
+
+  /** Show the newest message: runs after the view has rendered the list. */
+  private scrollToBottom() {
+    setTimeout(() => {
+      const el = this.messagesContainer?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 0);
+  }
   @ViewChild('createGroupDialog')
   createGroupDialog!: CreateGroupDialogComponent;
   @ViewChild('createChannelDialog')
@@ -153,6 +162,7 @@ export class Chat implements OnInit {
 
         if (added) {
           this.cdr.detectChanges();
+          this.scrollToBottom();
         }
       }
       // Refresh conversations list to show latest message
@@ -253,6 +263,7 @@ export class Chat implements OnInit {
       // API returns { messages, nextCursor }
       this.messages = Array.isArray(response) ? response : response?.messages ?? [];
       this.cdr.detectChanges();
+      this.scrollToBottom();
     } catch (error) {
       console.error('Error loading messages:', error);
       this.messages = [];
@@ -285,6 +296,7 @@ export class Chat implements OnInit {
       }
 
       this.cdr.detectChanges();
+      this.scrollToBottom();
       // Sidebar preview/time come from the conversation list, which only refreshed on socket events
       this.loadConversations();
     } catch (error) {
