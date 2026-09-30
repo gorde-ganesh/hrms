@@ -73,11 +73,26 @@ export function registerHuddleHandlers(io: Server, socket: Socket, userId: strin
       set.add(userId);
       participants.set(data.conversationId, set);
 
+      const [starter, convo] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+        prisma.conversation.findUnique({
+          where: { id: data.conversationId },
+          select: { name: true, isGroup: true },
+        }),
+      ]);
+      const where = convo?.isGroup && convo.name ? ` in ${convo.name}` : '';
+
       for (const id of await memberIds(data.conversationId)) {
         if (id === userId) continue;
         io.to(room(id)).emit('huddle-started-notification', {
           conversationId: data.conversationId,
           userId,
+        });
+        // App-wide popup, so the receiver is alerted on any page (not only the Chat page)
+        io.to(room(id)).emit('notification', {
+          title: 'Huddle started',
+          type: 'CHAT',
+          message: `${starter?.name ?? 'Someone'} started a huddle${where}. Open Chat to join.`,
         });
       }
     } catch (err) {
