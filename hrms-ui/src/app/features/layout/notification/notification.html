@@ -1,10 +1,11 @@
 <div class="notification-bell" (click)="visible = true">
-  <p-overlaybadge
-    [value]="unreadCount > 0 ? unreadCount.toString() : ''"
-    severity="danger"
-  >
+  @if (unreadCount > 0) {
+    <p-overlaybadge [value]="unreadCount.toString()" severity="danger">
+      <i class="pi pi-bell"></i>
+    </p-overlaybadge>
+  } @else {
     <i class="pi pi-bell"></i>
-  </p-overlaybadge>
+  }
 </div>
 
 <p-drawer

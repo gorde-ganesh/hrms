@@ -88,15 +88,27 @@ export class Designations implements OnInit {
     const page = event ? Math.floor(event.first / event.rows) + 1 : 1;
     const limit = event ? event.rows : 10;
 
+    const search =
+      typeof event?.globalFilter === 'string' ? event.globalFilter.trim() : '';
     const response: any = await this.apiService.get('/api/designations', {
       page,
       limit,
+      ...(search ? { search } : {}),
     });
 
     this.designations = response.content;
     this.totalRecords = response.totalRecords;
 
     this.cdr.detectChanges();
+  }
+
+  private reloadCurrentView() {
+    const global = this.dt?.filters?.['global'];
+    this.loadDesignations({
+      first: this.dt?.first ?? 0,
+      rows: this.dt?.rows ?? 10,
+      globalFilter: Array.isArray(global) ? global[0]?.value : global?.value,
+    });
   }
 
   applyGlobalFilter(event: Event) {
@@ -146,7 +158,7 @@ export class Designations implements OnInit {
 
     this.dialogVisible = false;
     this.designationForm.reset();
-    this.loadDesignations();
+    this.reloadCurrentView();
   }
 
   confirmDelete(event: Event, row: DesignationDto) {
@@ -164,7 +176,7 @@ export class Designations implements OnInit {
           summary: 'Removed',
           detail: 'Designation deleted successfully',
         });
-        this.loadDesignations();
+        this.reloadCurrentView();
       },
     });
   }

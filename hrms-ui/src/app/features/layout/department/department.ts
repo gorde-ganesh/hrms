@@ -78,15 +78,27 @@ export class Department implements OnInit {
     const page = event ? Math.floor(event.first / event.rows) + 1 : 1;
     const limit = event ? event.rows : 10;
 
+    const search =
+      typeof event?.globalFilter === 'string' ? event.globalFilter.trim() : '';
     const response: any = await this.apiService.get('/api/departments', {
       page,
       limit,
+      ...(search ? { search } : {}),
     });
 
     this.departments = response.content;
     this.totalRecords = response.totalRecords;
 
     this.cdr.detectChanges();
+  }
+
+  private reloadCurrentView() {
+    const global = this.dt?.filters?.['global'];
+    this.loadDepartments({
+      first: this.dt?.first ?? 0,
+      rows: this.dt?.rows ?? 10,
+      globalFilter: Array.isArray(global) ? global[0]?.value : global?.value,
+    });
   }
 
   applyGlobalFilter(event: Event) {
@@ -134,7 +146,7 @@ export class Department implements OnInit {
 
     this.dialogVisible = false;
     this.departmentForm.reset();
-    this.loadDepartments();
+    this.reloadCurrentView();
   }
 
   confirmDelete(event: Event, row: DepartmentDto) {
@@ -152,7 +164,7 @@ export class Department implements OnInit {
           summary: 'Removed',
           detail: 'Department deleted successfully',
         });
-        this.loadDepartments();
+        this.reloadCurrentView();
       },
     });
   }

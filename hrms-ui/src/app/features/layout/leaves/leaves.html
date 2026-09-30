@@ -39,7 +39,7 @@
     </div>
   }
 
-  <p-tabs value="0">
+  <p-tabs value="0" (valueChange)="onTabChange($event)">
     <p-tablist>
       <p-tab value="0">My Leaves</p-tab>
       @if(hasPermission('teams_leave')) {

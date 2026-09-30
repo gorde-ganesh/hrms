@@ -214,7 +214,7 @@
 
                 <div>
                   <p-floatlabel class="w-full" variant="on">
-                    <input pInputText type="email" formControlName="email" class="w-full"
+                    <input pInputText type="email" formControlName="email" autocomplete="off" class="w-full"
                       [invalid]="registerUserForm.controls['email'].invalid && registerUserForm.controls['email'].touched" />
                     <label>Work Email</label>
                   </p-floatlabel>
@@ -251,7 +251,7 @@
 
                 <div class="col-span-2">
                   <p-floatlabel class="w-full" variant="on">
-                    <p-password formControlName="password" [toggleMask]="true" inputId="add_password"
+                    <p-password formControlName="password" [toggleMask]="true" inputId="add_password" autocomplete="new-password"
                       fluid class="w-full" appendTo="body"
                       [invalid]="registerUserForm.controls['password'].invalid && registerUserForm.controls['password'].touched">
                       <ng-template #footer>

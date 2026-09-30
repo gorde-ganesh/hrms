@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ApiService } from '../../../services/api-interface.service';
 import { AuthStateService } from '../../../services/auth-state.service';
 import { CommonModule } from '@angular/common';
@@ -169,14 +169,18 @@ export class Payroll implements OnInit {
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-    private authState: AuthStateService
+    private authState: AuthStateService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.userInfo = this.authState.userInfo;
     this.serverApi
       .get<any>('/api/master-data')
-      .then((r) => (this.options = r))
+      .then((r) => {
+        this.options = r;
+        this.cdr.markForCheck();
+      })
       .catch(() => {});
 
     this.generateForm = this.fb.group({
@@ -234,6 +238,7 @@ export class Payroll implements OnInit {
     const resp: any = await this.serverApi.get('/api/payroll', params);
     this.payrolls = resp.content;
     this.payrollTotal = resp.totalRecords;
+    this.cdr.markForCheck();
   }
 
   applyFilter() {
@@ -259,6 +264,7 @@ export class Payroll implements OnInit {
     } catch {
       this.empSuggestions = [];
     }
+    this.cdr.markForCheck();
   }
 
   payrollMonthLabel(p: PayrollRecord) {
@@ -356,6 +362,7 @@ export class Payroll implements OnInit {
       this.toast('error', 'Generation failed', e?.message ?? 'Unknown error');
     } finally {
       this.generating = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -376,6 +383,7 @@ export class Payroll implements OnInit {
     } catch {
       this.empSuggestions = [];
     }
+    this.cdr.markForCheck();
   }
 
   // ── Salary structures ─────────────────────────────────────────────────────
@@ -391,6 +399,7 @@ export class Payroll implements OnInit {
     } catch {
       this.structEmpSuggestions = [];
     }
+    this.cdr.markForCheck();
   }
 
   async onStructEmployeeSelect() {
@@ -402,6 +411,7 @@ export class Payroll implements OnInit {
       employeeId: this.structEmployee.id,
     });
     this.structures = r.content;
+    this.cdr.markForCheck();
   }
 
   openAddStructure() {
@@ -468,6 +478,7 @@ export class Payroll implements OnInit {
     } catch {
       this.transfers = [];
     }
+    this.cdr.markForCheck();
   }
 
   async createTransferBatch() {
@@ -523,6 +534,7 @@ export class Payroll implements OnInit {
     );
     this.payrollComponentsAll = r.content;
     this.payrollComponentsTotal = r.totalRecords;
+    this.cdr.markForCheck();
   }
 
   pageComponentChange(event: any) {

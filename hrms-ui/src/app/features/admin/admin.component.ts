@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Role } from '../../models/global';
 import { AdminService, GroupedPermissions } from '../../services/admin.service';
@@ -52,7 +52,8 @@ export class Admin implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -79,10 +80,12 @@ export class Admin implements OnInit {
       next: (users: any[]) => {
         this.users = users;
         this.usersLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load users' });
         this.usersLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -118,10 +121,12 @@ export class Admin implements OnInit {
       next: (roles) => {
         this.roles = roles;
         this.rolesLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load roles' });
         this.rolesLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -223,6 +228,7 @@ export class Admin implements OnInit {
       next: (data) => {
         this.groupedPermissions = data.groupedPermissions;
         this.resources = Object.keys(this.groupedPermissions);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load permissions' });

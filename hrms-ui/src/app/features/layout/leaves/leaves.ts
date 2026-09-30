@@ -124,6 +124,7 @@ export class Leaves implements OnInit, OnDestroy {
     const masterData: any = await this.serverApi.get('/api/master-data');
     this.statuses = masterData.LEAVE_STATUS;
     this.leaveTypes = masterData.LEAVE_TYPE;
+    this.cdr.detectChanges();
 
     this.searchControl.valueChanges
       .pipe(debounceTime(350), takeUntil(this.destroy$))
@@ -366,6 +367,13 @@ export class Leaves implements OnInit, OnDestroy {
         d.getMonth() === month &&
         d.getFullYear() === year
     );
+  }
+
+  onTabChange(value: string | number | undefined) {
+    // FullCalendar measures its container on init; the panel has no width until the tab is visible.
+    if (String(value) === '2') {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    }
   }
 
   hasPermission(action: string): boolean {

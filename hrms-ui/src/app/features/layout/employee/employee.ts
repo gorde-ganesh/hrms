@@ -153,6 +153,7 @@ export class Employee implements OnInit {
     this.loadEmployeeSummary();
     const data: any = await this.serverApi.get('/api/master-data');
     this.options = data;
+    this.cdr.detectChanges();
 
     this.searchControl.valueChanges
       .pipe(debounceTime(400), distinctUntilChanged())

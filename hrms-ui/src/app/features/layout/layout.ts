@@ -1,5 +1,5 @@
 import { SpinnerService } from './../../services/spinner.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
@@ -73,7 +73,7 @@ export class Layout implements OnInit {
   changePasswordForm!: FormGroup;
   loading$!: Observable<boolean>;
   activeRoute: string = '';
-  userDetails: any = {};
+  userDetails = signal<any>({});
 
   pageRouteMap: Record<string, MenuItem> = {
     dashboard: { label: 'Dashboard', icon: 'pi pi-home', route: '/dashboard' },
@@ -167,7 +167,7 @@ export class Layout implements OnInit {
       // Single name → use first two letters
       initials = parts[0].substring(0, 2).toUpperCase();
     }
-    this.userDetails = { ...details, initials: initials };
+    this.userDetails.set({ ...details, initials: initials });
   }
 
   buildMenu(permissions: Record<string, string[]>): MenuItem[] {

@@ -39,7 +39,15 @@
       </div>
       <p-button
         [label]="
-          attendenceSummary?.today?.isCheckedIn ? 'Check Out' : 'Clock In'
+          attendenceSummary?.today?.isCheckedIn
+            ? 'Check Out'
+            : attendenceSummary?.today?.checkInTime
+            ? 'Completed'
+            : 'Clock In'
+        "
+        [disabled]="
+          !!attendenceSummary?.today?.checkInTime &&
+          !attendenceSummary?.today?.isCheckedIn
         "
         icon="pi pi-clock"
         (click)="clockInOut()"
@@ -172,10 +180,10 @@
           </ng-template>
           <ng-template #body let-attendance>
             <tr>
-              <td>{{ attendance.attendanceDate | date : 'mediumDate' }}</td>
+              <td>{{ attendance.attendanceDate | date : 'mediumDate' : 'UTC' }}</td>
               <td>{{ attendance.checkIn | date : 'shortTime' }}</td>
               <td>{{ attendance.checkOut | date : 'shortTime' }}</td>
-              <td>{{ attendance.totalHours || '-' }}</td>
+              <td>{{ attendance.totalHours != null ? (attendance.totalHours | number : '1.2-2') + 'h' : '-' }}</td>
               <td>{{ attendance.status }}</td>
             </tr>
           </ng-template>
@@ -238,10 +246,10 @@
             <tr>
               <td>{{ attendance.employee?.user?.name }}</td>
               <td>{{ attendance.employee?.department?.name || 'N/A' }}</td>
-              <td>{{ attendance.attendanceDate | date : 'mediumDate' }}</td>
+              <td>{{ attendance.attendanceDate | date : 'mediumDate' : 'UTC' }}</td>
               <td>{{ attendance.checkIn | date : 'shortTime' }}</td>
               <td>{{ attendance.checkOut | date : 'shortTime' }}</td>
-              <td>{{ attendance.totalHours || '-' }}</td>
+              <td>{{ attendance.totalHours != null ? (attendance.totalHours | number : '1.2-2') + 'h' : '-' }}</td>
               <td>{{ attendance.status }}</td>
             </tr>
           </ng-template>
@@ -349,10 +357,10 @@
               </td>
               <td>{{ attendance.employee?.user?.name }}</td>
               <td>{{ attendance.employee?.department?.name || 'N/A' }}</td>
-              <td>{{ attendance.attendanceDate | date : 'mediumDate' }}</td>
+              <td>{{ attendance.attendanceDate | date : 'mediumDate' : 'UTC' }}</td>
               <td>{{ attendance.checkIn | date : 'shortTime' }}</td>
               <td>{{ attendance.checkOut | date : 'shortTime' }}</td>
-              <td>{{ attendance.totalHours || '-' }}</td>
+              <td>{{ attendance.totalHours != null ? (attendance.totalHours | number : '1.2-2') + 'h' : '-' }}</td>
               <td>{{ attendance.status }}</td>
               <td>
                 <p-button

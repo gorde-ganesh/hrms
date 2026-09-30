@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthStateService } from '../../../services/auth-state.service';
 import { CommonModule } from '@angular/common';
@@ -16,7 +16,11 @@ export class Notification {
   notifications: any[] = [];
   unreadCount = 0;
   visible: boolean = false;
-  constructor(private notificationService: NotificationService, private authState: AuthStateService) {}
+  constructor(
+    private notificationService: NotificationService,
+    private authState: AuthStateService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     const userInfo = this.authState.userInfo;
@@ -26,6 +30,7 @@ export class Notification {
     this.notificationService.notifications$.subscribe((data) => {
       this.notifications = data;
       this.unreadCount = this.notifications.filter((n) => !n.readStatus).length;
+      this.cdr.markForCheck();
     });
   }
 

@@ -150,11 +150,12 @@ export class Attendence implements OnInit {
   async loadDepartmentsAndDesignations() {
     try {
       const [depts, desigs]: any = await Promise.all([
-        this.serverApi.get('/api/departments', { skip: 0, top: 100 }),
-        this.serverApi.get('/api/designations', { skip: 0, top: 100 }),
+        this.serverApi.get('/api/departments', { page: 1, limit: 100 }),
+        this.serverApi.get('/api/designations', { page: 1, limit: 100 }),
       ]);
       this.departments = depts.content || [];
       this.designations = desigs.content || [];
+      this.cdr.detectChanges();
     } catch (error) {
       console.error('Error loading departments/designations:', error);
     }
@@ -198,6 +199,7 @@ export class Attendence implements OnInit {
       this.todayCheckInTime = summary.today.checkInTime
         ? formatDate(summary.today.checkInTime, 'shortTime', 'en')
         : '-';
+      this.cdr.detectChanges();
     } catch (error) {
       console.error('Error loading attendance summary:', error);
     }

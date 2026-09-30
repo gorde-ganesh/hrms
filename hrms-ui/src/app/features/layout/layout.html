@@ -38,11 +38,11 @@
     <div class="user-bar px-4 py-4">
       <div class="flex items-center gap-3">
         <div class="user-avatar flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold text-white shrink-0">
-          {{ userDetails.initials }}
+          {{ userDetails().initials }}
         </div>
         <div class="flex-1 min-w-0">
-          <p class="user-name text-sm font-medium leading-tight truncate">{{ userDetails.name }}</p>
-          <p class="user-role text-xs leading-tight capitalize truncate">{{ userDetails.role }}</p>
+          <p class="user-name text-sm font-medium leading-tight truncate">{{ userDetails().name }}</p>
+          <p class="user-role text-xs leading-tight capitalize truncate">{{ userDetails().role }}</p>
         </div>
         <button class="sign-out-btn flex items-center justify-center w-7 h-7 rounded-md"
                 (click)="onLogoutClick()"
@@ -74,7 +74,7 @@
       <div class="flex items-center gap-2">
         <app-notification></app-notification>
         <button class="avatar-btn flex items-center justify-center overflow-hidden" title="Profile" aria-label="User profile">
-          <span>{{ userDetails.initials || 'PO' }}</span>
+          <span>{{ userDetails().initials || 'PO' }}</span>
         </button>
       </div>
     </header>
