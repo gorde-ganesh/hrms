@@ -1,4 +1,4 @@
-import { PrismaClient, EmployeeStatus } from '../generated/prisma';
+import { PrismaClient, EmployeeStatus, LeaveType } from '../generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -273,6 +273,15 @@ async function main() {
   const marketingManagerDesig = await prisma.designation.findFirstOrThrow({ where: { name: 'Marketing Manager', companyId: null } });
   const supportManagerDesig = await prisma.designation.findFirstOrThrow({ where: { name: 'Support Manager', companyId: null } });
 
+  // Default company that all seeded users belong to. Departments, designations and
+  // statutory payroll components stay system-wide (companyId: null).
+  const DEFAULT_COMPANY_NAME = 'Demo Company Pvt Ltd';
+  const company =
+    (await prisma.company.findFirst({ where: { name: DEFAULT_COMPANY_NAME } })) ??
+    (await prisma.company.create({
+      data: { name: DEFAULT_COMPANY_NAME, email: 'info@company.com', isActive: true },
+    }));
+
   const testUsers = [
     // ADMIN
     {
@@ -458,24 +467,75 @@ async function main() {
     },
   ];
 
+  const employeeIdByEmail: Record<string, string> = {};
+
   for (const userData of testUsers) {
     const { employee: employeeData, roleId, ...userCreateData } = userData;
 
     const user = await prisma.user.upsert({
       where: { email: userCreateData.email },
-      update: { ...userCreateData, password: hashedPassword, roleId },
-      create: { ...userCreateData, password: hashedPassword, roleId },
+      update: { ...userCreateData, password: hashedPassword, roleId, companyId: company.id },
+      create: { ...userCreateData, password: hashedPassword, roleId, companyId: company.id },
     });
 
     if (employeeData) {
-      await prisma.employee.upsert({
+      const employee = await prisma.employee.upsert({
         where: { employeeCode: employeeData.employeeCode },
         update: { ...employeeData, userId: user.id },
         create: { ...employeeData, userId: user.id },
       });
+      employeeIdByEmail[user.email] = employee.id;
     }
 
     console.log(`Created user: ${user.name} (${user.email})`);
+  }
+
+  // 7. Reporting lines (employee email -> manager email). The CEO has no manager.
+  console.log('Setting reporting lines...');
+  const managerOf: Record<string, string> = {
+    'sysadmin@company.com': 'admin@company.com',
+    'hr.manager@company.com': 'admin@company.com',
+    'hr.specialist@company.com': 'hr.manager@company.com',
+    'eng.manager@company.com': 'sysadmin@company.com',
+    'product.manager@company.com': 'admin@company.com',
+    'sales.manager@company.com': 'admin@company.com',
+    'marketing.manager@company.com': 'admin@company.com',
+    'support.manager@company.com': 'admin@company.com',
+    'senior.engineer1@company.com': 'eng.manager@company.com',
+    'senior.engineer2@company.com': 'eng.manager@company.com',
+    'engineer1@company.com': 'eng.manager@company.com',
+    'engineer2@company.com': 'eng.manager@company.com',
+    'engineer3@company.com': 'eng.manager@company.com',
+    'junior.engineer1@company.com': 'eng.manager@company.com',
+    'junior.engineer2@company.com': 'eng.manager@company.com',
+  };
+  for (const [email, managerEmail] of Object.entries(managerOf)) {
+    await prisma.employee.update({
+      where: { id: employeeIdByEmail[email] },
+      data: { managerId: employeeIdByEmail[managerEmail] },
+    });
+  }
+
+  // 8. Leave balances for the current year (same defaults as the leave-balance API)
+  console.log('Creating leave balances...');
+  const defaultLeaves: Record<LeaveType, number> = {
+    ANNUAL: 20,
+    SICK: 10,
+    PERSONAL: 5,
+    CASUAL: 7,
+    MATERNITY: 180,
+    PATERNITY: 15,
+    UNPAID: 0,
+  };
+  const currentYear = new Date().getFullYear();
+  for (const employeeId of Object.values(employeeIdByEmail)) {
+    for (const leaveType of Object.keys(defaultLeaves) as LeaveType[]) {
+      await prisma.leaveBalance.upsert({
+        where: { employeeId_year_leaveType: { employeeId, year: currentYear, leaveType } },
+        update: {}, // keep any usage already recorded
+        create: { employeeId, year: currentYear, leaveType, totalLeaves: defaultLeaves[leaveType] },
+      });
+    }
   }
 
   console.log('\n=========================================');
