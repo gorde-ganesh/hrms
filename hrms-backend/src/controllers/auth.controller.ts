@@ -201,6 +201,7 @@ export const registerUser = async (req: Request, res: Response) => {
             bloodGroup: bloodGroup || 'N/A',
             emergencyContactPerson: emergencyContactPerson || 'N/A',
             emergencyContactNumber: emergencyContactNumber || 'N/A',
+            deletedAt: null, // un-delete: reactivating must make the employee visible again
           },
         });
       } else {

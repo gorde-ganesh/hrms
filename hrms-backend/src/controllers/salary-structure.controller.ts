@@ -8,12 +8,12 @@ import { prisma } from '../lib/prisma';
 
 function parseDate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, m - 1, d);
+  return new Date(Date.UTC(y, m - 1, d)); // @db.Date column: pin to UTC midnight
 }
 
 function prevDay(date: Date): Date {
   const d = new Date(date);
-  d.setDate(d.getDate() - 1);
+  d.setUTCDate(d.getUTCDate() - 1);
   return d;
 }
 

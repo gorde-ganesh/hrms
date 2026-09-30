@@ -435,8 +435,10 @@ export const getPayroll = async (req: Request, res: Response) => {
   const { employeeId, month, year, skip, pageno, top } = req.query;
   const skipValue = Number(skip ?? pageno) || 0;
 
+  // Employees may only ever see their own payslips, regardless of the query they send
+  const isEmployee = req.user?.role === 'EMPLOYEE';
   const where = {
-    employeeId: employeeId ? String(employeeId) : undefined,
+    employeeId: isEmployee ? req.user.employeeId : employeeId ? String(employeeId) : undefined,
     month: month ? Number(month) : undefined,
     year: year ? Number(year) : undefined,
   };
@@ -466,6 +468,13 @@ export const getPayroll = async (req: Request, res: Response) => {
 export const downloadPayslip = async (req: Request, res: Response) => {
   const payrollId = req.params.payrollId as string;
   if (!payrollId) throw new HttpError(400, 'Payroll ID required', ERROR_CODES.VALIDATION_ERROR);
+
+  if (req.user?.role === 'EMPLOYEE') {
+    const owner = await prisma.payroll.findUnique({ where: { id: payrollId }, select: { employeeId: true } });
+    if (!owner || owner.employeeId !== req.user.employeeId) {
+      throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+    }
+  }
 
   // Serve from stored payslip if available
   const stored = await (prisma as any).payslip?.findUnique({ where: { payrollId } });

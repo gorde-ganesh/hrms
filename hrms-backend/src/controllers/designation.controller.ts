@@ -117,6 +117,15 @@ export const deleteDesignation = async (req: Request, res: Response) => {
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 
+  const inUse = await prisma.employee.count({ where: { designationId: id, ...notDeleted } });
+  if (inUse > 0) {
+    throw new HttpError(
+      409,
+      `Cannot delete: ${inUse} employee${inUse === 1 ? ' is' : 's are'} assigned to this designation`,
+      ERROR_CODES.VALIDATION_ERROR
+    );
+  }
+
   await prisma.designation.update({ where: { id }, data: softDeleteData() });
 
   invalidateCachePrefix('designations:');

@@ -18,7 +18,7 @@ const bulkNotificationLimiter = rateLimit({
 });
 
 function registerRouters(app: express.Application) {
-  app.post('/api/notifications', authenticate, sendNotification);
+  app.post('/api/notifications', authenticate, roleAccess(['HR', 'ADMIN', 'MANAGER']), sendNotification);
   app.get('/api/notifications', authenticate, listNotifications);
   app.patch('/api/notifications/:id/read', authenticate, markNotificationAsRead);
   app.patch('/api/notifications/read-all', authenticate, markAllNotificationsAsRead);

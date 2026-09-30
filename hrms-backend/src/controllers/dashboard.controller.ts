@@ -32,12 +32,12 @@ const getAdminStats = async () => {
   const currentDate = new Date();
   const [statusCounts, totalDepartments, pendingLeaves, todayAttendance, recentJoiners, payrollStats] =
     await Promise.all([
-      prisma.employee.groupBy({ by: ['status'], _count: true }),
-      prisma.department.count(),
+      prisma.employee.groupBy({ by: ['status'], where: { deletedAt: null }, _count: true }),
+      prisma.department.count({ where: { deletedAt: null } }),
       prisma.leave.count({ where: { status: 'PENDING' } }),
       getTodayPresentCount(),
       prisma.employee.findMany({
-        where: { status: 'ACTIVE' },
+        where: { status: 'ACTIVE', deletedAt: null },
         orderBy: { joiningDate: 'desc' },
         take: 5,
         select: {

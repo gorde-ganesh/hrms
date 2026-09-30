@@ -6,11 +6,13 @@ export const validate =
   (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors as Record<string, string[] | undefined>;
+      const [firstField, firstMsgs] = Object.entries(fieldErrors)[0] ?? [];
       res.status(400).json({
         success: false,
         statusCode: 400,
-        message: 'Validation failed',
-        errors: result.error.flatten().fieldErrors,
+        message: firstField ? `Validation failed: ${firstField} — ${firstMsgs?.[0]}` : 'Validation failed',
+        errors: fieldErrors,
       });
       return;
     }

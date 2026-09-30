@@ -13,6 +13,7 @@ import {
 import { authenticate, roleAccess } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate';
 import { LoginSchema, ForgotPasswordSchema, ChangePasswordSchema, ResetPasswordSchema } from '../schemas/auth.schema';
+import { CreateEmployeeSchema } from '../schemas/employee.schema';
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -32,7 +33,7 @@ const globalLimiter = rateLimit({
 
 function registerRouters(app: express.Application) {
   app.use('/api', globalLimiter);
-  app.post('/api/auth/register', authenticate, roleAccess(['HR', 'ADMIN']), registerUser);
+  app.post('/api/auth/register', authenticate, roleAccess(['HR', 'ADMIN']), validate(CreateEmployeeSchema), registerUser);
   app.post('/api/auth/login', authLimiter, validate(LoginSchema), loginUser);
   app.post('/api/auth/refresh', refreshAccessToken);
   app.post('/api/auth/logout', authenticate, logoutUser);

@@ -123,6 +123,15 @@ export const deleteDepartment = async (req: Request, res: Response) => {
 
   if (!id) throw new HttpError(400, 'Id is required', ERROR_CODES.VALIDATION_ERROR);
 
+  const inUse = await prisma.employee.count({ where: { departmentId: id, ...notDeleted } });
+  if (inUse > 0) {
+    throw new HttpError(
+      409,
+      `Cannot delete: ${inUse} employee${inUse === 1 ? ' is' : 's are'} assigned to this department`,
+      ERROR_CODES.VALIDATION_ERROR
+    );
+  }
+
   await prisma.department.update({ where: { id }, data: softDeleteData() });
 
   invalidateCachePrefix('departments:');

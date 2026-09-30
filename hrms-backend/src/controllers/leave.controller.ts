@@ -352,13 +352,16 @@ export const getTeamLeaves = async (req: Request, res: Response) => {
     );
   }
 
+  // HR/Admin approve leave for the whole company; managers only for their direct reports
+  const where = ['ADMIN', 'HR'].includes(req.user.role) ? {} : { employee: { managerId } };
+
   const [leaves, totalRecords] = await Promise.all([
     prisma.leave.findMany({
-      where: { employee: { managerId: managerId } },
+      where,
       orderBy: { id: 'desc' },
       include: { employee: { include: { manager: true, user: true } } },
     }),
-    prisma.leave.count({ where: { employee: { managerId: managerId } } }),
+    prisma.leave.count({ where }),
   ]);
 
   return successResponse(

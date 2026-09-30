@@ -197,7 +197,7 @@ export class EmployeeService {
             },
           },
         }),
-        prisma.department.count(),
+        prisma.department.count({ where: { ...notDeleted } }),
       ]);
     return { totalEmployees, activeEmployees, newEmployees, totalDepartments };
   }
