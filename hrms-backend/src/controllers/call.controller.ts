@@ -6,6 +6,9 @@ import { prisma } from '../lib/prisma';
 
 export const startCall = async (req: Request, res: Response) => {
   const { callerId, receiverId, callType } = req.body;
+  if (callerId !== req.user?.id) {
+    return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+  }
   try {
     const call = await prisma.callLog.create({
       data: {

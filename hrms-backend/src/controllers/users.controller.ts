@@ -3,7 +3,23 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { assertSelfOrPrivileged, isPrivileged } from '../utils/access';
 
+// Never return credential / session fields to clients.
+const sanitizeUser = <T extends Record<string, any>>(user: T) => {
+  const {
+    password,
+    refreshToken,
+    refreshTokenExp,
+    resetToken,
+    resetTokenExp,
+    failedLoginAttempts,
+    lockedUntil,
+    tokenVersion,
+    ...safe
+  } = user as any;
+  return safe;
+};
 
 // ----------------- Get All Users -----------------
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -42,6 +58,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // ----------------- Get User Details -----------------
 export const getUserDetails = async (req: Request, res: Response) => {
   const id = req.params.id as string;
+  assertSelfOrPrivileged(req.user, id);
 
   if (!id) {
     throw new HttpError(
@@ -93,7 +110,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
   return successResponse(
     res,
     {
-      ...user,
+      ...sanitizeUser(user),
       manager: manager,
       department: department?.name,
       designation: designation?.name,
@@ -108,6 +125,15 @@ export const getUserDetails = async (req: Request, res: Response) => {
 // ----------------- Update User Details -----------------
 export const updateUserDetails = async (req: Request, res: Response) => {
   const id = req.params.id as string;
+  assertSelfOrPrivileged(req.user, id);
+
+  // Role changes are ADMIN-only; email is the login identifier so HR/ADMIN-only.
+  if (req.body.roleId !== undefined && req.user?.role !== 'ADMIN') {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
+  if (req.body.email !== undefined && !isPrivileged(req.user)) {
+    throw new HttpError(403, 'Access denied', ERROR_CODES.FORBIDDEN);
+  }
   const { name, email, phone, address, country, state, city, zipCode } =
     req.body;
 
@@ -142,7 +168,7 @@ export const updateUserDetails = async (req: Request, res: Response) => {
 
   return successResponse(
     res,
-    { user: updatedUser },
+    { user: sanitizeUser(updatedUser) },
     'User updated successfully',
     SUCCESS_CODES.SUCCESS,
     200

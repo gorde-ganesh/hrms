@@ -10,6 +10,7 @@ import {
 } from './leave-balance.controller';
 import { prisma } from '../lib/prisma';
 import { successResponse } from '../utils/response-helper';
+import { assertCanAccessEmployee, assertSelfManagerOrPrivileged } from '../utils/access';
 
 // ----------------- Helper Functions -----------------
 
@@ -311,6 +312,7 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
 // ----------------- Get Employee Leaves -----------------
 export const getEmployeeLeaves = async (req: Request, res: Response) => {
   const employeeId = req.params.employeeId as string;
+  await assertCanAccessEmployee(req.user, employeeId);
 
   if (!employeeId) {
     throw new HttpError(
@@ -340,6 +342,7 @@ export const getEmployeeLeaves = async (req: Request, res: Response) => {
 
 export const getTeamLeaves = async (req: Request, res: Response) => {
   const managerId = req.params.managerId as string;
+  assertSelfManagerOrPrivileged(req.user, managerId);
 
   if (!managerId) {
     throw new HttpError(

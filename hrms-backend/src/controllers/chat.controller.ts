@@ -10,6 +10,7 @@ import {
 } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
+import { canReadConversation } from '../utils/access';
 
 
 const ALLOWED_MIME_TYPES = [
@@ -50,6 +51,9 @@ export const upload = multer({
 export const getUserConversations = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -116,6 +120,9 @@ export const getUserConversations = async (req: Request, res: Response) => {
 export const getMessages = async (req: Request, res: Response) => {
   try {
     const conversationId = req.params.conversationId as string;
+    if (!(await canReadConversation(req.user, conversationId))) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
     const { cursor, take = '50' } = req.query as { cursor?: string; take?: string };
     const limit = Math.min(Number(take), 100);
 
@@ -162,6 +169,12 @@ export const getMessages = async (req: Request, res: Response) => {
 export const sendMessage = async (req: Request, res: Response) => {
   try {
     const { senderId, conversationId, messageType } = req.body;
+    if (senderId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
+    if (!(await canReadConversation(req.user, conversationId))) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
     const messageText = typeof req.body.messageText === 'string' ? xss(req.body.messageText) : req.body.messageText;
 
     // ✅ Validate required fields
@@ -226,6 +239,9 @@ export const sendMessage = async (req: Request, res: Response) => {
 export const startConversation = async (req: Request, res: Response) => {
   try {
     const { currentUserId, otherUserId } = req.body;
+    if (currentUserId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!currentUserId || !otherUserId) {
       return errorResponse(
@@ -513,6 +529,9 @@ export const joinChannel = async (req: Request, res: Response) => {
   try {
     const channelId = req.params.channelId as string;
     const { userId } = req.body;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -590,6 +609,9 @@ export const leaveChannel = async (req: Request, res: Response) => {
   try {
     const channelId = req.params.channelId as string;
     const { userId } = req.body;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -638,6 +660,9 @@ export const addMember = async (req: Request, res: Response) => {
   try {
     const conversationId = req.params.conversationId as string;
     const { userId, addedBy } = req.body;
+    if (addedBy !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -710,6 +735,9 @@ export const removeMember = async (req: Request, res: Response) => {
     const conversationId = req.params.conversationId as string;
     const userId = req.params.userId as string;
     const { removedBy } = req.body;
+    if (removedBy !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     // Check if requester is admin
     const requesterMember = await prisma.conversationMember.findFirst({

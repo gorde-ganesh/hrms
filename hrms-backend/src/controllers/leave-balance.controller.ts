@@ -4,6 +4,7 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { assertCanAccessEmployee } from '../utils/access';
 
 
 // Helper function to get default leave count by type
@@ -23,6 +24,7 @@ const getDefaultLeaveCount = (leaveType: LeaveType): number => {
 // GET /api/leave-balance/:employeeId
 export const getEmployeeLeaveBalance = async (req: Request, res: Response) => {
   const employeeId = req.params.employeeId as string;
+  await assertCanAccessEmployee(req.user, employeeId);
   const { year } = req.query;
 
   if (!employeeId) {
@@ -59,6 +61,7 @@ export const getEmployeeLeaveBalance = async (req: Request, res: Response) => {
 // GET /api/leave-balance/:employeeId/summary
 export const getLeaveBalanceSummary = async (req: Request, res: Response) => {
   const employeeId = req.params.employeeId as string;
+  await assertCanAccessEmployee(req.user, employeeId);
 
   if (!employeeId) {
     throw new HttpError(

@@ -8,6 +8,9 @@ import { prisma } from '../lib/prisma';
 export const startHuddle = async (req: Request, res: Response) => {
   try {
     const { conversationId, userId } = req.body;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!conversationId || !userId) {
       return res
@@ -74,6 +77,9 @@ export const joinHuddle = async (req: Request, res: Response) => {
   try {
     const huddleId = req.params.huddleId as string;
     const { userId } = req.body;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -146,6 +152,9 @@ export const leaveHuddle = async (req: Request, res: Response) => {
   try {
     const huddleId = req.params.huddleId as string;
     const { userId } = req.body;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -173,6 +182,9 @@ export const leaveHuddle = async (req: Request, res: Response) => {
 export const getActiveHuddles = async (req: Request, res: Response) => {
   try {
     const { userId } = req.query;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(
@@ -222,6 +234,9 @@ export const endHuddle = async (req: Request, res: Response) => {
   try {
     const huddleId = req.params.huddleId as string;
     const { userId } = req.body;
+    if (userId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
 
     if (!userId) {
       return errorResponse(

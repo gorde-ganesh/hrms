@@ -10,6 +10,7 @@ import {
 import { employeeService } from '../services/employee.service';
 import { prisma } from '../lib/prisma';
 import { auditLog } from '../utils/audit';
+import { assertCanAccessEmployee } from '../utils/access';
 
 export const addEmployee = async (req: Request, res: Response) => {
   const result = await employeeService.create(req.body);
@@ -172,6 +173,7 @@ export const inviteEmployee = async (req: Request, res: Response) => {
 
 export const getOnboardingStatus = async (req: Request, res: Response) => {
   const employeeId = req.params.employeeId as string;
+  await assertCanAccessEmployee(req.user, employeeId);
 
   const [employee, tasks] = await Promise.all([
     prisma.employee.findUnique({ where: { id: employeeId }, select: { onboardingStatus: true } }),

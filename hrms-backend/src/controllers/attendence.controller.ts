@@ -4,6 +4,7 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse, createdResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
+import { assertCanAccessEmployee } from '../utils/access';
 
 
 /**
@@ -44,6 +45,7 @@ export const getAttendance = async (req: Request, res: Response) => {
  */
 export const getAttendenceById = async (req: Request, res: Response) => {
   const { employeeId } = req.params;
+  await assertCanAccessEmployee(req.user, employeeId as string);
   const { skip, top, month, year } = req.query;
 
   if (!employeeId) {
@@ -162,6 +164,7 @@ export const clockInOut = async (req: Request, res: Response) => {
 
 export const getAttendanceSummary = async (req: Request, res: Response) => {
   const employeeId = req.params.employeeId as string;
+  await assertCanAccessEmployee(req.user, employeeId);
   const { month, year } = req.query;
 
   if (!employeeId || !month || !year) {
