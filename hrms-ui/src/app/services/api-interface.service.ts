@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { ApplicationRef, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { SpinnerService } from './spinner.service';
@@ -19,8 +19,17 @@ export interface ApiResponse<T> {
 export class ApiService {
   constructor(
     private http: HttpClient,
-    private spinnerService: SpinnerService
+    private spinnerService: SpinnerService,
+    private appRef: ApplicationRef
   ) {}
+
+  /**
+   * The app is zoneless, so component fields assigned after an `await` on an API call are not
+   * picked up automatically. Request a render once the caller's continuation has run.
+   */
+  private scheduleRender() {
+    setTimeout(() => this.appRef.tick());
+  }
 
   private getHeaders(): HttpHeaders {
     return new HttpHeaders({ 'Content-Type': 'application/json' });
@@ -52,6 +61,7 @@ export class ApiService {
       throw error;
     } finally {
       if (spinner) this.spinnerService.hide();
+      this.scheduleRender();
     }
   }
 
@@ -70,16 +80,13 @@ export class ApiService {
         throw new Error(response.message || 'Request failed');
       }
 
-      // Return data, throw error if null when not expected
-      if (response.data === null) {
-        throw new Error('No data returned from server');
-      }
-
-      return response.data;
+      // Mutations may legitimately succeed without a payload (e.g. logout)
+      return response.data as T;
     } catch (error) {
       throw error;
     } finally {
       if (spinner) this.spinnerService.hide();
+      this.scheduleRender();
     }
   }
 
@@ -98,16 +105,13 @@ export class ApiService {
         throw new Error(response.message || 'Request failed');
       }
 
-      // Return data, throw error if null when not expected
-      if (response.data === null) {
-        throw new Error('No data returned from server');
-      }
-
-      return response.data;
+      // Mutations may legitimately succeed without a payload (e.g. logout)
+      return response.data as T;
     } catch (error) {
       throw error;
     } finally {
       if (spinner) this.spinnerService.hide();
+      this.scheduleRender();
     }
   }
 
@@ -126,16 +130,13 @@ export class ApiService {
         throw new Error(response.message || 'Request failed');
       }
 
-      // Return data, throw error if null when not expected
-      if (response.data === null) {
-        throw new Error('No data returned from server');
-      }
-
-      return response.data;
+      // Mutations may legitimately succeed without a payload (e.g. logout)
+      return response.data as T;
     } catch (error) {
       throw error;
     } finally {
       if (spinner) this.spinnerService.hide();
+      this.scheduleRender();
     }
   }
 
@@ -148,11 +149,12 @@ export class ApiService {
           headers: this.getHeaders(),
         })
       );
-      return response.data || null;
+      return response?.data ?? null;
     } catch (error) {
       throw error;
     } finally {
       if (spinner) this.spinnerService.hide();
+      this.scheduleRender();
     }
   }
 

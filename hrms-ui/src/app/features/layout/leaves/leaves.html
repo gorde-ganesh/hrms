@@ -1,4 +1,3 @@
-<p-toast />
 
 <div class="space-y-6">
   <div class="flex items-start gap-2 justify-between">
@@ -42,7 +41,7 @@
   <p-tabs value="0" (valueChange)="onTabChange($event)">
     <p-tablist>
       <p-tab value="0">My Leaves</p-tab>
-      @if(hasPermission('teams_leave')) {
+      @if(hasPermission('teams_leave') || hasPermission('approve')) {
         <p-tab value="1">Team Leaves</p-tab>
       }
       <p-tab value="2">Calendar</p-tab>

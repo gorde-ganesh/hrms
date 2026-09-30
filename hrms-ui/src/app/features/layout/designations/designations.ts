@@ -53,7 +53,7 @@ interface DesignationDto {
     InputIconModule,
     ConfirmPopup,
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService],
   templateUrl: './designations.html',
   styleUrl: './designations.css',
 })

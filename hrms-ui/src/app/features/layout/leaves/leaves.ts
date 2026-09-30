@@ -333,10 +333,22 @@ export class Leaves implements OnInit, OnDestroy {
 
   async onRowEditSave(leave: any) {
     const userInfo = this.authState.userInfo;
-    await this.serverApi.patch(`/api/leaves/${leave.id}/status`, {
-      status: leave.status,
-      approvedBy: userInfo?.id,
-    });
+    try {
+      await this.serverApi.patch(`/api/leaves/${leave.id}/status`, {
+        status: leave.status,
+        approvedBy: userInfo?.id,
+      });
+    } catch (e: any) {
+      // Drop the optimistic edit so the table shows what the server actually has
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Update failed',
+        detail: e?.error?.message ?? e?.message ?? 'Could not update leave status.',
+      });
+      this.loadLeaves();
+      this.loadTeamLeaves();
+      return;
+    }
     this.messageService.add({
       severity: 'success',
       summary: 'Status Updated',

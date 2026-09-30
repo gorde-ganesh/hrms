@@ -1,5 +1,7 @@
 /* ── Layout shell ── */
 .layout-shell {
+  /* Fixed to the viewport so the sidebar stays put and only .main-content scrolls */
+  height: 100dvh;
   background:
     radial-gradient(circle at 82% 12%, oklch(86% 0.055 150 / 0.38), transparent 28rem),
     linear-gradient(135deg, #f7f8f5 0%, #eef2ec 46%, #f8faf7 100%);

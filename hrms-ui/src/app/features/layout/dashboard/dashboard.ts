@@ -124,7 +124,7 @@ export class Dashboard implements OnInit {
     this.loadQuickActions();
     this.loadDashboardStats();
 
-    if (['EMPLOYEE', 'MANAGER', 'HR'].includes(this.userInfo?.role) && this.userInfo?.employeeId) {
+    if (['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'].includes(this.userInfo?.role) && this.userInfo?.employeeId) {
       this.initChartOptions();
     }
 

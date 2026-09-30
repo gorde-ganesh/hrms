@@ -44,7 +44,6 @@ import { AuthStateService } from '../../../services/auth-state.service';
     ToastModule,
     FloatLabel,
   ],
-  providers: [MessageService],
   templateUrl: './attendence.html',
   styleUrl: './attendence.css',
 })

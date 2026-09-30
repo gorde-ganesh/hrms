@@ -44,7 +44,6 @@ import dayjs from 'dayjs';
     TextareaModule,
     ToastModule,
   ],
-  providers: [MessageService],
   templateUrl: './performance.html',
   styleUrl: './performance.css',
 })
@@ -138,7 +137,7 @@ export class Performance implements OnInit {
       const res: any = await this.apiService.get(
         `/api/performance/${this.userInfo.employeeId}`
       );
-      this.performanceRecords = res?.data ?? [];
+      this.performanceRecords = Array.isArray(res) ? res : res?.data ?? [];
       this.buildChartData();
     } catch {
       this.performanceRecords = [];
@@ -152,7 +151,7 @@ export class Performance implements OnInit {
       const endpoint =
         role === 'MANAGER' ? '/api/performance/team' : '/api/performance/all';
       const res: any = await this.apiService.get(endpoint);
-      this.teamRecords = res?.data ?? [];
+      this.teamRecords = Array.isArray(res) ? res : res?.data ?? [];
     } catch {
       this.teamRecords = [];
     }
@@ -169,6 +168,7 @@ export class Performance implements OnInit {
     } catch {
       this.employees = [];
     }
+    this.cdr.detectChanges();
   }
 
   buildChartData() {
@@ -250,6 +250,7 @@ export class Performance implements OnInit {
       });
     } finally {
       this.saving = false;
+      this.cdr.detectChanges();
     }
   }
 

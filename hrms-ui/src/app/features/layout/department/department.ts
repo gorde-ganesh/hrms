@@ -44,7 +44,7 @@ interface DepartmentDto {
     InputIconModule,
     ConfirmPopup,
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService],
   templateUrl: './department.html',
   styleUrl: './department.css',
 })

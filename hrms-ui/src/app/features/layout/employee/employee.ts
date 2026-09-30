@@ -239,16 +239,25 @@ export class Employee implements OnInit {
         severity: 'danger',
       },
       accept: async () => {
-        const deletedEmployee: any = await this.serverApi.delete(
-          `/api/employees/${employee.id}`
-        );
+        try {
+          await this.serverApi.delete(`/api/employees/${employee.id}`);
+        } catch (e: any) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Delete failed',
+            detail: e?.error?.message ?? e?.message ?? 'Could not remove employee.',
+            life: 4000,
+          });
+          return;
+        }
         this.messageService.add({
           severity: 'info',
           summary: 'Removed',
-          detail: deletedEmployee.message,
+          detail: `${employee.user?.name ?? 'Employee'} was removed.`,
           life: 3000,
         });
         this.loadEmployees();
+        this.loadEmployeeSummary();
       },
       reject: () => {},
     });
@@ -289,6 +298,7 @@ export class Employee implements OnInit {
 
     this.editNameControl.setValue(employee.user.name);
     this.editEmployeeDialog = true;
+    this.cdr.detectChanges();
   }
 
   onEditDialogHide() {
@@ -303,6 +313,7 @@ export class Employee implements OnInit {
     this.lastEmployeeCode = await this.serverApi.get(
       '/api/employees/last-employee-code'
     );
+    this.cdr.detectChanges();
   }
 
   onAddDialogHide() {
@@ -342,8 +353,23 @@ export class Employee implements OnInit {
     if (!this.addEmployeeForm.valid || !this.editNameControl.valid) return;
     if (!this.editingEmployeeId) return;
 
-    const payload = { ...this.addEmployeeForm.getRawValue(), name: this.editNameControl.value };
-    await this.serverApi.put(`/api/employees/${this.editingEmployeeId}`, payload);
+    const raw = { ...this.addEmployeeForm.getRawValue(), name: this.editNameControl.value };
+    // Salary arrives from the API as a decimal string; the API expects a number. Null/empty
+    // optional fields are dropped so they don't fail schema validation.
+    const payload: Record<string, any> = { ...raw, salary: Number(raw.salary) };
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === null || payload[k] === '') delete payload[k];
+    });
+    try {
+      await this.serverApi.put(`/api/employees/${this.editingEmployeeId}`, payload);
+    } catch (e: any) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Update failed',
+        detail: e?.message ?? 'Could not update employee.',
+      });
+      return;
+    }
     this.editEmployeeDialog = false;
     this.messageService.add({
       severity: 'success',
@@ -382,6 +408,7 @@ export class Employee implements OnInit {
     });
     this.generatePayrollDialog = true;
     this.calculateNetSalary();
+    this.cdr.detectChanges();
   }
 
   calculateNetSalary() {

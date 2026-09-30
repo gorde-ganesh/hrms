@@ -110,7 +110,7 @@ const MONTH_NAMES = [
     ConfirmPopup,
     TooltipModule,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [ConfirmationService],
   templateUrl: './payroll.html',
   styleUrl: './payroll.css',
 })
