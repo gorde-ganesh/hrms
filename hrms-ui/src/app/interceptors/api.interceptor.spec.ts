@@ -73,4 +73,50 @@ describe('apiInterceptor', () => {
     expect(mockAuthState.clear).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
   }));
+
+  it('shares one refresh between concurrent 401s and retries each request', fakeAsync(() => {
+    const results: string[] = [];
+    http.get(`${environment.apiUrl}/api/a`).subscribe((r: any) => results.push(r.name));
+    http.get(`${environment.apiUrl}/api/b`).subscribe((r: any) => results.push(r.name));
+
+    const a = httpMock.expectOne(`${environment.apiUrl}/api/a`);
+    const b = httpMock.expectOne(`${environment.apiUrl}/api/b`);
+    a.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+    b.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+    tick();
+
+    // A single refresh request serves both failed calls
+    httpMock.expectOne(`${environment.apiUrl}/api/auth/refresh`).flush({});
+    tick();
+
+    httpMock.expectOne(`${environment.apiUrl}/api/a`).flush({ name: 'a' });
+    httpMock.expectOne(`${environment.apiUrl}/api/b`).flush({ name: 'b' });
+    tick();
+
+    expect(results.sort()).toEqual(['a', 'b']);
+    expect(mockErrorHandler.handle).not.toHaveBeenCalled();
+    expect(mockAuthState.clear).not.toHaveBeenCalled();
+  }));
+
+  it('does not log the user out when the retried request fails after a good refresh', fakeAsync(() => {
+    let failure: any;
+    http.get(`${environment.apiUrl}/api/data`).subscribe({ error: (e) => (failure = e) });
+
+    httpMock.expectOne(`${environment.apiUrl}/api/data`).flush('Unauthorized', {
+      status: 401,
+      statusText: 'Unauthorized',
+    });
+    tick();
+    httpMock.expectOne(`${environment.apiUrl}/api/auth/refresh`).flush({});
+    tick();
+    httpMock.expectOne(`${environment.apiUrl}/api/data`).flush('Forbidden', {
+      status: 403,
+      statusText: 'Forbidden',
+    });
+    tick();
+
+    expect(failure?.status).toBe(403);
+    expect(mockAuthState.clear).not.toHaveBeenCalled();
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+  }));
 });

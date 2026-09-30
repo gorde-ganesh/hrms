@@ -26,7 +26,7 @@ export class HuddleService {
       path: '/socket.io',
       transports: ['websocket', 'polling'], // allow fallback
       reconnection: true,
-      // auth: { token: '...' } // optional
+      withCredentials: true, // send the authToken cookie on the handshake
     });
     this.setupSocketListeners();
   }

@@ -28,6 +28,7 @@ import { ApiService } from '../../services/api-interface.service';
 import { filter, Observable } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { AuthStateService } from '../../services/auth-state.service';
+import { NotificationService } from '../../services/notification.service';
 import { Notification } from './notification/notification';
 
 @Component({
@@ -118,7 +119,8 @@ export class Layout implements OnInit {
     private validationService: ValidationService,
     private serverApi: ApiService,
     private spinnerService: SpinnerService,
-    private authState: AuthStateService
+    private authState: AuthStateService,
+    private notificationService: NotificationService
   ) {
     this.userInfo = this.authState.userInfo as any;
     this.changePasswordForm = this.fb.group(
@@ -214,6 +216,7 @@ export class Layout implements OnInit {
     try {
       await this.serverApi.post('/api/auth/logout', {}, false);
     } finally {
+      this.notificationService.disconnect();
       this.authState.clear();
       this.router.navigate(['/login']);
     }

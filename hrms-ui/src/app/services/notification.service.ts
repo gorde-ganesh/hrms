@@ -20,7 +20,7 @@ export interface Notification {
   providedIn: 'root',
 })
 export class NotificationService {
-  private socket!: Socket;
+  private socket?: Socket;
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   notifications$ = this.notificationsSubject.asObservable();
 
@@ -30,17 +30,22 @@ export class NotificationService {
   ) {}
 
   connect(userId: string) {
-    this.socket = io(environment.apiUrl, {
+    // Several components call connect(); reuse the live socket instead of opening one per call.
+    if (this.socket) return;
+
+    const socket = io(environment.apiUrl, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
+      withCredentials: true, // send the authToken cookie on the handshake
+    });
+    this.socket = socket;
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+      socket.emit('register', userId); // Register user on server
     });
 
-    this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket.id);
-      this.socket.emit('register', userId); // Register user on server
-    });
-
-    this.socket.on('notification', (notification: any) => {
+    socket.on('notification', (notification: any) => {
       const current = this.notificationsSubject.value;
       this.notificationsSubject.next([notification, ...current]);
       this.messageService.add({
@@ -83,6 +88,11 @@ export class NotificationService {
   }
 
   sendNotification(notification: Notification) {
-    this.socket.emit('sendNotification', notification);
+    this.socket?.emit('sendNotification', notification);
+  }
+
+  disconnect() {
+    this.socket?.disconnect();
+    this.socket = undefined;
   }
 }

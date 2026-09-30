@@ -6,14 +6,15 @@ import {
   HttpClient,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Observable, throwError, from } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, finalize, shareReplay, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ErrorHandlerService } from '../services/error-handler.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { environment } from '../../environment/environment';
 
-let isRefreshing = false;
+// The in-flight token refresh, shared by every request that gets a 401 while it runs.
+let refresh$: Observable<unknown> | null = null;
 
 export const apiInterceptor: HttpInterceptorFn = (
   req: HttpRequest<any>,
@@ -28,21 +29,22 @@ export const apiInterceptor: HttpInterceptorFn = (
 
   return next(modifiedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !req.url.includes('/api/auth/') && !isRefreshing) {
-        isRefreshing = true;
-        return from(
-          http.post(`${environment.apiUrl}/api/auth/refresh`, {}, { withCredentials: true }).toPromise()
-        ).pipe(
-          switchMap(() => {
-            isRefreshing = false;
-            return next(modifiedReq);
-          }),
+      if (error.status === 401 && !req.url.includes('/api/auth/')) {
+        refresh$ ??= http
+          .post(`${environment.apiUrl}/api/auth/refresh`, {}, { withCredentials: true })
+          .pipe(
+            finalize(() => (refresh$ = null)),
+            shareReplay(1)
+          );
+
+        return refresh$.pipe(
+          // Only a failed refresh ends the session; a failed retry is reported to the caller.
           catchError((refreshError) => {
-            isRefreshing = false;
             authState.clear();
             router.navigate(['/login']);
             return throwError(() => refreshError);
-          })
+          }),
+          switchMap(() => next(modifiedReq))
         );
       }
       errorHandler.handle(error);

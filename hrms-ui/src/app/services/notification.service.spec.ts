@@ -4,7 +4,7 @@ import { ApiService } from './api-interface.service';
 import { MessageService } from 'primeng/api';
 
 const mockApiService = {
-  get: jasmine.createSpy('get').and.returnValue(Promise.resolve([])),
+  get: jasmine.createSpy('get').and.returnValue(Promise.resolve({ content: [] })),
   patch: jasmine.createSpy('patch').and.returnValue(Promise.resolve({})),
 };
 
@@ -44,9 +44,9 @@ describe('NotificationService', () => {
   describe('fetchNotifications', () => {
     it('calls GET with the correct URL and updates notifications$', fakeAsync(() => {
       const items: Notification[] = [
-        { id: 1, employeeId: 'emp-1', type: 'SYSTEM', message: 'Hello' },
+        { id: 'n-1', employeeId: 'emp-1', type: 'SYSTEM', message: 'Hello' },
       ];
-      mockApiService.get.and.returnValue(Promise.resolve(items));
+      mockApiService.get.and.returnValue(Promise.resolve({ content: items }));
 
       let result: Notification[] = [];
       service.notifications$.subscribe((n) => (result = n));
@@ -55,16 +55,28 @@ describe('NotificationService', () => {
       tick();
 
       expect(mockApiService.get).toHaveBeenCalledWith(
-        '/api/notifications?employeeId=emp-1'
+        '/api/notifications?employeeId=emp-1&top=50'
       );
       expect(result).toEqual(items);
+    }));
+
+    it('falls back to an empty list when the response has no content', fakeAsync(() => {
+      mockApiService.get.and.returnValue(Promise.resolve(null));
+
+      let result: Notification[] = [{ id: 'x', employeeId: 'e', type: 'SYSTEM', message: 'm' }];
+      service.notifications$.subscribe((n) => (result = n));
+
+      service.fetchNotifications('emp-1');
+      tick();
+
+      expect(result).toEqual([]);
     }));
   });
 
   describe('markAsRead', () => {
     it('calls PATCH with correct URL', fakeAsync(() => {
       mockApiService.patch.and.returnValue(Promise.resolve({}));
-      service.markAsRead(42);
+      service.markAsRead('42');
       tick();
       expect(mockApiService.patch).toHaveBeenCalledWith(
         '/api/notifications/42/read',
@@ -74,29 +86,35 @@ describe('NotificationService', () => {
 
     it('updates local read state on success', fakeAsync(() => {
       const notifications: Notification[] = [
-        { id: 1, employeeId: 'emp-1', type: 'SYSTEM', message: 'A', read: false },
-        { id: 2, employeeId: 'emp-1', type: 'SYSTEM', message: 'B', read: false },
+        { id: 'n-1', employeeId: 'emp-1', type: 'SYSTEM', message: 'A', readStatus: false },
+        { id: 'n-2', employeeId: 'emp-1', type: 'SYSTEM', message: 'B', readStatus: false },
       ];
-      mockApiService.get.and.returnValue(Promise.resolve(notifications));
+      mockApiService.get.and.returnValue(Promise.resolve({ content: notifications }));
       service.fetchNotifications('emp-1');
       tick();
 
       mockApiService.patch.and.returnValue(Promise.resolve({}));
-      service.markAsRead(1);
+      service.markAsRead('n-1');
       tick();
 
       let result: Notification[] = [];
       service.notifications$.subscribe((n) => (result = n));
-      expect(result.find((n) => n.id === 1)?.read).toBeTrue();
-      expect(result.find((n) => n.id === 2)?.read).toBeFalse();
+      expect(result.find((n) => n.id === 'n-1')?.readStatus).toBeTrue();
+      expect(result.find((n) => n.id === 'n-2')?.readStatus).toBeFalse();
     }));
 
     it('silently ignores PATCH errors without throwing', fakeAsync(() => {
       mockApiService.patch.and.returnValue(Promise.reject(new Error('network')));
       expect(() => {
-        service.markAsRead(99);
+        service.markAsRead('99');
         tick();
       }).not.toThrow();
     }));
+  });
+
+  describe('disconnect', () => {
+    it('does not throw when no socket has been opened', () => {
+      expect(() => service.disconnect()).not.toThrow();
+    });
   });
 });
