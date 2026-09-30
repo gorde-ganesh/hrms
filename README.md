@@ -4,9 +4,14 @@ A comprehensive Human Resource Management System built with modern web technolog
 
 ## 🚀 Technology Stack
 
+### Monorepo
+
+- **Workspaces**: npm workspaces (single root `package-lock.json`)
+- **Task runner**: [Turborepo](https://turbo.build) (`turbo.json`)
+
 ### Frontend
 
-- **Framework**: Angular (latest version)
+- **Framework**: Angular 20 (standalone components)
 - **UI Components**: PrimeNG
 - **Styling**: Tailwind CSS
 - **Real-time Communication**: Socket.IO Client
@@ -14,7 +19,7 @@ A comprehensive Human Resource Management System built with modern web technolog
 
 ### Backend
 
-- **Runtime**: Node.js with Bun
+- **Runtime**: Node.js (TypeScript, run with `tsx`)
 - **Framework**: Express.js
 - **Database**: PostgreSQL
 - **ORM**: Prisma
@@ -26,7 +31,12 @@ A comprehensive Human Resource Management System built with modern web technolog
 
 ```
 hrms/
-├── hrms-ui/                 # Angular frontend application
+├── package.json             # Workspace root (npm workspaces + turbo scripts)
+├── turbo.json               # Turborepo task pipeline
+├── package-lock.json        # Single lockfile for all workspaces
+├── docker-compose.yml
+│
+├── hrms-ui/                 # Angular frontend workspace
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── features/    # Feature modules (admin, chat, attendance, etc.)
@@ -35,7 +45,7 @@ hrms/
 │   │   └── assets/          # Static assets
 │   └── package.json
 │
-├── hrms-backend/            # Node.js backend application
+├── hrms-backend/            # Node.js backend workspace
 │   ├── src/
 │   │   ├── controllers/     # API controllers
 │   │   ├── routes/          # API routes
@@ -65,26 +75,22 @@ hrms/
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- Bun (latest version)
+- Node.js (v20 or higher) and npm
 - PostgreSQL database
 - Git
+- Windows only: Microsoft Visual C++ Redistributable (required by the Turbo binary)
+
+### Install
+
+Install all dependencies once from the repository root:
+
+```bash
+npm install
+```
 
 ### Backend Setup
 
-1. Navigate to the backend directory:
-
-   ```bash
-   cd hrms-backend
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   bun install
-   ```
-
-3. Create a `.env` file in the `hrms-backend` directory with the following variables:
+1. Create a `.env` file in the `hrms-backend` directory with the following variables:
 
    ```env
    DATABASE_URL="postgresql://username:password@localhost:5432/hrms_db"
@@ -95,50 +101,58 @@ hrms/
    NODE_ENV=development
    ```
 
-4. Run Prisma migrations:
+2. Place SSL certificates in `hrms-backend/cert/` (git-ignored).
+
+3. Run Prisma migrations and generate the client:
 
    ```bash
-   bunx prisma migrate dev
+   npm run migrate -w hrms-backend
+   npm run generate -w hrms-backend
    ```
 
-5. Generate Prisma Client:
+4. Optionally seed the database:
 
    ```bash
-   bunx prisma generate
+   npm run seed -w hrms-backend
    ```
-
-6. Start the backend server:
-   ```bash
-   bun run main.ts
-   ```
-
-The backend will be available at `https://localhost:8080` (or your configured host/port).
 
 ### Frontend Setup
 
-1. Navigate to the frontend directory:
+Update the API endpoint in the environment files if needed:
 
-   ```bash
-   cd hrms-ui
-   ```
+- `hrms-ui/src/environments/environment.ts` (development)
+- `hrms-ui/src/environments/environment.prod.ts` (production)
 
-2. Install dependencies:
+### Run Everything
 
-   ```bash
-   npm install
-   ```
+From the repository root:
 
-3. Update the API endpoint in the environment files if needed:
+```bash
+npm run dev
+```
 
-   - `src/environments/environment.ts` (development)
-   - `src/environments/environment.prod.ts` (production)
+This runs `prisma generate` and then starts both dev servers through Turbo:
 
-4. Start the development server:
-   ```bash
-   npm start
-   ```
+- Backend: `https://localhost:8080`
+- Frontend: `http://localhost:4200`
 
-The frontend will be available at `http://localhost:4200`.
+To run a single app:
+
+```bash
+npm run dev -w hrms-backend
+npm start -w hrms-ui
+```
+
+### Common Commands
+
+| Command                                     | Description                                     |
+| ------------------------------------------- | ----------------------------------------------- |
+| `npm run dev`                               | Start backend and frontend                      |
+| `npm run build`                             | Build all workspaces                            |
+| `npm run typecheck`                         | Type-check all workspaces                       |
+| `npm run test`                              | Run all tests                                   |
+| `npx turbo run test --filter=hrms-backend`  | Run a task for one workspace                    |
+| `npm run <script> -w <workspace>`           | Run any workspace script directly (no Turbo)    |
 
 ## 🌐 Running on Local Network
 
@@ -153,7 +167,7 @@ The backend is already configured to listen on `0.0.0.0` (all network interfaces
 Run the Angular dev server with the host flag:
 
 ```bash
-ng serve --host 0.0.0.0
+npm run host -w hrms-ui
 ```
 
 Then access the application from other devices using:
@@ -189,8 +203,7 @@ http://<your-ip-address>:4200
 **Frontend:**
 
 ```bash
-cd hrms-ui
-npm run build
+npm run build -w hrms-ui
 ```
 
 The production build will be in `hrms-ui/dist/`.
@@ -198,13 +211,20 @@ The production build will be in `hrms-ui/dist/`.
 **Backend:**
 
 ```bash
-cd hrms-backend
-# Ensure all dependencies are installed
-bun install --production
+# From the repository root
+npm ci
 # Run migrations
-bunx prisma migrate deploy
+npm exec -w hrms-backend -- prisma migrate deploy
 # Start the server
-bun run main.ts
+npm run start -w hrms-backend
+```
+
+### Docker
+
+Both images build from the repository root (they share the root lockfile):
+
+```bash
+docker compose up --build
 ```
 
 ## 🤝 Contributing

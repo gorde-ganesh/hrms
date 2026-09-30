@@ -10,26 +10,39 @@ HRMS (Human Resource Management System) is a full-stack monorepo with:
 
 ## Commands
 
+The repo is an npm-workspaces monorepo orchestrated by [Turborepo](https://turbo.build) (`turbo.json`). Install once at the repo root; there is a single root `package-lock.json` (no per-package lockfiles).
+
+### Root (`/`)
+
+```bash
+npm install                    # Install all workspace dependencies
+npm run dev                    # turbo run dev — backend + frontend together
+npm run build                  # turbo run build
+npm run typecheck              # turbo run typecheck (runs prisma generate first)
+npm run test                   # turbo run test
+npx turbo run test --filter=hrms-backend   # Single workspace
+```
+
+On Windows the Turbo binary needs the Microsoft Visual C++ Redistributable (`vcruntime140.dll`).
+
 ### Backend (`hrms-backend/`)
 
 ```bash
-bun install                    # Install dependencies (uses Bun, not npm)
-bun run main.ts                # Start dev server (HTTPS on localhost:8080)
-npm run dev                    # Alternative: nodemon watch mode
-bunx prisma migrate dev        # Run pending migrations
-bunx prisma generate           # Regenerate Prisma Client after schema changes
-npm run seed                   # Seed the database
-npm run reset                  # Reset DB and re-run all migrations (destructive)
+npm run dev -w hrms-backend        # nodemon watch mode (HTTPS on localhost:8080)
+npm run start -w hrms-backend      # tsx main.ts
+npm run migrate -w hrms-backend    # Run pending migrations
+npm run generate -w hrms-backend   # Regenerate Prisma Client after schema changes
+npm run seed -w hrms-backend       # Seed the database
+npm run reset -w hrms-backend      # Reset DB and re-run all migrations (destructive)
 ```
 
 ### Frontend (`hrms-ui/`)
 
 ```bash
-npm install
-npm start                      # ng serve (http://localhost:4200)
-npm run host                   # ng serve --host 0.0.0.0 (network accessible)
-npm run build                  # Production build → dist/
-npm test                       # ng test (Jasmine/Karma)
+npm start -w hrms-ui           # ng serve (http://localhost:4200)
+npm run host -w hrms-ui        # ng serve --host 0.0.0.0 (network accessible)
+npm run build -w hrms-ui       # Production build → hrms-ui/dist/
+npm test -w hrms-ui            # ng test (Jasmine/Karma)
 ```
 
 ## Backend Environment Setup
@@ -61,7 +74,7 @@ SSL certificates must be placed in `hrms-backend/cert/` (git-ignored). The serve
 - All protected routes pass through `src/middlewares/auth.middleware.ts` which injects user context
 - RBAC rules live in `src/utils/permission.utils.ts`
 
-**Database**: Prisma schema at `prisma/schema.prisma`. After any schema change: run `bunx prisma migrate dev` then `bunx prisma generate`. Prisma Client is generated into `generated/prisma/` (not committed).
+**Database**: Prisma schema at `prisma/schema.prisma`. After any schema change: run `npm run migrate -w hrms-backend` then `npm run generate -w hrms-backend`. Prisma Client is generated into `generated/prisma/` (not committed).
 
 **Real-time (Socket.IO)**: Handlers in `main.ts` cover user online status, 1-1 chat, typing indicators, message read receipts, and huddle/call signaling.
 

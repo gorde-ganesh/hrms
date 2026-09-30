@@ -8,41 +8,28 @@ on:
 
 jobs:
   backend-typecheck:
-    name: Backend — TypeScript check
+    name: Backend — TypeScript check and tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: hrms-backend
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
-      - name: Generate Prisma client
-        run: bun run generate
-        env:
-          DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
-
-      - name: TypeScript type check
-        run: bunx tsc --noEmit
-
-      - name: Run backend tests
-        run: bun run test
+      - name: Type check and test (runs prisma generate first)
+        run: npx turbo run typecheck test --filter=hrms-backend
         env:
           DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
   frontend-build:
     name: Frontend — Production build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: hrms-ui
 
     steps:
       - uses: actions/checkout@v4
@@ -51,20 +38,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: hrms-ui/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Production build
-        run: npm run build -- --configuration production
+        run: npx turbo run build --filter=hrms-ui
 
   frontend-test:
     name: Frontend — Unit tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: hrms-ui
 
     steps:
       - uses: actions/checkout@v4
@@ -73,15 +56,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: hrms-ui/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run unit tests
+        working-directory: hrms-ui
         run: npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --karmaConfig=karma.conf.js --code-coverage
 
       - name: Check coverage thresholds
+        working-directory: hrms-ui
         run: |
           node -e "
             const fs = require('fs');
@@ -100,4 +84,3 @@ jobs:
             if (failed) process.exit(1);
             console.log('All coverage thresholds passed.');
           "
-

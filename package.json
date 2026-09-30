@@ -1,0 +1,20 @@
+{
+  "name": "hrms",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@11.17.0",
+  "workspaces": [
+    "hrms-backend",
+    "hrms-ui"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "generate": "turbo run generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

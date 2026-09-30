@@ -4,8 +4,8 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: hrms
-      POSTGRES_PASSWORD: hrms_password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: hrms_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -29,12 +29,12 @@ services:
 
   backend:
     build:
-      context: ./hrms-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: hrms-backend/Dockerfile
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgresql://hrms:hrms_password@postgres:5432/hrms_db
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/hrms_db
       JWT_KEY: change-me-in-production
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
@@ -44,8 +44,8 @@ services:
       ALLOWED_ORIGINS: http://localhost:4200
       REDIS_URL: redis://redis:6379
     volumes:
-      - ./hrms-backend/cert:/app/cert:ro
-      - uploads_data:/app/uploads
+      - ./hrms-backend/cert:/app/hrms-backend/cert:ro
+      - uploads_data:/app/hrms-backend/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,8 +54,8 @@ services:
 
   frontend:
     build:
-      context: ./hrms-ui
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: hrms-ui/Dockerfile
     ports:
       - "4200:80"
     depends_on:
