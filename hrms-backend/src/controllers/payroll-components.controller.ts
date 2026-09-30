@@ -47,6 +47,16 @@ export const getPayrollComponents = async (req: Request, res: Response) => {
 };
 
 // ----------------- Create Payroll Component -----------------
+// Blank means "no percentage"; anything else must be a number between 0 and 100
+const parsePercent = (value: unknown): number | null => {
+  if (value === undefined || value === null || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0 || n > 100) {
+    throw new HttpError(400, 'Percent must be a number between 0 and 100', ERROR_CODES.VALIDATION_ERROR);
+  }
+  return n;
+};
+
 export const createPayrollComponent = async (req: Request, res: Response) => {
   const { name, type, description, percent } = req.body;
 
@@ -59,7 +69,7 @@ export const createPayrollComponent = async (req: Request, res: Response) => {
   }
 
   const component = await prisma.payrollComponentType.create({
-    data: { name, type, description, percent: Number(percent) },
+    data: { name: String(name).trim(), type, description, percent: parsePercent(percent) },
   });
 
   return createdResponse(res, component, 'Component created successfully', SUCCESS_CODES.SUCCESS);
@@ -80,7 +90,7 @@ export const updatePayrollComponent = async (req: Request, res: Response) => {
 
   const updated = await prisma.payrollComponentType.update({
     where: { id: id },
-    data: { name, type, description, percent: Number(percent) },
+    data: { name, type, description, percent: parsePercent(percent) },
   });
 
   return successResponse(res, updated, 'Component updated successfully', SUCCESS_CODES.SUCCESS, 200);

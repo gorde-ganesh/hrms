@@ -151,6 +151,17 @@ export const updateUserDetails = async (req: Request, res: Response) => {
     throw new HttpError(404, 'User not found', ERROR_CODES.NOT_FOUND);
   }
 
+  if (req.body.roleId !== undefined && req.body.roleId !== user.roleId) {
+    // Stops an admin locking themselves (and possibly everyone) out of the admin area
+    if (id === req.user?.id) {
+      throw new HttpError(400, 'You cannot change your own role', ERROR_CODES.VALIDATION_ERROR);
+    }
+    const targetRole = await prisma.userRole.findUnique({ where: { id: String(req.body.roleId) } });
+    if (!targetRole) {
+      throw new HttpError(400, 'Invalid role', ERROR_CODES.VALIDATION_ERROR);
+    }
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: id },
     data: {

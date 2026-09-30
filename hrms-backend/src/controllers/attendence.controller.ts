@@ -482,7 +482,9 @@ export const updateAttendance = async (req: Request, res: Response) => {
   }
 
   if (attendanceDate !== undefined) {
+    // YYYY-MM-DD parses as UTC midnight, which is what the @db.Date column stores
     updateData.attendanceDate = new Date(attendanceDate);
+    updateData.attendanceDate.setUTCHours(0, 0, 0, 0);
   }
 
   // Calculate total hours if both checkIn and checkOut are provided
@@ -559,7 +561,8 @@ export const autoCloseAttendance = async (req: Request, res: Response) => {
  * Marks multiple employees as present/absent/leave for a specific date
  */
 export const bulkMarkAttendance = async (req: Request, res: Response) => {
-  const { employeeIds, date, status } = req.body;
+  const { date, status } = req.body;
+  let employeeIds = req.body.employeeIds;
 
   if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
     throw new HttpError(
@@ -583,6 +586,7 @@ export const bulkMarkAttendance = async (req: Request, res: Response) => {
 
   const attendanceDate = new Date(date);
   attendanceDate.setUTCHours(0, 0, 0, 0);
+  employeeIds = [...new Set<string>(employeeIds)];
 
   // Validate all employees exist
   const employees = await prisma.employee.findMany({

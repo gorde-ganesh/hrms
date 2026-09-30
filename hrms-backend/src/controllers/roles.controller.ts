@@ -68,7 +68,8 @@ export const getRoleById = async (req: Request, res: Response) => {
 
 // Create new role
 export const createRole = async (req: Request, res: Response) => {
-  const { name, description, permissionIds } = req.body;
+  const { description, permissionIds } = req.body;
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
 
   if (!name) {
     throw new HttpError(
@@ -78,8 +79,9 @@ export const createRole = async (req: Request, res: Response) => {
     );
   }
 
-  const existingRole = await prisma.userRole.findUnique({
-    where: { name },
+  // Role names are compared case-insensitively so "manager" can't shadow the MANAGER system role
+  const existingRole = await prisma.userRole.findFirst({
+    where: { name: { equals: name, mode: 'insensitive' } },
   });
 
   if (existingRole) {
@@ -134,16 +136,27 @@ export const updateRole = async (req: Request, res: Response) => {
     throw new HttpError(404, 'Role not found', ERROR_CODES.NOT_FOUND);
   }
 
-  if (role.isSystem) {
-    // Optional: Prevent renaming system roles, but allow updating permissions
-    // throw new HttpError(403, 'Cannot modify system roles', ERROR_CODES.FORBIDDEN);
+  const newName = typeof name === 'string' ? name.trim() : undefined;
+
+  // System role names are referenced by access checks throughout the API, so they can't change
+  if (role.isSystem && newName !== undefined && newName !== role.name) {
+    throw new HttpError(403, 'System roles cannot be renamed', ERROR_CODES.FORBIDDEN);
+  }
+
+  if (newName !== undefined && newName.toLowerCase() !== role.name.toLowerCase()) {
+    const clash = await prisma.userRole.findFirst({
+      where: { id: { not: id }, name: { equals: newName, mode: 'insensitive' } },
+    });
+    if (clash) {
+      throw new HttpError(400, 'Role with this name already exists', ERROR_CODES.VALIDATION_ERROR);
+    }
   }
 
   const updatedRole = await prisma.$transaction(async (tx) => {
     const updated = await tx.userRole.update({
       where: { id },
       data: {
-        name,
+        name: newName,
         description,
       },
     });
