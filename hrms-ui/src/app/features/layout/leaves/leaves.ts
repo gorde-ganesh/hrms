@@ -102,7 +102,7 @@ export class Leaves implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private authState: AuthStateService
+    private authState: AuthStateService,
   ) {
     this.permissions = this.authState.userInfo?.permissions?.['leaves'];
     this.applyLeaveForm = fb.group({
@@ -157,7 +157,7 @@ export class Leaves implements OnInit, OnDestroy {
   async loadLeaveBalances() {
     const userInfo = this.authState.userInfo;
     const balances: any = await this.serverApi.get(
-      `/api/leave-balance/${userInfo?.employeeId}`
+      `/api/leave-balance/${userInfo?.employeeId}`,
     );
     this.leaveBalances = balances;
     this.cdr.detectChanges();
@@ -167,7 +167,7 @@ export class Leaves implements OnInit, OnDestroy {
     const userInfo = this.authState.userInfo;
     const leave: any = await this.serverApi.get(
       `/api/leaves/${userInfo?.employeeId}`,
-      payload
+      payload,
     );
     this.leaves = leave.content;
     this.totalRecords = leave.totalRecords;
@@ -179,7 +179,7 @@ export class Leaves implements OnInit, OnDestroy {
     const userInfo = this.authState.userInfo;
     const leave: any = await this.serverApi.get(
       `/api/leaves/${userInfo?.employeeId}/team`,
-      payload
+      payload,
     );
     this.teamLeaves = leave.content;
     this.teamTotalRecords = leave.totalRecords;
@@ -187,14 +187,21 @@ export class Leaves implements OnInit, OnDestroy {
   }
 
   updateCalendarEvents() {
-    const events = this.leaves.map((l) => ({
-      title: `${this.formatLeaveType(l.leaveType)} — ${l.reason}`,
-      start: l.startDate,
-      end: l.endDate,
-      color: this.getEventColor(l.status),
-    }));
+    const ymd = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const events = this.leaves.map((l) => {
+      // FullCalendar's all-day `end` is exclusive, so add a day to include the last leave day
+      const end = new Date(l.endDate);
+      end.setDate(end.getDate() + 1);
+      return {
+        title: `${this.formatLeaveType(l.leaveType)} — ${l.reason}`,
+        start: ymd(new Date(l.startDate)),
+        end: ymd(end),
+        allDay: true,
+        color: this.getEventColor(l.status),
+      };
+    });
     this.calendarOptions = { ...this.calendarOptions, events };
-
     this.cdr.detectChanges();
   }
 
@@ -247,9 +254,12 @@ export class Leaves implements OnInit, OnDestroy {
 
   async accrueLeaves() {
     try {
-      const result: any = await this.serverApi.post('/api/leave-balance/accrue', {
-        year: new Date().getFullYear(),
-      });
+      const result: any = await this.serverApi.post(
+        '/api/leave-balance/accrue',
+        {
+          year: new Date().getFullYear(),
+        },
+      );
       this.messageService.add({
         severity: 'success',
         summary: 'Accrual Complete',
@@ -257,7 +267,11 @@ export class Leaves implements OnInit, OnDestroy {
       });
       this.loadLeaveBalances();
     } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message ?? 'Accrual failed' });
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: error?.message ?? 'Accrual failed',
+      });
     }
   }
 
@@ -278,13 +292,13 @@ export class Leaves implements OnInit, OnDestroy {
     const { date, reason, leaveType } = this.applyLeaveForm.value;
 
     const selectedBalance = this.leaveBalances.find(
-      (b) => b.leaveType === leaveType
+      (b) => b.leaveType === leaveType,
     );
     const start = new Date(date[0]);
     const end = new Date(date[1] ?? date[0]);
     const diffDays =
       Math.ceil(
-        Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+        Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       ) + 1;
 
     if (
@@ -343,7 +357,8 @@ export class Leaves implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'error',
         summary: 'Update failed',
-        detail: e?.error?.message ?? e?.message ?? 'Could not update leave status.',
+        detail:
+          e?.error?.message ?? e?.message ?? 'Could not update leave status.',
       });
       this.loadLeaves();
       this.loadTeamLeaves();
@@ -377,7 +392,7 @@ export class Leaves implements OnInit, OnDestroy {
       (d) =>
         d.getDate() === day &&
         d.getMonth() === month &&
-        d.getFullYear() === year
+        d.getFullYear() === year,
     );
   }
 
@@ -420,7 +435,7 @@ export class Leaves implements OnInit, OnDestroy {
     const end = new Date(leave.endDate);
     return (
       Math.ceil(
-        Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+        Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       ) + 1
     );
   }
