@@ -92,7 +92,9 @@ export function registerHuddleHandlers(io: Server, socket: Socket, userId: strin
         io.to(room(id)).emit('notification', {
           title: 'Huddle started',
           type: 'CHAT',
-          message: `${starter?.name ?? 'Someone'} started a huddle${where}. Open Chat to join.`,
+          action: 'join-huddle',
+          conversationId: data.conversationId,
+          message: `${starter?.name ?? 'Someone'} started a huddle${where}. Click to join.`,
         });
       }
     } catch (err) {

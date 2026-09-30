@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { ApplicationRef, Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -26,7 +26,8 @@ export class NotificationService {
 
   constructor(
     private serverApi: ApiService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private appRef: ApplicationRef
   ) {}
 
   connect(userId: string) {
@@ -48,11 +49,17 @@ export class NotificationService {
     socket.on('notification', (notification: any) => {
       const current = this.notificationsSubject.value;
       this.notificationsSubject.next([notification, ...current]);
+      const joinHuddle = notification.action === 'join-huddle';
       this.messageService.add({
         severity: 'info',
         summary: notification.title,
         detail: notification.message,
+        // Huddle invites stay until acted on; clicking one opens the chat and joins
+        sticky: joinHuddle,
+        data: joinHuddle ? { action: 'join-huddle', conversationId: notification.conversationId } : undefined,
       });
+      // Socket events arrive outside Angular's change detection (zoneless), so draw the toast now
+      setTimeout(() => this.appRef.tick());
     });
   }
 

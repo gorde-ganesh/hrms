@@ -1,4 +1,5 @@
 import { MessageService } from 'primeng/api';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Component,
   ElementRef,
@@ -80,7 +81,9 @@ export class Chat implements OnInit {
     public callService: CallService,
     private cdr: ChangeDetectorRef,
     private authState: AuthStateService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   onlineUserIds = new Set<string>();
@@ -114,6 +117,19 @@ export class Chat implements OnInit {
     this.chatService.listenForTyping();
     this.chatService.listenForOnlineStatus();
     this.huddleService.huddleChanged$.subscribe(() => this.loadConversations());
+
+    // Arrived from a huddle notification: open that chat and join
+    this.route.queryParamMap.subscribe(async (params) => {
+      const conversationId = params.get('huddle');
+      if (!conversationId) return;
+      await this.loadConversations();
+      const conv = this.conversations.find((c) => c.id === conversationId);
+      this.router.navigate([], { queryParams: { huddle: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      if (!conv) return;
+      await this.openConversation(conv);
+      if (conv.huddleActive) await this.joinHuddle();
+      else this.messageService.add({ severity: 'info', summary: 'Huddle ended', detail: 'That huddle is no longer active.' });
+    });
     this.chatService.onlineUsers$.subscribe((ids) => {
       this.onlineUserIds = new Set(ids);
       this.cdr.markForCheck();
@@ -173,6 +189,10 @@ export class Chat implements OnInit {
       );
 
       this.conversations = response || [];
+      // Keep the open chat in sync (e.g. huddleActive flips while it is open)
+      if (this.selectedChat) {
+        this.selectedChat = this.conversations.find((c) => c.id === this.selectedChat.id) ?? this.selectedChat;
+      }
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error loading conversations:', error);

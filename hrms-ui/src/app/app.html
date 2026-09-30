@@ -1,3 +1,21 @@
-<p-toast position="bottom-right" />
+<p-toast position="bottom-right">
+  <ng-template let-message pTemplate="message">
+    <div class="flex flex-col gap-2 w-full">
+      <span class="font-semibold">{{ message.summary }}</span>
+      <span class="text-sm">{{ message.detail }}</span>
+      @if (message.data?.action === 'join-huddle') {
+        <button
+          pButton
+          type="button"
+          size="small"
+          icon="pi pi-headphones"
+          label="Join huddle"
+          class="self-start mt-1"
+          (click)="joinHuddle(message)"
+        ></button>
+      }
+    </div>
+  </ng-template>
+</p-toast>
 <p-confirmpopup />
 <router-outlet />
