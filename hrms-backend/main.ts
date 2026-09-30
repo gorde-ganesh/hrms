@@ -17,7 +17,7 @@ import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import { startScheduler } from './src/jobs/scheduler';
 import { setSocketState } from './src/lib/socket-state';
-import { registerHuddleHandlers } from './src/lib/huddle-signaling';
+import { registerHuddleHandlers, resetStaleHuddles } from './src/lib/huddle-signaling';
 const swaggerDocument = require('./src/docs/swagger.json');
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { success: false, statusCode: 429, message: 'Too many requests, please try again later.' } });
@@ -251,6 +251,7 @@ io.on('connection', (socket) => {
 });
 
 setSocketState(io, onlineUsers);
+resetStaleHuddles().catch((err) => logger.error(`resetStaleHuddles failed: ${err}`));
 export { io, onlineUsers };
 // ----------------- Middlewares -----------------
 app.use(helmet());

@@ -41,9 +41,27 @@ async function endHuddleFor(io: Server, conversationId: string) {
   }
 }
 
+/** Participants live in memory, so after a restart any huddle still flagged active is stale. */
+export async function resetStaleHuddles() {
+  const { count } = await prisma.conversation.updateMany({
+    where: { huddleActive: true },
+    data: { huddleActive: false },
+  });
+  if (count > 0) logger.info(`Reset ${count} stale huddle(s) left over from a previous run`);
+}
+
 async function leave(io: Server, conversationId: string, userId: string) {
   const set = participants.get(conversationId);
-  if (!set || !set.delete(userId)) return;
+  if (!set) {
+    // Nobody is recorded in this huddle (e.g. server restarted): make sure it is not left open
+    const stillActive = await prisma.conversation.findFirst({
+      where: { id: conversationId, huddleActive: true },
+      select: { id: true },
+    });
+    if (stillActive && (await isMember(conversationId, userId))) await endHuddleFor(io, conversationId);
+    return;
+  }
+  if (!set.delete(userId)) return;
 
   for (const other of set) {
     io.to(room(other)).emit('huddle-user-left', { huddleId: conversationId, userId });
@@ -144,6 +162,16 @@ export function registerHuddleHandlers(io: Server, socket: Socket, userId: strin
       for (const conversationId of [...participants.keys()]) {
         void leave(io, conversationId, userId);
       }
+      // Huddles flagged active with nobody recorded in them (missed start/join event)
+      void prisma.conversation
+        .findMany({
+          where: { huddleActive: true, members: { some: { userId } } },
+          select: { id: true },
+        })
+        .then((rows) => {
+          for (const { id } of rows) if (!participants.has(id)) void endHuddleFor(io, id);
+        })
+        .catch(() => undefined);
     }, 0);
   });
 }
