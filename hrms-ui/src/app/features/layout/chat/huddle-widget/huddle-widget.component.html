@@ -1,6 +1,8 @@
 @if (activeHuddle) {
 <!-- Overlay backdrop -->
-<div class="huddle-overlay" (click)="isExpanded && toggleExpand()"></div>
+@if (isExpanded) {
+<div class="huddle-overlay" (click)="toggleExpand()"></div>
+}
 
 <div
   class="huddle-widget surface-card shadow-4 border-round flex flex-column"
