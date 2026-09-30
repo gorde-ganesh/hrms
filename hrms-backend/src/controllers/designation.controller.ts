@@ -3,7 +3,7 @@ import { HttpError } from '../utils/http-error';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { successResponse, createdResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
-import { cachedQuery, invalidateCache } from '../lib/cache';
+import { cachedQuery, invalidateCachePrefix } from '../lib/cache';
 import { notDeleted, softDeleteData } from '../utils/soft-delete';
 
 
@@ -33,22 +33,35 @@ export const createDesignation = async (req: Request, res: Response) => {
     data: { name: name.trim(), description, classification },
   });
 
-  invalidateCache('designations:page=1:limit=10');
+  invalidateCachePrefix('designations:');
 
   return createdResponse(res, designation, 'Designation created successfully', SUCCESS_CODES.SUCCESS);
 };
 
 export const getAllDesignations = async (req: Request, res: Response) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, search } = req.query;
   const pageNumber = parseInt(page as string, 10);
   const pageSize = parseInt(limit as string, 10);
   const skip = (pageNumber - 1) * pageSize;
-  const cacheKey = `designations:page=${pageNumber}:limit=${pageSize}`;
+  const term = typeof search === 'string' ? search.trim() : '';
+  const cacheKey = `designations:page=${pageNumber}:limit=${pageSize}:search=${term.toLowerCase()}`;
+  const where = {
+    ...notDeleted,
+    ...(term
+      ? {
+          OR: [
+            { name: { contains: term, mode: 'insensitive' as const } },
+            { description: { contains: term, mode: 'insensitive' as const } },
+            { classification: { contains: term, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
 
   const result = await cachedQuery(cacheKey, () =>
     Promise.all([
-      prisma.designation.findMany({ where: notDeleted, skip, take: pageSize, orderBy: { name: 'asc' } }),
-      prisma.designation.count({ where: notDeleted }),
+      prisma.designation.findMany({ where, skip, take: pageSize, orderBy: { name: 'asc' } }),
+      prisma.designation.count({ where }),
     ])
   );
 
@@ -94,7 +107,7 @@ export const updateDesignation = async (req: Request, res: Response) => {
     data: { name: name.trim(), description, classification },
   });
 
-  invalidateCache('designations:page=1:limit=10');
+  invalidateCachePrefix('designations:');
 
   return successResponse(res, designation, 'Designation updated successfully', SUCCESS_CODES.SUCCESS, 200);
 };
@@ -106,7 +119,7 @@ export const deleteDesignation = async (req: Request, res: Response) => {
 
   await prisma.designation.update({ where: { id }, data: softDeleteData() });
 
-  invalidateCache('designations:page=1:limit=10');
+  invalidateCachePrefix('designations:');
 
   return successResponse(res, null, 'Designation deleted successfully', SUCCESS_CODES.SUCCESS, 200);
 };
@@ -121,7 +134,7 @@ export const restoreDesignation = async (req: Request, res: Response) => {
     data: { deletedAt: null },
   });
 
-  invalidateCache('designations:page=1:limit=10');
+  invalidateCachePrefix('designations:');
 
   return successResponse(res, designation, 'Designation restored successfully', SUCCESS_CODES.SUCCESS, 200);
 };

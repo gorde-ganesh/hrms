@@ -6,6 +6,10 @@ import { successResponse, createdResponse } from '../utils/response-helper';
 import { prisma } from '../lib/prisma';
 import { assertCanAccessEmployee } from '../utils/access';
 
+// attendanceDate is a @db.Date column: keep the server's local calendar day but pin it to UTC
+// midnight so it round-trips unchanged regardless of the server timezone.
+const utcDateOf = (d: Date) => new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+
 
 /**
  * Fetch attendance records (Admin / HR View)
@@ -117,7 +121,7 @@ export const clockInOut = async (req: Request, res: Response) => {
   }
 
   const today = new Date();
-  const attendanceDate = new Date(today.toDateString()); // strip time
+  const attendanceDate = utcDateOf(today); // date-only column, stored as UTC midnight
   const existing = await prisma.attendance.findFirst({
     where: { employeeId, attendanceDate },
   });
@@ -223,7 +227,7 @@ export const getAttendanceSummary = async (req: Request, res: Response) => {
 
   // --- 5️⃣ Today’s Record
   const today = new Date();
-  const todayDate = new Date(today.toDateString());
+  const todayDate = utcDateOf(today);
   const todayRecord = await prisma.attendance.findFirst({
     where: { employeeId, attendanceDate: todayDate },
   });
@@ -578,7 +582,7 @@ export const bulkMarkAttendance = async (req: Request, res: Response) => {
   }
 
   const attendanceDate = new Date(date);
-  attendanceDate.setHours(0, 0, 0, 0);
+  attendanceDate.setUTCHours(0, 0, 0, 0);
 
   // Validate all employees exist
   const employees = await prisma.employee.findMany({

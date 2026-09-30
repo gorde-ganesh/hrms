@@ -15,3 +15,9 @@ export async function cachedQuery<T>(key: string, fetcher: () => Promise<T>): Pr
 export function invalidateCache(...keys: string[]): void {
   keys.forEach((k) => cache.delete(k));
 }
+
+export function invalidateCachePrefix(prefix: string): void {
+  for (const k of cache.keys()) {
+    if (k.startsWith(prefix)) cache.delete(k);
+  }
+}
