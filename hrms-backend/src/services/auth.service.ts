@@ -75,7 +75,7 @@ export class AuthService {
     });
 
     const accessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee.id, tv: user.tokenVersion },
+      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee.id, companyId: user.companyId ?? undefined, tv: user.tokenVersion },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -129,7 +129,7 @@ export class AuthService {
     const employee = await prisma.employee.findFirst({ where: { userId: user.id } });
 
     const newAccessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee?.id, tv: user.tokenVersion },
+      { id: user.id, email: user.email, role: user.userRole?.name, employeeId: employee?.id, companyId: user.companyId ?? undefined, tv: user.tokenVersion },
       JWT_SECRET,
       { expiresIn: '1h' }
     );

@@ -22,6 +22,7 @@ export const sendNotification = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Notification sent successfully',
     data: notification,
     statusCode: 200,
@@ -57,6 +58,7 @@ export const listNotifications = async (req: Request, res: Response) => {
   ]);
 
   return res.status(200).json({
+    success: true,
     message: 'Notifications fetched successfully',
     data: { content: notifications, totalRecords },
     statusCode: 200,
@@ -81,6 +83,7 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Notification marked as read',
     data: updated,
     statusCode: 200,
@@ -103,6 +106,7 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
   });
 
   return res.status(200).json({
+    success: true,
     message: `${count} notification(s) marked as read`,
     data: { count },
     statusCode: 200,
@@ -139,6 +143,7 @@ export const sendBulkNotification = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Notifications sent successfully',
     data: { count: notificationsData.length },
     statusCode: 200,

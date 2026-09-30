@@ -109,6 +109,7 @@ export const leaveReport = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Leave report fetched successfully',
     data: leaves,
     statusCode: 200,
@@ -136,6 +137,7 @@ export const payrollReport = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Payroll report fetched successfully',
     data: payrolls,
     statusCode: 200,
@@ -187,6 +189,7 @@ export const attendanceReport = async (req: Request, res: Response) => {
 
   // 🔸 Response
   return res.status(200).json({
+    success: true,
     statusCode: 200,
     code: SUCCESS_CODES.SUCCESS,
     message: 'Attendance report fetched successfully',

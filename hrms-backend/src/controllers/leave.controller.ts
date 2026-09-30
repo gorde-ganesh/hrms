@@ -333,7 +333,7 @@ export const getEmployeeLeaves = async (req: Request, res: Response) => {
 
   return successResponse(
     res,
-    { content: leaves, totalRecord: totalRecords },
+    { content: leaves, totalRecords },
     'Data fetched successfully',
     SUCCESS_CODES.SUCCESS,
     200
@@ -363,7 +363,7 @@ export const getTeamLeaves = async (req: Request, res: Response) => {
 
   return successResponse(
     res,
-    { content: leaves, totalRecord: totalRecords },
+    { content: leaves, totalRecords },
     'Data fetched successfully',
     SUCCESS_CODES.SUCCESS,
     200
@@ -405,7 +405,7 @@ export const getAllLeaves = async (req: Request, res: Response) => {
 
   return successResponse(
     res,
-    { content: leaves, totalRecord: totalRecords },
+    { content: leaves, totalRecords },
     'Data fetched successfully',
     SUCCESS_CODES.SUCCESS,
     200

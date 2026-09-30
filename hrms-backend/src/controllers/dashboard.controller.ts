@@ -40,7 +40,9 @@ const getAdminStats = async () => {
         where: { status: 'ACTIVE' },
         orderBy: { joiningDate: 'desc' },
         take: 5,
-        include: {
+        select: {
+          id: true,
+          joiningDate: true,
           user: { select: { name: true, email: true } },
           designation: { select: { name: true } },
         },

@@ -81,10 +81,22 @@ if (process.env.REDIS_URL) {
 }
 
 // Verify JWT on Socket.IO handshake
+const readCookie = (header: string | undefined, name: string): string | undefined => {
+  if (!header) return undefined;
+  for (const part of header.split(';')) {
+    const [key, ...rest] = part.trim().split('=');
+    if (key === name) return decodeURIComponent(rest.join('='));
+  }
+  return undefined;
+};
+
 io.use((socket, next) => {
+  // Same sources as the REST auth middleware: explicit token, Bearer header, or the
+  // authToken cookie (the browser client uses cookies, so it cannot pass a token itself).
   const token =
     socket.handshake.auth?.token ||
-    socket.handshake.headers?.authorization?.replace('Bearer ', '');
+    socket.handshake.headers?.authorization?.replace('Bearer ', '') ||
+    readCookie(socket.handshake.headers?.cookie, 'authToken');
   const JWT_SECRET = process.env.JWT_KEY;
   if (!token || !JWT_SECRET) {
     return next(new Error('Unauthorized: missing token'));

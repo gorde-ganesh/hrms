@@ -11,10 +11,15 @@ import { assertCanAccessEmployee } from '../utils/access';
  * Fetch attendance records (Admin / HR View)
  */
 export const getAttendance = async (req: Request, res: Response) => {
-  const { skip, top, month, year } = req.query;
+  const { skip, top } = req.query;
 
-  const start = new Date(Number(year), Number(month) - 1, 1);
-  const end = new Date(Number(year), Number(month), 0, 23, 59, 59);
+  // Default to the current month when month/year are not supplied
+  const now = new Date();
+  const month = Number(req.query.month) || now.getMonth() + 1;
+  const year = Number(req.query.year) || now.getFullYear();
+
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 0, 23, 59, 59);
 
   const [attendances, totalRecords] = await Promise.all([
     prisma.attendance.findMany({

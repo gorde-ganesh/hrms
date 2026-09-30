@@ -33,6 +33,13 @@ export const startCall = async (req: Request, res: Response) => {
 export const endCall = async (req: Request, res: Response) => {
   const { callId } = req.body;
   try {
+    const call = await prisma.callLog.findUnique({ where: { id: callId } });
+    if (!call) {
+      return errorResponse(res, 'Call not found', ERROR_CODES.NOT_FOUND, 404);
+    }
+    if (call.callerId !== req.user?.id && call.receiverId !== req.user?.id) {
+      return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
+    }
     const updated = await prisma.callLog.update({
       where: { id: callId },
       data: { status: 'ended', endTime: new Date() },

@@ -48,6 +48,7 @@ export const addAppraisal = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Appraisal added successfully',
     data: performance,
     statusCode: 200,
@@ -100,6 +101,7 @@ export const updateAppraisal = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Appraisal updated successfully',
     data: updatedAppraisal,
     statusCode: 200,
@@ -131,6 +133,7 @@ export const getEmployeePerformance = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Performance data fetched successfully',
     data: performance,
     statusCode: 200,
@@ -161,6 +164,7 @@ export const getAllPerformance = async (req: Request, res: Response) => {
   ]);
 
   return res.status(200).json({
+    success: true,
     message: 'All performance records fetched',
     data: records,
     totalRecords: total,
@@ -195,6 +199,7 @@ export const getTeamPerformance = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({
+    success: true,
     message: 'Team performance fetched successfully',
     data: records,
     statusCode: 200,
