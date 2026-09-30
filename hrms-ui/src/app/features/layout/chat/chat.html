@@ -102,7 +102,7 @@
             ></p-avatar>
             <!-- Online Status Indicator (for DMs) -->
             <span
-              *ngIf="!convo.isGroup && convo.channelType === 'DM'"
+              *ngIf="!convo.isGroup && convo.channelType === 'DM' && isOnline(convo)"
               class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-green-500"
             ></span>
           </div>
@@ -110,7 +110,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex justify-between text-sm font-medium text-gray-800">
               <span class="truncate">{{ getChatName(convo) }}</span>
-              <span class="text-gray-400 text-xs">2m</span>
+              <span class="text-gray-400 text-xs">{{ timeAgo(convo.lastMessageTime || convo.updatedAt || convo.createdAt) }}</span>
             </div>
             <p class="truncate text-gray-500 text-sm">
               <span
@@ -275,8 +275,8 @@
   </div>
 
   <!-- Dialogs & Widgets -->
-  <app-create-group-dialog #createGroupDialog></app-create-group-dialog>
-  <app-create-channel-dialog #createChannelDialog></app-create-channel-dialog>
+  <app-create-group-dialog #createGroupDialog (created)="onConversationAdded($event)"></app-create-group-dialog>
+  <app-create-channel-dialog #createChannelDialog (created)="onConversationAdded($event)"></app-create-channel-dialog>
   <app-channel-browser #channelBrowser></app-channel-browser>
   <app-incoming-call-dialog></app-incoming-call-dialog>
   <app-active-call></app-active-call>

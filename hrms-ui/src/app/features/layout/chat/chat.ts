@@ -81,6 +81,24 @@ export class Chat implements OnInit {
     private authState: AuthStateService
   ) {}
 
+  onlineUserIds = new Set<string>();
+
+  isOnline(conv: any): boolean {
+    const other = conv?.members?.find((m: any) => m.userId !== this.currentUser?.id);
+    return !!other && this.onlineUserIds.has(other.userId);
+  }
+
+  timeAgo(value: string | Date | null | undefined): string {
+    if (!value) return '';
+    const secs = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+    if (secs < 60) return 'now';
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    return `${Math.floor(hrs / 24)}d`;
+  }
+
   ngOnInit() {
     const userInfo = this.authState.userInfo;
     this.currentUser = userInfo as any;
@@ -93,6 +111,10 @@ export class Chat implements OnInit {
     this.chatService.listenForMessages();
     this.chatService.listenForTyping();
     this.chatService.listenForOnlineStatus();
+    this.chatService.onlineUsers$.subscribe((ids) => {
+      this.onlineUserIds = new Set(ids);
+      this.cdr.markForCheck();
+    });
 
     // Update messages in real-time
     this.chatService.messages$.subscribe((msgs) => {
@@ -182,6 +204,14 @@ export class Chat implements OnInit {
     }
   }
 
+  /** A group/channel was just created: refresh the list and open it. */
+  async onConversationAdded(created: any) {
+    await this.loadConversations();
+    const conv = this.conversations.find((c) => c.id === created?.id);
+    if (conv) await this.openConversation(conv);
+    this.cdr.detectChanges();
+  }
+
   handleConversationCreated(conversation: any) {
     this.selectedChat = conversation;
 
@@ -197,7 +227,8 @@ export class Chat implements OnInit {
     this.selectedChat = conv;
     try {
       const response: any = await this.chatService.getMessages(conv.id);
-      this.messages = response || [];
+      // API returns { messages, nextCursor }
+      this.messages = Array.isArray(response) ? response : response?.messages ?? [];
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -231,6 +262,8 @@ export class Chat implements OnInit {
       }
 
       this.cdr.detectChanges();
+      // Sidebar preview/time come from the conversation list, which only refreshed on socket events
+      this.loadConversations();
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -299,15 +332,6 @@ export class Chat implements OnInit {
 
   isMyMessage(msg: any): boolean {
     if (!msg || !this.currentUser) return false;
-
-    console.log('Message check:', {
-      msgSenderId: msg.senderId,
-      msgSenderObjId: msg.sender?.id,
-      currentUserId: this.currentUser.id,
-      isMatch:
-        msg.senderId === this.currentUser.id ||
-        msg.sender?.id === this.currentUser.id,
-    });
 
     return (
       msg.senderId === this.currentUser.id ||

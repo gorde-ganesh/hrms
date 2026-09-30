@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import xss from 'xss';
 import {
   successResponse,
   createdResponse,
@@ -135,9 +134,11 @@ export const getMessages = async (req: Request, res: Response) => {
       );
     }
 
-    const messages = await prisma.message.findMany({
+    // Newest page first (so long conversations show the latest messages), then flip to chronological.
+    // With a cursor this pages backwards to older messages.
+    const rows = await prisma.message.findMany({
       where: { conversationId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: limit,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
@@ -147,7 +148,8 @@ export const getMessages = async (req: Request, res: Response) => {
       },
     });
 
-    const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null;
+    const messages = rows.reverse();
+    const nextCursor = rows.length === limit ? messages[0].id : null;
 
     return successResponse(
       res,
@@ -175,7 +177,8 @@ export const sendMessage = async (req: Request, res: Response) => {
     if (!(await canReadConversation(req.user, conversationId))) {
       return errorResponse(res, 'Access denied', ERROR_CODES.FORBIDDEN, 403);
     }
-    const messageText = typeof req.body.messageText === 'string' ? xss(req.body.messageText) : req.body.messageText;
+    // Stored as typed: the UI renders messages as text (Angular escapes on output), so encoding here corrupts content
+    const messageText = typeof req.body.messageText === 'string' ? req.body.messageText.trim() : req.body.messageText;
 
     // ✅ Validate required fields
     if (!senderId || !conversationId || !messageText) {
@@ -404,13 +407,11 @@ export const createGroupChat = async (req: Request, res: Response) => {
     const { memberIds, groupName, createdById } = req.body;
 
     if (!memberIds || !Array.isArray(memberIds) || memberIds.length < 2) {
-      return res
-        .status(400)
-        .json({ message: 'At least 2 members required for a group' });
+      return errorResponse(res, 'At least 2 members required for a group', ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     if (!groupName) {
-      return res.status(400).json({ message: 'Group name is required' });
+      return errorResponse(res, 'Group name is required', ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const group = await prisma.conversation.create({
@@ -437,10 +438,10 @@ export const createGroupChat = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(group);
+    return createdResponse(res, group, 'Group created successfully', SUCCESS_CODES.SUCCESS);
   } catch (error: any) {
     console.error('Error creating group:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.SERVER_ERROR, 500);
   }
 };
 
@@ -450,7 +451,7 @@ export const createChannel = async (req: Request, res: Response) => {
     const { name, description, isPublic, createdById } = req.body;
 
     if (!name) {
-      return res.status(400).json({ message: 'Channel name is required' });
+      return errorResponse(res, 'Channel name is required', ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const channel = await prisma.conversation.create({
@@ -480,10 +481,10 @@ export const createChannel = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(channel);
+    return createdResponse(res, channel, 'Channel created successfully', SUCCESS_CODES.SUCCESS);
   } catch (error: any) {
     console.error('Error creating channel:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.SERVER_ERROR, 500);
   }
 };
 

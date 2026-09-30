@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -28,7 +28,9 @@ export class CreateGroupDialogComponent {
   allUsers: any[] = [];
   currentUserId = '';
 
-  constructor(private chatService: ChatService) {}
+  @Output() created = new EventEmitter<any>();
+
+  constructor(private chatService: ChatService, private cdr: ChangeDetectorRef) {}
 
   open(users: any[], currentUserId: string) {
     this.allUsers = users.filter((u) => u.id !== currentUserId);
@@ -38,18 +40,25 @@ export class CreateGroupDialogComponent {
     this.selectedMembers = [];
   }
 
+  submitting = false;
+
   async onCreate() {
-    if (!this.groupName || this.selectedMembers.length === 0) return;
+    if (this.submitting || !this.groupName.trim() || this.selectedMembers.length === 0) return;
+    this.submitting = true;
 
     const memberIds = [...this.selectedMembers, this.currentUserId];
-
-    const response: any = await this.chatService.createGroupChat(
-      memberIds,
-      this.groupName,
-      this.currentUserId
-    );
-    console.log('Group created:', response.data);
-    this.visible = false;
+    try {
+      const response: any = await this.chatService.createGroupChat(
+        memberIds,
+        this.groupName.trim(),
+        this.currentUserId
+      );
+      this.visible = false;
+      this.created.emit(response);
+    } finally {
+      this.submitting = false;
+      this.cdr.detectChanges();
+    }
   }
 
   onCancel() {

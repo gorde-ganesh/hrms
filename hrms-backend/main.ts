@@ -122,6 +122,9 @@ io.on('connection', (socket) => {
 
   // Broadcast user online status on connect
   io.emit('user-online', currentUserId);
+  // Let clients fetch who is online (they may attach listeners after connecting)
+  socket.on('get-online-users', () => socket.emit('online-users', Object.keys(onlineUsers)));
+  socket.emit('online-users', Object.keys(onlineUsers));
 
   // ==================== User Registration ====================
   // 'register' event kept for backwards compatibility but identity

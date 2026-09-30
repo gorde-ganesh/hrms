@@ -205,6 +205,12 @@ export class ChatService {
 
   // Online status
   listenForOnlineStatus() {
+    this.socket.on('online-users', (ids: string[]) => {
+      this.onlineUsers$.next(Array.from(new Set([...this.onlineUsers$.getValue(), ...ids])));
+    });
+
+    this.socket.emit('get-online-users');
+
     this.socket.on('user-online', (userId: string) => {
       const current = this.onlineUsers$.getValue();
       if (!current.includes(userId)) {

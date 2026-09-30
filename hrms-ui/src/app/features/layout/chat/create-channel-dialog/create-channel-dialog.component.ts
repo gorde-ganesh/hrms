@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -28,7 +28,9 @@ export class CreateChannelDialogComponent {
   isPublic = true;
   currentUserId = '';
 
-  constructor(private chatService: ChatService) {}
+  @Output() created = new EventEmitter<any>();
+
+  constructor(private chatService: ChatService, private cdr: ChangeDetectorRef) {}
 
   open(currentUserId: string) {
     this.currentUserId = currentUserId;
@@ -38,17 +40,24 @@ export class CreateChannelDialogComponent {
     this.isPublic = true;
   }
 
-  async onCreate() {
-    if (!this.channelName) return;
+  submitting = false;
 
-    const response: any = await this.chatService.createChannel(
-      this.channelName,
-      this.description,
-      this.isPublic,
-      this.currentUserId
-    );
-    console.log('Channel created:', response.data);
-    this.visible = false;
+  async onCreate() {
+    if (this.submitting || !this.channelName.trim()) return;
+    this.submitting = true;
+    try {
+      const response: any = await this.chatService.createChannel(
+        this.channelName.trim(),
+        this.description,
+        this.isPublic,
+        this.currentUserId
+      );
+      this.visible = false;
+      this.created.emit(response);
+    } finally {
+      this.submitting = false;
+      this.cdr.detectChanges();
+    }
   }
 
   onCancel() {

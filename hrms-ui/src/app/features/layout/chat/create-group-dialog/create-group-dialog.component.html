@@ -36,7 +36,8 @@
     <p-button
       label="Create"
       (onClick)="onCreate()"
-      [disabled]="!groupName || selectedMembers.length === 0"
+      [loading]="submitting"
+      [disabled]="!groupName || selectedMembers.length === 0 || submitting"
     />
   </ng-template>
 </p-dialog>

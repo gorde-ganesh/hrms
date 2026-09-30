@@ -45,6 +45,6 @@
 
   <ng-template pTemplate="footer">
     <p-button label="Cancel" severity="secondary" (onClick)="onCancel()" />
-    <p-button label="Create" (onClick)="onCreate()" [disabled]="!channelName" />
+    <p-button label="Create" (onClick)="onCreate()" [loading]="submitting" [disabled]="!channelName || submitting" />
   </ng-template>
 </p-dialog>
