@@ -16,6 +16,7 @@ import {
 } from '@angular/common/http';
 import { apiInterceptor } from './interceptors/api.interceptor';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupeMessageService } from './services/dedupe-message.service';
 import { ValidationService } from './services/validation.service';
 import { SpinnerService } from './services/spinner.service';
 import { NotificationService } from './services/notification.service';
@@ -40,7 +41,7 @@ const MyPreset = definePreset(Aura, {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    MessageService,
+    { provide: MessageService, useClass: DedupeMessageService },
     ValidationService,
     ConfirmationService,
     SpinnerService,

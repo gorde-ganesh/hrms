@@ -16,8 +16,9 @@
         </div>
       }
       <p-button
-        [label]="attendenceSummary?.today?.isCheckedIn ? 'Clock Out' : 'Clock In'"
+        [label]="attendenceSummary?.today?.isCheckedIn ? 'Clock Out' : attendenceSummary?.today?.checkInTime ? 'Completed' : 'Clock In'"
         [icon]="attendenceSummary?.today?.isCheckedIn ? 'pi pi-stop-circle' : 'pi pi-play-circle'"
+        [disabled]="!!attendenceSummary?.today?.checkInTime && !attendenceSummary?.today?.isCheckedIn"
         size="small"
         (click)="clockInOut()">
       </p-button>

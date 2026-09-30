@@ -1,7 +1,7 @@
 import { SpinnerService } from './../../services/spinner.service';
 import { Component, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { AvatarModule } from 'primeng/avatar';
 import { InputTextModule } from 'primeng/inputtext';
@@ -120,7 +120,8 @@ export class Layout implements OnInit {
     private serverApi: ApiService,
     private spinnerService: SpinnerService,
     private authState: AuthStateService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private messageService: MessageService
   ) {
     this.userInfo = this.authState.userInfo as any;
     this.changePasswordForm = this.fb.group(
@@ -241,6 +242,11 @@ export class Layout implements OnInit {
       }
     );
 
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Password changed',
+      detail: 'Your password has been updated.',
+    });
     this.changePasswordForm.reset();
     this.changePasswordDialog = false;
   }

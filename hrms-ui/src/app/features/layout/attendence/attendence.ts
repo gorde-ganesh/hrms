@@ -336,7 +336,7 @@ export class Attendence implements OnInit {
           checkIn: formValue.checkIn,
           checkOut: formValue.checkOut,
           status: formValue.status,
-          attendanceDate: formValue.attendanceDate,
+          attendanceDate: this.toDateOnly(formValue.attendanceDate),
         }
       );
 
@@ -368,12 +368,20 @@ export class Attendence implements OnInit {
     this.showBulkDialog = true;
   }
 
+  /** Calendar day as YYYY-MM-DD in the user's timezone, so the server never shifts it a day. */
+  private toDateOnly(d: Date | string | null): string | null {
+    if (!d) return null;
+    const date = new Date(d);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
   async saveBulkAttendance() {
     try {
-      const employeeIds = this.selectedEmployees.map((emp) => emp.employee.id);
+      // The table lists attendance records, so one employee can be selected more than once
+      const employeeIds = [...new Set<string>(this.selectedEmployees.map((emp) => emp.employee.id))];
       await this.serverApi.post('/api/attendance/bulk', {
         employeeIds,
-        date: this.bulkDate,
+        date: this.toDateOnly(this.bulkDate),
         status: this.bulkStatus,
       });
 

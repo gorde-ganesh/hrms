@@ -175,10 +175,10 @@ export class Dashboard implements OnInit {
   }
 
   async clockInOut() {
-    const clockInOut = await this.serverApi.post(`/api/attendance`, {
+    await this.serverApi.post(`/api/attendance`, {
       employeeId: this.userInfo.employeeId,
     });
-    this.loadAttendenceSummary();
+    await this.loadAttendenceSummary();
   }
 
   todayCheckInTime = '';

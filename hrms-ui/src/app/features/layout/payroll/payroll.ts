@@ -606,6 +606,11 @@ export class Payroll implements OnInit {
         description,
       });
     }
+    this.toast(
+      'success',
+      this.isEditMode ? 'Updated' : 'Created',
+      `Component ${this.isEditMode ? 'updated' : 'created'} successfully`
+    );
     this.hideDialog();
     this.loadComponents();
   }

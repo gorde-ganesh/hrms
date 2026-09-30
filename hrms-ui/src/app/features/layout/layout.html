@@ -45,6 +45,12 @@
           <p class="user-role text-xs leading-tight capitalize truncate">{{ userDetails().role }}</p>
         </div>
         <button class="sign-out-btn flex items-center justify-center w-7 h-7 rounded-md"
+                (click)="onChangePasswordClick()"
+                title="Change password"
+                aria-label="Change password">
+          <i class="pi pi-key" style="font-size: 0.8rem"></i>
+        </button>
+        <button class="sign-out-btn flex items-center justify-center w-7 h-7 rounded-md"
                 (click)="onLogoutClick()"
                 title="Sign out"
                 aria-label="Sign out">
