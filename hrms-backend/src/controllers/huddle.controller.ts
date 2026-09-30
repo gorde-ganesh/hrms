@@ -13,9 +13,7 @@ export const startHuddle = async (req: Request, res: Response) => {
     }
 
     if (!conversationId || !userId) {
-      return res
-        .status(400)
-        .json({ message: 'Conversation ID and User ID are required' });
+      return errorResponse(res, 'Conversation ID and User ID are required', ERROR_CODES.BAD_REQUEST, 400);
     }
 
     // Check if conversation exists
@@ -24,7 +22,7 @@ export const startHuddle = async (req: Request, res: Response) => {
     });
 
     if (!conversation) {
-      return res.status(404).json({ message: 'Conversation not found' });
+      return errorResponse(res, 'Conversation not found', ERROR_CODES.NOT_FOUND, 404);
     }
 
     // Check if user is a member
@@ -36,9 +34,7 @@ export const startHuddle = async (req: Request, res: Response) => {
     });
 
     if (!member) {
-      return res
-        .status(403)
-        .json({ message: 'You must be a member to start a huddle' });
+      return errorResponse(res, 'You must be a member to start a huddle', ERROR_CODES.FORBIDDEN, 403);
     }
 
     // Update conversation to mark huddle as active
@@ -68,7 +64,7 @@ export const startHuddle = async (req: Request, res: Response) => {
     );
   } catch (error: any) {
     console.error('Error starting huddle:', error);
-    errorResponse(res, error, ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
   }
 };
 
@@ -143,7 +139,7 @@ export const joinHuddle = async (req: Request, res: Response) => {
     );
   } catch (error: any) {
     console.error('Error joining huddle:', error);
-    errorResponse(res, error, ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
   }
 };
 
@@ -174,7 +170,7 @@ export const leaveHuddle = async (req: Request, res: Response) => {
     );
   } catch (error: any) {
     console.error('Error leaving huddle:', error);
-    errorResponse(res, error, ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
   }
 };
 
@@ -225,7 +221,7 @@ export const getActiveHuddles = async (req: Request, res: Response) => {
     );
   } catch (error: any) {
     console.error('Error fetching active huddles:', error);
-    errorResponse(res, error, ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
   }
 };
 
@@ -282,6 +278,6 @@ export const endHuddle = async (req: Request, res: Response) => {
     );
   } catch (error: any) {
     console.error('Error ending huddle:', error);
-    errorResponse(res, error, ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
+    return errorResponse(res, 'Internal Server Error', ERROR_CODES.INTERNAL_SERVER_ERROR, 500);
   }
 };

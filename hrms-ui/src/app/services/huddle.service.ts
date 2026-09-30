@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, firstValueFrom } from 'rxjs';
 import { environment } from '../../environment/environment';
 import { ApiService } from './api-interface.service';
 
@@ -13,6 +13,10 @@ export class HuddleService {
 
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
   private localStream: MediaStream | null = null;
+
+  /** Fires when a huddle starts/ends in any of the user's conversations (so lists can refresh) */
+  huddleChanged$ = new Subject<void>();
+  private currentUserId = '';
 
   activeHuddle$ = new BehaviorSubject<any>(null);
   huddleParticipants$ = new BehaviorSubject<any[]>([]);
@@ -33,18 +37,39 @@ export class HuddleService {
 
   // ==================== Huddle Management ====================
 
+  /** Microphone is required; camera is optional (many machines have none) and starts switched off. */
+  private async getLocalMedia(): Promise<MediaStream> {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    } catch {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    stream.getVideoTracks().forEach((track) => (track.enabled = false));
+    return stream;
+  }
+
+  /** Tear down media/peers without calling the API (used when the huddle was ended remotely). */
+  private resetLocalState() {
+    this.peerConnections.forEach((pc) => pc.close());
+    this.peerConnections.clear();
+    if (this.localStream) {
+      this.localStream.getTracks().forEach((track) => track.stop());
+      this.localStream = null;
+    }
+    this.localStream$.next(null);
+    this.isVideoEnabled$.next(false);
+    this.isMuted$.next(false);
+    this.remoteStreams$.next(new Map());
+    this.activeHuddle$.next(null);
+    this.huddleParticipants$.next([]);
+  }
+
   async startHuddle(conversationId: string, userId: string) {
     try {
       // Get local media stream (audio + video)
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-
-      // Disable video initially
-      this.localStream
-        .getVideoTracks()
-        .forEach((track) => (track.enabled = false));
+      this.currentUserId = userId;
+      this.localStream = await this.getLocalMedia();
       this.localStream$.next(this.localStream);
 
       // Start huddle on backend
@@ -71,15 +96,8 @@ export class HuddleService {
   async joinHuddle(huddleId: string, userId: string) {
     try {
       // Get local media stream
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-
-      // Disable video initially
-      this.localStream
-        .getVideoTracks()
-        .forEach((track) => (track.enabled = false));
+      this.currentUserId = userId;
+      this.localStream = await this.getLocalMedia();
       this.localStream$.next(this.localStream);
 
       // Join huddle on backend
@@ -249,7 +267,12 @@ export class HuddleService {
       async (data: { from: string; candidate: RTCIceCandidateInit }) => {
         const pc = this.peerConnections.get(data.from);
         if (pc) {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          } catch (err) {
+            // A candidate can arrive before the remote description is set; safe to drop
+            console.warn('Ignoring ICE candidate', err);
+          }
         }
       }
     );
@@ -261,15 +284,20 @@ export class HuddleService {
         pc.close();
         this.peerConnections.delete(data.userId);
       }
+      const streams = new Map(this.remoteStreams$.getValue());
+      if (streams.delete(data.userId)) this.remoteStreams$.next(streams);
     });
 
     // Huddle ended
-    this.socket.on('huddle-ended', () => {
+    this.socket.on('huddle-ended', (data: { huddleId?: string }) => {
       const activeHuddle = this.activeHuddle$.getValue();
-      if (activeHuddle) {
-        this.leaveHuddle(activeHuddle.id, ''); // Will clean up connections
+      if (activeHuddle && (!data?.huddleId || data.huddleId === activeHuddle.id)) {
+        this.resetLocalState();
       }
+      this.huddleChanged$.next();
     });
+
+    this.socket.on('huddle-started-notification', () => this.huddleChanged$.next());
   }
 
   // ==================== Audio Controls ====================

@@ -1,3 +1,4 @@
+import { MessageService } from 'primeng/api';
 import {
   Component,
   ElementRef,
@@ -78,7 +79,8 @@ export class Chat implements OnInit {
     public huddleService: HuddleService,
     public callService: CallService,
     private cdr: ChangeDetectorRef,
-    private authState: AuthStateService
+    private authState: AuthStateService,
+    private messageService: MessageService
   ) {}
 
   onlineUserIds = new Set<string>();
@@ -111,6 +113,7 @@ export class Chat implements OnInit {
     this.chatService.listenForMessages();
     this.chatService.listenForTyping();
     this.chatService.listenForOnlineStatus();
+    this.huddleService.huddleChanged$.subscribe(() => this.loadConversations());
     this.chatService.onlineUsers$.subscribe((ids) => {
       this.onlineUserIds = new Set(ids);
       this.cdr.markForCheck();
@@ -314,20 +317,34 @@ export class Chat implements OnInit {
     this.channelBrowser.open(this.currentUser.id, joinedIds);
   }
 
+  private huddleError(action: string, err: any) {
+    const denied = err?.name === 'NotAllowedError' || err?.name === 'NotFoundError';
+    this.messageService.add({
+      severity: 'error',
+      summary: `Could not ${action} huddle`,
+      detail: denied
+        ? 'Microphone access is needed. Allow it in the browser and try again.'
+        : err?.message ?? 'Something went wrong.',
+    });
+  }
+
   async startHuddle() {
     if (!this.selectedChat) return;
-    await this.huddleService.startHuddle(
-      this.selectedChat.id,
-      this.currentUser.id
-    );
+    try {
+      await this.huddleService.startHuddle(this.selectedChat.id, this.currentUser.id);
+      await this.loadConversations();
+    } catch (err) {
+      this.huddleError('start', err);
+    }
   }
 
   async joinHuddle() {
     if (!this.selectedChat) return;
-    await this.huddleService.joinHuddle(
-      this.selectedChat.id,
-      this.currentUser.id
-    );
+    try {
+      await this.huddleService.joinHuddle(this.selectedChat.id, this.currentUser.id);
+    } catch (err) {
+      this.huddleError('join', err);
+    }
   }
 
   isMyMessage(msg: any): boolean {

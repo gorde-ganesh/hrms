@@ -17,6 +17,7 @@ import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import { startScheduler } from './src/jobs/scheduler';
 import { setSocketState } from './src/lib/socket-state';
+import { registerHuddleHandlers } from './src/lib/huddle-signaling';
 const swaggerDocument = require('./src/docs/swagger.json');
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { success: false, statusCode: 429, message: 'Too many requests, please try again later.' } });
@@ -163,64 +164,7 @@ io.on('connection', (socket) => {
   });
 
   // ==================== Huddle Signaling ====================
-
-  socket.on(
-    'huddle-started',
-    (data: { conversationId: string; userId: string }) => {
-      socket.broadcast.emit('huddle-started-notification', data);
-    }
-  );
-
-  socket.on('huddle-join', (data: { huddleId: string; userId: string }) => {
-    socket.broadcast.emit('huddle-user-joined', data);
-  });
-
-  socket.on(
-    'huddle-offer',
-    (data: { target: string; offer: RTCSessionDescriptionInit }) => {
-      const targetSocketId = onlineUsers[data.target];
-      if (targetSocketId) {
-        io.to(targetSocketId).emit('huddle-offer', {
-          from: currentUserId,
-          offer: data.offer,
-        });
-      }
-    }
-  );
-
-  socket.on(
-    'huddle-answer',
-    (data: { target: string; answer: RTCSessionDescriptionInit }) => {
-      const targetSocketId = onlineUsers[data.target];
-      if (targetSocketId) {
-        io.to(targetSocketId).emit('huddle-answer', {
-          from: currentUserId,
-          answer: data.answer,
-        });
-      }
-    }
-  );
-
-  socket.on(
-    'huddle-ice-candidate',
-    (data: { target: string; candidate: RTCIceCandidateInit }) => {
-      const targetSocketId = onlineUsers[data.target];
-      if (targetSocketId) {
-        io.to(targetSocketId).emit('huddle-ice-candidate', {
-          from: currentUserId,
-          candidate: data.candidate,
-        });
-      }
-    }
-  );
-
-  socket.on('huddle-leave', (data: { huddleId: string; userId: string }) => {
-    socket.broadcast.emit('huddle-user-left', data);
-  });
-
-  socket.on('huddle-ended', (data: { huddleId: string }) => {
-    socket.broadcast.emit('huddle-ended', data);
-  });
+  registerHuddleHandlers(io, socket, currentUserId);
 
   // ==================== Call Signaling (1-1) ====================
 
