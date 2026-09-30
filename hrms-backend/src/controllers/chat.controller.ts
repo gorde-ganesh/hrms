@@ -10,6 +10,7 @@ import {
 import { prisma } from '../lib/prisma';
 import { ERROR_CODES, SUCCESS_CODES } from '../utils/response-codes';
 import { canReadConversation } from '../utils/access';
+import { getIo } from '../lib/socket-state';
 
 
 const ALLOWED_MIME_TYPES = [
@@ -221,6 +222,24 @@ export const sendMessage = async (req: Request, res: Response) => {
         },
       },
     });
+
+    // Push to every other member's open sockets (chat page and notification bell)
+    const io = getIo();
+    if (io) {
+      const recipients = await prisma.conversationMember.findMany({
+        where: { conversationId, userId: { not: senderId } },
+        select: { userId: true },
+      });
+      const preview = messageText.length > 80 ? `${messageText.slice(0, 80)}…` : messageText;
+      for (const { userId } of recipients) {
+        io.to(`user:${userId}`).emit('receiveMessage', newMessage);
+        io.to(`user:${userId}`).emit('notification', {
+          title: `New message from ${newMessage.sender.name}`,
+          type: 'CHAT',
+          message: preview,
+        });
+      }
+    }
 
     return createdResponse(
       res,

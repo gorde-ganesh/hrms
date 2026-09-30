@@ -128,15 +128,8 @@ export class ChatService {
   // ==================== Messages ====================
 
   async sendMessage(data: any) {
-    this.socket.emit('sendMessage', data);
-    const message = await this.serverApiService.post(
-      `/api/chats/messages`,
-      data
-    );
-
-    console.log(message);
-
-    return message;
+    // The server persists the message and pushes it to the other members
+    return await this.serverApiService.post(`/api/chats/messages`, data);
   }
 
   async getMessages(conversationId: string) {

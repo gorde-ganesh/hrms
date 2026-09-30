@@ -52,12 +52,10 @@ export const sendNotification = async (options: {
 
     // Emit to online users
     const io = getIo();
-    const onlineUsers = getOnlineUsers();
     if (io) {
       notificationsData.forEach((n) => {
-        const socketId = onlineUsers[n.userId];
-        if (socketId) {
-          io.to(socketId).emit('notification', { type: n.type, message: n.message });
+        {
+          io.to(`user:${n.userId}`).emit('notification', { title: 'Notification', type: n.type, message: n.message });
         }
       });
     }

@@ -118,6 +118,8 @@ io.on('connection', (socket) => {
   // Use verified identity from JWT, not client-supplied userId
   let currentUserId: string = (socket as any).userId;
   onlineUsers[currentUserId] = socket.id;
+  // A user can have several sockets (chat + notifications, multiple tabs); target them all via a room
+  socket.join(`user:${currentUserId}`);
   logger.info(`User ${currentUserId} connected with socket ${socket.id}`);
 
   // Broadcast user online status on connect
@@ -135,12 +137,7 @@ io.on('connection', (socket) => {
 
   // ==================== Chat Messages ====================
 
-  socket.on('sendMessage', (data) => {
-    const receiverSocketId = onlineUsers[data.receiverId];
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('receiveMessage', data);
-    }
-  });
+  // Messages are persisted and pushed to the other members by POST /api/chats/messages
 
   // ==================== Typing Indicators ====================
 
@@ -296,10 +293,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     if (currentUserId) {
-      delete onlineUsers[currentUserId];
-      // Broadcast user offline status
-      io.emit('user-offline', currentUserId);
-      console.log(`User ${currentUserId} disconnected`);
+      // Only mark offline when the user's last socket has gone
+      const stillConnected = io.sockets.adapter.rooms.get(`user:${currentUserId}`)?.size ?? 0;
+      if (stillConnected === 0) {
+        delete onlineUsers[currentUserId];
+        // Broadcast user offline status
+        io.emit('user-offline', currentUserId);
+        console.log(`User ${currentUserId} disconnected`);
+      }
     }
     console.log('Client disconnected:', socket.id);
   });
