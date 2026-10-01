@@ -150,8 +150,6 @@ npm start -w hrms-ui
 | `npm run dev`                               | Start backend and frontend                      |
 | `npm run build`                             | Build all workspaces                            |
 | `npm run typecheck`                         | Type-check all workspaces                       |
-| `npm run test`                              | Run all tests                                   |
-| `npx turbo run test --filter=hrms-backend`  | Run a task for one workspace                    |
 | `npm run <script> -w <workspace>`           | Run any workspace script directly (no Turbo)    |
 
 ## 🌐 Running on Local Network

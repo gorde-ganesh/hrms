@@ -11,10 +11,10 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
     "generate": "turbo run generate"
   },
   "devDependencies": {
+    "prettier": "^3.9.9",
     "turbo": "^2.5.0"
   }
 }

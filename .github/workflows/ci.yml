@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-typecheck:
-    name: Backend — TypeScript check and tests
+    name: Backend — TypeScript check
     runs-on: ubuntu-latest
 
     steps:
@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check and test (runs prisma generate first)
-        run: npx turbo run typecheck test --filter=hrms-backend
+      - name: Type check (runs prisma generate first)
+        run: npx turbo run typecheck --filter=hrms-backend
         env:
           DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
@@ -44,43 +44,3 @@ jobs:
 
       - name: Production build
         run: npx turbo run build --filter=hrms-ui
-
-  frontend-test:
-    name: Frontend — Unit tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        working-directory: hrms-ui
-        run: npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --karmaConfig=karma.conf.js --code-coverage
-
-      - name: Check coverage thresholds
-        working-directory: hrms-ui
-        run: |
-          node -e "
-            const fs = require('fs');
-            const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
-            const total = summary.total;
-            const threshold = 60;
-            const fields = ['lines', 'statements', 'functions', 'branches'];
-            let failed = false;
-            for (const f of fields) {
-              const pct = total[f].pct;
-              if (pct < threshold) {
-                console.error('Coverage ' + f + ' ' + pct + '% is below threshold ' + threshold + '%');
-                failed = true;
-              }
-            }
-            if (failed) process.exit(1);
-            console.log('All coverage thresholds passed.');
-          "

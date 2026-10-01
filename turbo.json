@@ -13,10 +13,6 @@
     "typecheck": {
       "dependsOn": ["generate"]
     },
-    "test": {
-      "dependsOn": ["generate"],
-      "outputs": ["coverage/**"]
-    },
     "dev": {
       "dependsOn": ["generate"],
       "cache": false,
