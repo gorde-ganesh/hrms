@@ -1,52 +1,35 @@
-<div class="space-y-6">
+<div class="page space-y-6">
 
-  <!-- ── Page header ── -->
-  <div class="flex items-start justify-between">
+  <header class="page-header">
     <div>
-      <h1 class="text-2xl font-bold text-color leading-tight mb-1">Employees</h1>
-      <p class="text-sm text-muted-color flex items-center gap-2">
-        <i class="pi pi-users text-xs"></i>
-        Manage your organization's workforce
-      </p>
+      <h1>Employees</h1>
+      <p class="page-lede">Everyone in your organization, in one list.</p>
     </div>
     <p-button
-      label="Add Employee"
+      label="Add employee"
       icon="pi pi-user-plus"
       (onClick)="onAddEmploeeDialog()"
     />
-  </div>
+  </header>
 
-  <!-- ── Summary metrics ── -->
-  <div class="metrics-row">
-    <div class="metric-card">
-      <div>
-        <span class="metric-value">{{ employeeSummary?.totalEmployees || 0 }}</span>
-        <span class="metric-label">Total Employees</span>
-      </div>
-      <div class="metric-icon icon-blue"><i class="pi pi-users"></i></div>
+  <section class="section ledger" aria-label="Employee summary">
+    <div class="ledger-cell">
+      <p class="ledger-label">Total employees</p>
+      <p class="ledger-value">{{ employeeSummary?.totalEmployees || 0 }}</p>
     </div>
-    <div class="metric-card">
-      <div>
-        <span class="metric-value">{{ employeeSummary?.activeEmployees || 0 }}</span>
-        <span class="metric-label">Active</span>
-      </div>
-      <div class="metric-icon icon-green"><i class="pi pi-check-circle"></i></div>
+    <div class="ledger-cell">
+      <p class="ledger-label">Active</p>
+      <p class="ledger-value">{{ employeeSummary?.activeEmployees || 0 }}</p>
     </div>
-    <div class="metric-card">
-      <div>
-        <span class="metric-value">{{ employeeSummary?.newEmployees || 0 }}</span>
-        <span class="metric-label">New This Month</span>
-      </div>
-      <div class="metric-icon icon-emerald"><i class="pi pi-user-plus"></i></div>
+    <div class="ledger-cell">
+      <p class="ledger-label">New this month</p>
+      <p class="ledger-value">{{ employeeSummary?.newEmployees || 0 }}</p>
     </div>
-    <div class="metric-card">
-      <div>
-        <span class="metric-value">{{ employeeSummary?.totalDepartments || 0 }}</span>
-        <span class="metric-label">Departments</span>
-      </div>
-      <div class="metric-icon icon-violet"><i class="pi pi-building"></i></div>
+    <div class="ledger-cell">
+      <p class="ledger-label">Departments</p>
+      <p class="ledger-value">{{ employeeSummary?.totalDepartments || 0 }}</p>
     </div>
-  </div>
+  </section>
 
   <!-- ── Employee table ── -->
   <p-table

@@ -1,5 +1,15 @@
-.card-icons {
-  font-size: 2rem;
+.today {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.today-line {
+  margin: 4px 0 2px;
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 
 .space-y-6 > * + * {

@@ -1,51 +1,22 @@
 <div class="auth-shell">
 
-  <aside class="brand-panel">
-    <div class="brand-top">
-      <div class="brand-mark">
-        <i class="pi pi-th-large"></i>
-      </div>
-      <div class="brand-wordmark">
-        <span class="brand-name">PeopleOS</span>
-        <span class="brand-tagline-small">Workforce desk</span>
-      </div>
-    </div>
-
-    <div class="brand-body">
-      <h2 class="brand-headline">Run payroll, attendance, and leave work from one clear desk.</h2>
-      <p class="brand-desc">A focused workspace for HR teams that need records, approvals, and daily movement close at hand.</p>
-      <ul class="brand-features">
-        <li>
-          <span class="feature-dot"><i class="pi pi-check"></i></span>
-          Attendance patterns by shift
-        </li>
-        <li>
-          <span class="feature-dot"><i class="pi pi-check"></i></span>
-          Payroll checks before release
-        </li>
-        <li>
-          <span class="feature-dot"><i class="pi pi-check"></i></span>
-          Role-aware approvals
-        </li>
-      </ul>
-    </div>
-
-    <footer class="brand-foot">PeopleOS 2026</footer>
-  </aside>
+  <div class="auth-brand">
+    <app-logo [size]="32" />
+  </div>
 
   <main class="form-panel">
     <div class="form-inner">
 
       <header class="form-head">
         <h1 class="form-title">
-          @if(isForwordPassword && tempToken) { Reset password }
-          @else if(isForwordPassword) { Forgot password }
-          @else { Welcome back }
+          @if(isForwordPassword && tempToken) { Set a new password }
+          @else if(isForwordPassword) { Reset your password }
+          @else { Sign in }
         </h1>
         <p class="form-subtitle">
           @if(isForwordPassword && tempToken) { Enter your new password below. }
-          @else if(isForwordPassword) { Enter your email and we'll send a reset link. }
-          @else { Sign in to your workspace to continue. }
+          @else if(isForwordPassword) { We will email you a reset link. }
+          @else { Use your work email to continue. }
         </p>
       </header>
 

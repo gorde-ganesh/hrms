@@ -24,17 +24,34 @@ import { NotificationService } from './services/notification.service';
 const MyPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{emerald.50}',
-      100: '{emerald.100}',
-      200: '{emerald.200}',
-      300: '{emerald.300}',
-      400: '{emerald.400}',
-      500: '{emerald.500}',
-      600: '{emerald.600}',
-      700: '{emerald.700}',
-      800: '{emerald.800}',
-      900: '{emerald.900}',
-      950: '{emerald.950}',
+      50: '{teal.50}',
+      100: '{teal.100}',
+      200: '{teal.200}',
+      300: '{teal.300}',
+      400: '{teal.400}',
+      500: '{teal.500}',
+      600: '{teal.600}',
+      700: '{teal.700}',
+      800: '{teal.800}',
+      900: '{teal.900}',
+      950: '{teal.950}',
+    },
+    // Teal-700 gives white button text 5.5:1 contrast (WCAG AA)
+    colorScheme: {
+      light: {
+        primary: {
+          color: '{primary.700}',
+          contrastColor: '#ffffff',
+          hoverColor: '{primary.800}',
+          activeColor: '{primary.900}',
+        },
+        highlight: {
+          background: '{primary.50}',
+          focusBackground: '{primary.100}',
+          color: '{primary.800}',
+          focusColor: '{primary.900}',
+        },
+      },
     },
   },
 });

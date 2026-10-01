@@ -1,21 +1,27 @@
 /* ===== Notification Bell ===== */
 .notification-bell {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hr-muted);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  background: var(--p-surface-100);
 }
 
 .notification-bell:hover {
-  background: var(--p-primary-100);
-  transform: scale(1.1);
+  background: var(--hr-canvas);
+  border-color: var(--hr-line);
+  color: var(--hr-ink);
 }
 
-.notification-bell i {
-  font-size: 1.25rem;
-  color: var(--p-text-color);
+.notification-bell app-icon {
+  color: inherit;
 }
 
 /* ===== Notification List ===== */
@@ -38,7 +44,7 @@
 }
 
 .notification-item::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0;
@@ -66,7 +72,7 @@
 }
 
 .notification-item.unread::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 16px;
   right: 16px;
@@ -120,8 +126,6 @@
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--p-text-color);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .notification-message {

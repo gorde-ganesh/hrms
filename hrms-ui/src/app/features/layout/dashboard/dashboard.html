@@ -1,294 +1,184 @@
-<div class="dash-page">
-
-  <!-- Page header -->
-  <div class="page-head flex items-start justify-between gap-4 mb-8">
+<div class="page">
+  <header class="page-header">
     <div>
-      <h1 class="page-title">Good morning, {{ userInfo.name?.split(' ')[0] }}</h1>
-      <p class="page-date">{{ currentDate | date: 'EEEE, MMMM d, y' }}</p>
+      <h1>Good morning, {{ userInfo.name?.split(" ")[0] }}</h1>
+      <p class="page-lede">{{ currentDate | date: "EEEE, MMMM d, y" }}</p>
     </div>
-    <div class="clock-action flex items-center gap-4">
-      @if (todayStatus && todayStatus !== '-') {
-        <div class="text-right">
-          <p class="clock-status-label">Today</p>
-          <p class="clock-status-value">
-            {{ todayStatus === 'PRESENT' ? 'In since ' + todayCheckInTime : todayStatus }}
-          </p>
-        </div>
+    <div class="clock">
+      @if (todayStatus && todayStatus !== "-") {
+        <span class="clock-status">
+          {{
+            todayStatus === "PRESENT"
+              ? "Clocked in since " + todayCheckInTime
+              : todayStatus
+          }}
+        </span>
       }
       <p-button
-        [label]="attendenceSummary?.today?.isCheckedIn ? 'Clock Out' : attendenceSummary?.today?.checkInTime ? 'Completed' : 'Clock In'"
-        [icon]="attendenceSummary?.today?.isCheckedIn ? 'pi pi-stop-circle' : 'pi pi-play-circle'"
-        [disabled]="!!attendenceSummary?.today?.checkInTime && !attendenceSummary?.today?.isCheckedIn"
-        size="small"
-        (click)="clockInOut()">
+        [label]="
+          attendenceSummary?.today?.isCheckedIn
+            ? 'Clock out'
+            : attendenceSummary?.today?.checkInTime
+              ? 'Done for today'
+              : 'Clock in'
+        "
+        [icon]="
+          attendenceSummary?.today?.isCheckedIn
+            ? 'pi pi-stop-circle'
+            : 'pi pi-play-circle'
+        "
+        [disabled]="
+          !!attendenceSummary?.today?.checkInTime &&
+          !attendenceSummary?.today?.isCheckedIn
+        "
+        (click)="clockInOut()"
+      >
       </p-button>
     </div>
-  </div>
+  </header>
 
-  <section class="command-strip mb-7">
-    <div class="command-copy">
-      <span class="eyebrow">Workforce pulse</span>
-      <strong>Daily operating view</strong>
-      <span>Approvals, attendance, and pay movement in one place.</span>
-    </div>
-    <div class="command-metrics">
-      <div>
-        <span>Role</span>
-        <strong>{{ userInfo.role }}</strong>
+  <!-- Alerts (Admin / HR): text and icon carry the meaning, color only supports it -->
+  @if (alerts.length > 0) {
+    <ul class="alerts" aria-label="Needs attention">
+      @for (alert of alerts; track alert.type) {
+        <li class="alert" [attr.data-type]="alert.type">
+          <app-icon [name]="alertIcon(alert.type)" />
+          <span>{{ alert.message }}</span>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Key numbers: one ledger strip, not a row of cards -->
+  <section class="section ledger" aria-label="Key numbers">
+    @for (stat of stats; track stat.label) {
+      <div class="ledger-cell">
+        <p class="ledger-label">{{ stat.label }}</p>
+        <p class="stat-value">{{ stat.value }}</p>
+        @if (stat.note) {
+          <p class="ledger-note">{{ stat.note }}</p>
+        }
       </div>
-      <div>
-        <span>Status</span>
-        <strong>{{ todayStatus || 'Ready' }}</strong>
-      </div>
-    </div>
+    }
   </section>
 
-  <!-- Alerts strip (ADMIN / HR) -->
-  @if (alerts.length > 0) {
-    <div class="flex flex-col gap-2 mb-6">
-      @for (alert of alerts; track alert.type) {
-        <div class="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm"
-             [class]="alert.type === 'CONTRACT' ? 'bg-red-50 border-red-200 text-red-700'
-                    : alert.type === 'LEAVE'    ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
-                    : 'bg-blue-50 border-blue-200 text-blue-700'">
-          <i [class]="alertIcon(alert.type) + ' text-base'"></i>
-          <span>{{ alert.message }}</span>
-        </div>
-      }
-    </div>
+  <!-- Shortcuts -->
+  <nav class="shortcuts" aria-label="Shortcuts">
+    @for (action of quickActions; track action.label) {
+      <button
+        type="button"
+        class="shortcut"
+        (click)="onQuickAction(action.label)"
+      >
+        <app-icon [name]="action.icon" [size]="16" />
+        {{ action.label }}
+      </button>
+    }
+  </nav>
+
+  <!-- Payroll this month (Admin) -->
+  @if (userInfo.role === "ADMIN" && dashboardStats.payrollSummary) {
+    <section class="section block">
+      <div class="section-head">
+        <h2 class="section-title">Payroll this month</h2>
+      </div>
+      <div class="ledger ledger-flush">
+        @for (cell of payrollCells; track cell.label) {
+          <div class="ledger-cell">
+            <p class="ledger-label">{{ cell.label }}</p>
+            <p class="stat-value">{{ cell.value }}</p>
+          </div>
+        }
+      </div>
+    </section>
   }
 
-  <!-- Stat strip -->
-  <div class="stat-grid grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-
-    <!-- ADMIN -->
-    @if (userInfo.role === 'ADMIN') {
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Total Employees</span>
-          <i class="pi pi-users stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.headcount?.total || 0 }}</p>
-        <p class="stat-unit">{{ dashboardStats.headcount?.active || 0 }} active</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Departments</span>
-          <i class="pi pi-sitemap stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.totalDepartments || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Pending Leaves</span>
-          <i class="pi pi-calendar-times stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.pendingLeaves || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Present Today</span>
-          <i class="pi pi-check-circle stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.todayAttendance || 0 }}</p>
-      </div>
-    }
-
-    <!-- HR -->
-    @if (userInfo.role === 'HR') {
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Total Employees</span>
-          <i class="pi pi-users stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.totalEmployees || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Pending Leaves</span>
-          <i class="pi pi-calendar-times stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.pendingLeaves || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Present Today</span>
-          <i class="pi pi-check-circle stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.todayAttendance || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Pending Payrolls</span>
-          <i class="pi pi-dollar stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.pendingPayrolls || 0 }}</p>
-      </div>
-    }
-
-    <!-- MANAGER -->
-    @if (userInfo.role === 'MANAGER') {
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Team Size</span>
-          <i class="pi pi-users stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.teamSize || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Pending Leaves</span>
-          <i class="pi pi-calendar-times stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.teamLeaves || 0 }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Present Today</span>
-          <i class="pi pi-check-circle stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.teamAttendance || 0 }}</p>
-      </div>
-    }
-
-    <!-- EMPLOYEE -->
-    @if (userInfo.role === 'EMPLOYEE') {
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Days This Month</span>
-          <i class="pi pi-clock stat-icon"></i>
-        </div>
-        <p class="stat-value">{{ dashboardStats.attendanceSummary ?? '—' }}</p>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-header">
-          <span class="stat-label">Leave Balance</span>
-          <i class="pi pi-calendar stat-icon"></i>
-        </div>
-        <p class="stat-value">
-          {{ leaveBalanceDaysRemaining }}<span class="stat-unit"> days</span>
-        </p>
-      </div>
-    }
-
-  </div>
-
-  <!-- Payroll summary row (ADMIN only) -->
-  @if (userInfo.role === 'ADMIN' && dashboardStats.payrollSummary) {
-    <div class="panel mb-6">
-      <div class="panel-header">
-        <h2 class="panel-title">This Month's Payroll</h2>
-      </div>
-      <div class="grid grid-cols-3 gap-4">
-        <div class="stat-cell">
-          <div class="stat-header">
-            <span class="stat-label">Draft</span>
-            <i class="pi pi-file-edit stat-icon text-gray-400"></i>
-          </div>
-          <p class="stat-value">{{ dashboardStats.payrollSummary.draft || 0 }}</p>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-header">
-            <span class="stat-label">Finalized</span>
-            <i class="pi pi-check stat-icon text-yellow-500"></i>
-          </div>
-          <p class="stat-value">{{ dashboardStats.payrollSummary.finalized || 0 }}</p>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-header">
-            <span class="stat-label">Paid</span>
-            <i class="pi pi-dollar stat-icon text-green-600"></i>
-          </div>
-          <p class="stat-value">{{ dashboardStats.payrollSummary.paid || 0 }}</p>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Recent Joiners (Admin only) -->
-  @if (userInfo.role === 'ADMIN' && dashboardStats.recentJoiners?.length) {
-    <div class="panel mb-6">
-      <div class="panel-header">
-        <h2 class="panel-title">Recent Joiners</h2>
+  <!-- Recent joiners (Admin) -->
+  @if (userInfo.role === "ADMIN" && dashboardStats.recentJoiners?.length) {
+    <section class="section block">
+      <div class="section-head">
+        <h2 class="section-title">Recent joiners</h2>
       </div>
       <div class="overflow-x-auto">
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Designation</th>
-              <th>Joined</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Designation</th>
+              <th scope="col">Joined</th>
             </tr>
           </thead>
           <tbody>
-            @for (employee of dashboardStats.recentJoiners; track employee.user.email) {
+            @for (
+              employee of dashboardStats.recentJoiners;
+              track employee.user.email
+            ) {
               <tr>
                 <td class="font-medium">{{ employee.user.name }}</td>
                 <td>{{ employee.user.email }}</td>
-                <td>{{ employee.designation?.name || 'N/A' }}</td>
+                <td>{{ employee.designation?.name || "Not assigned" }}</td>
                 <td>{{ employee.joiningDate | date }}</td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   }
 
-  <!-- Attendance chart + Upcoming leaves -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-
-    <div class="panel lg:col-span-2">
-      <div class="panel-header">
+  <!-- Attendance history + upcoming leaves -->
+  <div class="split block">
+    <section class="section">
+      <div class="section-head">
         <div>
-          <h2 class="panel-title">Attendance History</h2>
-          <p class="panel-subtitle">Last 7 working days</p>
+          <h2 class="section-title">Hours worked</h2>
+          <p class="section-note">Last 7 working days</p>
         </div>
       </div>
-      <p-chart type="bar" height="220px" [data]="attendanceData" [options]="chartOptions"></p-chart>
-    </div>
+      <div class="section-body">
+        <p-chart
+          type="bar"
+          height="220px"
+          [data]="attendanceData"
+          [options]="chartOptions"
+        ></p-chart>
+      </div>
+    </section>
 
-    <div class="panel">
-      <div class="panel-header">
+    <section class="section">
+      <div class="section-head">
         <div>
-          <h2 class="panel-title">Upcoming Leaves</h2>
-          <p class="panel-subtitle">Scheduled time off</p>
+          <h2 class="section-title">Upcoming leaves</h2>
+          <p class="section-note">Scheduled time off</p>
         </div>
       </div>
-      <div class="flex flex-col gap-2">
-        @for (leave of upcomingLeaves; track leave.date) {
-          <div class="leave-item">
-            <div class="flex items-start justify-between gap-2 mb-1">
-              <p class="leave-title">{{ leave.title }}</p>
-              <p-tag [value]="leave.status" severity="success" [style]="{ fontSize: '0.7rem', padding: '2px 8px' }"></p-tag>
-            </div>
-            <p class="leave-date">{{ leave.date }}</p>
-            <p class="leave-away">{{ leave.away }}</p>
-          </div>
+      <div class="section-body">
+        @if (upcomingLeaves?.length) {
+          <ul class="leave-list">
+            @for (leave of upcomingLeaves; track leave.date) {
+              <li class="leave-item">
+                <div class="leave-row">
+                  <p class="leave-title">{{ leave.title }}</p>
+                  <p-tag [value]="leave.status" severity="success"></p-tag>
+                </div>
+                <p class="leave-meta">{{ leave.date }} · {{ leave.away }}</p>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="leave-empty">
+            No leave is scheduled. Requests you approve will show up here.
+          </p>
         }
-        @if (!upcomingLeaves?.length) {
-          <p class="leave-empty">No upcoming leaves scheduled</p>
-        }
-        <p-button label="Request Leave" size="small" [outlined]="true" styleClass="w-full mt-2" (click)="onQuickAction('Request Leave')" />
+        <p-button
+          label="Request leave"
+          size="small"
+          [outlined]="true"
+          styleClass="w-full mt-4"
+          (click)="onQuickAction('Request Leave')"
+        />
       </div>
-    </div>
-
+    </section>
   </div>
-
-  <!-- Quick actions -->
-  <div class="panel">
-    <div class="panel-header">
-      <h2 class="panel-title">Quick Actions</h2>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      @for (action of quickActions; track action.label) {
-        <button class="quick-action flex items-center gap-3 px-4 py-3 rounded-lg text-left w-full" (click)="onQuickAction(action.label)">
-          <i [class]="action.icon + ' quick-action-icon'"></i>
-          <span class="quick-action-label">{{ action.label }}</span>
-        </button>
-      }
-    </div>
-  </div>
-
 </div>

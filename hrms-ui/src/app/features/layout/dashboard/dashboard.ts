@@ -12,6 +12,7 @@ import { ChartModule } from 'primeng/chart';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TagModule } from 'primeng/tag';
 import dayjs from 'dayjs';
+import { Icon } from '../../../shared/icon';
 
 interface DashboardSummary {
   // HR / normalized ADMIN
@@ -43,7 +44,6 @@ interface DashboardAlert {
   count: number;
 }
 
-
 @Component({
   selector: 'app-dashboard',
   imports: [
@@ -56,6 +56,7 @@ interface DashboardAlert {
     ChartModule,
     ProgressBarModule,
     TagModule,
+    Icon,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -95,14 +96,14 @@ export class Dashboard implements OnInit {
   ];
 
   quickActions = [
-    { label: 'Request Leave', icon: 'pi pi-calendar', color: 'text-blue-600' },
-    { label: 'View Payslips', icon: 'pi pi-dollar', color: 'text-green-600' },
+    { label: 'Request Leave', icon: 'calendar', color: 'text-teal-700' },
+    { label: 'View Payslips', icon: 'banknote', color: 'text-green-600' },
     {
       label: 'Performance',
-      icon: 'pi pi-chart-line',
+      icon: 'trend',
       color: 'text-emerald-700',
     },
-    { label: 'Timesheet', icon: 'pi pi-clock', color: 'text-orange-600' },
+    { label: 'Timesheet', icon: 'clock', color: 'text-orange-600' },
   ];
 
   attendanceData = {};
@@ -113,7 +114,12 @@ export class Dashboard implements OnInit {
   dashboardStats: DashboardSummary = {};
   alerts: DashboardAlert[] = [];
 
-  constructor(private serverApi: ApiService, private cdr: ChangeDetectorRef, private authState: AuthStateService, private router: Router) {}
+  constructor(
+    private serverApi: ApiService,
+    private cdr: ChangeDetectorRef,
+    private authState: AuthStateService,
+    private router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.userInfo = this.authState.userInfo;
@@ -124,7 +130,10 @@ export class Dashboard implements OnInit {
     this.loadQuickActions();
     this.loadDashboardStats();
 
-    if (['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'].includes(this.userInfo?.role) && this.userInfo?.employeeId) {
+    if (
+      ['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'].includes(this.userInfo?.role) &&
+      this.userInfo?.employeeId
+    ) {
       this.initChartOptions();
     }
 
@@ -137,14 +146,72 @@ export class Dashboard implements OnInit {
     }
   }
 
+  /** One list per role keeps the template free of per-role copies of the same cell. */
+  get stats(): { label: string; value: string | number; note?: string }[] {
+    const s = this.dashboardStats;
+    switch (this.userInfo?.role) {
+      case 'ADMIN':
+        return [
+          {
+            label: 'Employees',
+            value: s.headcount?.total || 0,
+            note: `${s.headcount?.active || 0} active`,
+          },
+          { label: 'Departments', value: s.totalDepartments || 0 },
+          { label: 'Pending leaves', value: s.pendingLeaves || 0 },
+          { label: 'Present today', value: s.todayAttendance || 0 },
+        ];
+      case 'HR':
+        return [
+          { label: 'Employees', value: s.totalEmployees || 0 },
+          { label: 'Pending leaves', value: s.pendingLeaves || 0 },
+          { label: 'Present today', value: s.todayAttendance || 0 },
+          { label: 'Pending payrolls', value: s.pendingPayrolls || 0 },
+        ];
+      case 'MANAGER':
+        return [
+          { label: 'Team size', value: s.teamSize || 0 },
+          { label: 'Pending leaves', value: s.teamLeaves || 0 },
+          { label: 'Present today', value: s.teamAttendance || 0 },
+        ];
+      case 'EMPLOYEE':
+        return [
+          {
+            label: 'Days worked this month',
+            value: s.attendanceSummary ?? '—',
+          },
+          {
+            label: 'Leave balance',
+            value: this.leaveBalanceDaysRemaining,
+            note: 'days left',
+          },
+        ];
+      default:
+        return [];
+    }
+  }
+
+  get payrollCells(): { label: string; value: number }[] {
+    const p = this.dashboardStats.payrollSummary;
+    return [
+      { label: 'Draft', value: p?.draft || 0 },
+      { label: 'Finalized', value: p?.finalized || 0 },
+      { label: 'Paid', value: p?.paid || 0 },
+    ];
+  }
 
   get leaveBalanceDaysRemaining(): number {
     if (!this.dashboardStats.leaveBalance) return 0;
-    return this.dashboardStats.leaveBalance.totalLeaves - this.dashboardStats.leaveBalance.usedLeaves;
+    return (
+      this.dashboardStats.leaveBalance.totalLeaves -
+      this.dashboardStats.leaveBalance.usedLeaves
+    );
   }
   async loadDashboardStats() {
     try {
-      const res = await this.serverApi.get<DashboardSummary>('/api/dashboard/summary');
+      const res = await this.serverApi.get<DashboardSummary>(
+        '/api/dashboard/summary',
+      );
       // Normalize ADMIN headcount so templates use the same field name across roles
       if (res.headcount) {
         res.totalEmployees = res.headcount.total;
@@ -158,7 +225,11 @@ export class Dashboard implements OnInit {
 
   async loadAlerts() {
     try {
-      const res: any = await this.serverApi.get('/api/dashboard/alerts', undefined, false);
+      const res: any = await this.serverApi.get(
+        '/api/dashboard/alerts',
+        undefined,
+        false,
+      );
       this.alerts = res?.alerts ?? [];
     } catch {
       this.alerts = [];
@@ -167,11 +238,22 @@ export class Dashboard implements OnInit {
   }
 
   alertSeverity(type: string): string {
-    return ({ LEAVE: 'warn', CONTRACT: 'danger', PAYROLL: 'info' } as any)[type] ?? 'secondary';
+    return (
+      ({ LEAVE: 'warn', CONTRACT: 'danger', PAYROLL: 'info' } as any)[type] ??
+      'secondary'
+    );
   }
 
   alertIcon(type: string): string {
-    return ({ LEAVE: 'pi pi-calendar-times', CONTRACT: 'pi pi-file', PAYROLL: 'pi pi-dollar' } as any)[type] ?? 'pi pi-bell';
+    return (
+      (
+        {
+          LEAVE: 'calendar',
+          CONTRACT: 'file',
+          PAYROLL: 'banknote',
+        } as any
+      )[type] ?? 'bell'
+    );
   }
 
   async clockInOut() {
@@ -194,31 +276,34 @@ export class Dashboard implements OnInit {
     try {
       const summary: any = await this.serverApi.get(
         `/api/attendance/summary/${this.userInfo.employeeId}`,
-        { month, year }
+        { month, year },
       );
-    this.attendenceSummary = summary;
-    this.todayWorkHours = summary.today.totalHours
-      ? `${summary.today.totalHours.toFixed(2)}h`
-      : '-';
-    this.todayStatus = summary.today.status || '-';
-    this.todayCheckInTime = summary.today.checkInTime
-      ? formatDate(summary.today.checkInTime, 'shortTime', 'en')
-      : '-';
+      this.attendenceSummary = summary;
+      this.todayWorkHours = summary.today.totalHours
+        ? `${summary.today.totalHours.toFixed(2)}h`
+        : '-';
+      this.todayStatus = summary.today.status || '-';
+      this.todayCheckInTime = summary.today.checkInTime
+        ? formatDate(summary.today.checkInTime, 'shortTime', 'en')
+        : '-';
 
-    const labels = summary.history.map((d: any) => dayjs(d.date).format('ddd'));
-    const hours = summary.history.map((d: any) => d.totalHours || 0);
+      const labels = summary.history.map((d: any) =>
+        dayjs(d.date).format('ddd'),
+      );
+      const hours = summary.history.map((d: any) => d.totalHours || 0);
 
-    this.attendanceData = {
-      labels,
-      datasets: [
-        {
-          label: 'Hours Worked',
-          backgroundColor: '#f97316',
-          borderRadius: 4,
-          data: hours,
-        },
-      ],
-    };
+      this.attendanceData = {
+        labels,
+        datasets: [
+          {
+            label: 'Hours Worked',
+            backgroundColor: '#0f766e',
+            borderRadius: 3,
+            maxBarThickness: 28,
+            data: hours,
+          },
+        ],
+      };
       this.cdr.detectChanges();
     } catch {
       this.attendanceData = { labels: [], datasets: [] };
@@ -229,12 +314,12 @@ export class Dashboard implements OnInit {
     try {
       const res: any = await this.serverApi.get('/api/leaves/upcoming');
       this.upcomingLeaves = (res || []).map((l: any) => ({
-      title: l.title,
-      status: l.status,
-      date: `${dayjs(l.startDate).format('MMM D')} - ${dayjs(l.endDate).format(
-        'D'
-      )}`,
-      away: `${dayjs(l.startDate).diff(dayjs(), 'day')} days away`,
+        title: l.title,
+        status: l.status,
+        date: `${dayjs(l.startDate).format('MMM D')} - ${dayjs(
+          l.endDate,
+        ).format('D')}`,
+        away: `${dayjs(l.startDate).diff(dayjs(), 'day')} days away`,
       }));
     } catch {
       this.upcomingLeaves = [];
@@ -245,14 +330,16 @@ export class Dashboard implements OnInit {
     if (!this.userInfo?.employeeId) return;
     try {
       const records: any = await this.serverApi.get(
-        `/api/performance/${this.userInfo.employeeId}`
+        `/api/performance/${this.userInfo.employeeId}`,
       );
       if (records?.data?.length) {
-        this.performanceGoals = records.data.slice(0, 3).map((r: any, i: number) => ({
-          title: r.goals?.split('\n')[0]?.substring(0, 40) || `Goal ${i + 1}`,
-          progress: r.rating ? Math.min(r.rating * 10, 100) : 0,
-          progressLabel: r.rating ? `${r.rating}/10` : 'Pending',
-        }));
+        this.performanceGoals = records.data
+          .slice(0, 3)
+          .map((r: any, i: number) => ({
+            title: r.goals?.split('\n')[0]?.substring(0, 40) || `Goal ${i + 1}`,
+            progress: r.rating ? Math.min(r.rating * 10, 100) : 0,
+            progressLabel: r.rating ? `${r.rating}/10` : 'Pending',
+          }));
       }
     } catch {
       // keep default placeholder goals on error
@@ -287,19 +374,22 @@ export class Dashboard implements OnInit {
     this.quickActions = [
       {
         label: 'Request Leave',
-        icon: 'pi pi-calendar',
+        icon: 'calendar',
         color: 'text-green-600',
       },
-      { label: 'View Payslip', icon: 'pi pi-dollar', color: 'text-emerald-700' },
-      { label: 'View Attendance', icon: 'pi pi-clock', color: 'text-blue-600' },
+      {
+        label: 'View Payslip',
+        icon: 'banknote',
+        color: 'text-emerald-700',
+      },
+      { label: 'View Attendance', icon: 'clock', color: 'text-teal-700' },
       {
         label: 'Performance Review',
-        icon: 'pi pi-chart-line',
+        icon: 'trend',
         color: 'text-orange-600',
       },
     ];
   }
-
 
   onQuickAction(actionLabel: string) {
     const routeMap: Record<string, string> = {
@@ -323,9 +413,9 @@ export class Dashboard implements OnInit {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#ffffff',
-          titleColor: '#111827',
-          bodyColor: '#6b7280',
-          borderColor: '#e5e7eb',
+          titleColor: '#15181e',
+          bodyColor: '#5a6272',
+          borderColor: '#e4e7ec',
           borderWidth: 1,
           padding: 10,
           cornerRadius: 6,
@@ -334,18 +424,18 @@ export class Dashboard implements OnInit {
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: '#f3f4f6' },
+          grid: { color: '#eef0f3' },
           border: { display: false },
-          ticks: { color: '#9ca3af', font: { size: 11 } },
+          ticks: { color: '#5a6272', font: { size: 12 } },
         },
         x: {
           grid: { display: false },
           border: { display: false },
-          ticks: { color: '#9ca3af', font: { size: 11 } },
+          ticks: { color: '#5a6272', font: { size: 12 } },
         },
       },
     };
-    
+
     this.cdr.markForCheck();
   }
 }

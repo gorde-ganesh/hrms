@@ -1,30 +1,22 @@
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="flex flex-wrap gap-3 items-start justify-between">
+<div class="page space-y-6">
+  <header class="page-header">
     <div>
-      <div class="text-2xl leading-8 text-color font-semibold">
-        Performance Management
-      </div>
-      <div class="mt-1 leading-6 text-muted-color">
-        Track goals, reviews, and appraisals
-      </div>
+      <h1>Performance</h1>
+      <p class="page-lede">Goals, reviews, and appraisals.</p>
     </div>
     @if (canManage) {
-    <p-button
-      label="Add Appraisal"
-      icon="pi pi-plus"
-      size="large"
-      (onClick)="openAddDialog()"
-    ></p-button>
+      <p-button
+        label="Add appraisal"
+        icon="pi pi-plus"
+        (onClick)="openAddDialog()"
+      ></p-button>
     }
-  </div>
+  </header>
 
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div
-      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
-    >
+  <div class="section ledger">
+    <div class="ledger-cell">
       <p class="text-sm text-muted-color">Latest Rating</p>
       <p class="text-3xl font-bold text-color mt-2">
         {{ latestRating !== null ? latestRating + '/10' : 'N/A' }}
@@ -32,9 +24,7 @@
       <p class="text-sm text-muted-color mt-1">Most recent review</p>
     </div>
 
-    <div
-      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
-    >
+    <div class="ledger-cell">
       <p class="text-sm text-muted-color">Performance Rank</p>
       <div class="mt-2">
         <p-tag
@@ -46,9 +36,7 @@
       <p class="text-sm text-muted-color mt-2">Based on latest review</p>
     </div>
 
-    <div
-      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
-    >
+    <div class="ledger-cell">
       <p class="text-sm text-muted-color">Total Reviews</p>
       <p class="text-3xl font-bold text-color mt-2">
         {{ performanceRecords.length }}
@@ -56,9 +44,7 @@
       <p class="text-sm text-muted-color mt-1">All time</p>
     </div>
 
-    <div
-      class="bg-card text-card-foreground rounded-xl border border-surface p-5 shadow-sm"
-    >
+    <div class="ledger-cell">
       <p class="text-sm text-muted-color">Last Review Date</p>
       <p class="text-lg font-semibold text-color mt-2">{{ lastReviewDate }}</p>
       <p class="text-sm text-muted-color mt-1">Most recent appraisal</p>

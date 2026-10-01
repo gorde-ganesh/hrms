@@ -1,21 +1,15 @@
-<div class="space-y-6">
-  <!-- ── Page header ── -->
-  <div class="flex items-start justify-between">
+<div class="page space-y-6">
+  <header class="page-header">
     <div>
-      <h1 class="text-2xl font-bold text-color leading-tight mb-1">
-        Designations
-      </h1>
-      <p class="text-sm text-muted-color flex items-center gap-2">
-        <i class="pi pi-users text-xs"></i>
-        Manage organization-wide roles and classifications.
-      </p>
+      <h1>Designations</h1>
+      <p class="page-lede">Roles and classifications used across the organization.</p>
     </div>
     <p-button
-      label="Add Designation"
+      label="Add designation"
       icon="pi pi-plus"
       (onClick)="openCreateDialog()"
     />
-  </div>
+  </header>
 
   <div
     class="bg-card text-card-foreground rounded-xl border border-surface p-6 shadow-sm"

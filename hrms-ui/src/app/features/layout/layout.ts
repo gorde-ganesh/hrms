@@ -1,5 +1,14 @@
 import { SpinnerService } from './../../services/spinner.service';
-import { Component, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  Injector,
+  afterNextRender,
+  inject,
+  OnInit,
+  computed,
+  signal,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
@@ -30,6 +39,8 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { AuthStateService } from '../../services/auth-state.service';
 import { NotificationService } from '../../services/notification.service';
 import { Notification } from './notification/notification';
+import { Icon } from '../../shared/icon';
+import { Logo } from '../../shared/logo';
 
 @Component({
   selector: 'app-layout',
@@ -53,6 +64,8 @@ import { Notification } from './notification/notification';
     FloatLabel,
     PasswordModule,
     Notification,
+    Icon,
+    Logo,
   ],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
@@ -75,42 +88,65 @@ export class Layout implements OnInit {
   activeRoute: string = '';
   userDetails = signal<any>({});
 
+  // Navigation is grouped by task so 11 flat links become 4 short lists
+  private readonly navGroupDefs: { label: string; pages: string[] }[] = [
+    { label: 'Workspace', pages: ['dashboard', 'chat', 'notifications'] },
+    { label: 'People', pages: ['employees', 'departments', 'designations'] },
+    { label: 'Time and pay', pages: ['attendence', 'leaves', 'payroll'] },
+    { label: 'Growth', pages: ['performance'] },
+    { label: 'System', pages: ['admin'] },
+  ];
+  navGroups: { label: string; items: MenuItem[] }[] = [];
+
+  // Quick jump (Ctrl/Cmd+K)
+  jumpOpen = signal(false);
+  jumpQuery = signal('');
+  jumpIndex = signal(0);
+  jumpResults = computed(() => {
+    const q = this.jumpQuery().trim().toLowerCase();
+    const all = this.items ?? [];
+    return q ? all.filter((i) => i.label?.toLowerCase().includes(q)) : all;
+  });
+
+  accountOpen = signal(false);
+  private injector = inject(Injector);
+
   pageRouteMap: Record<string, MenuItem> = {
-    dashboard: { label: 'Dashboard', icon: 'pi pi-home', route: '/dashboard' },
+    dashboard: { label: 'Dashboard', icon: 'home', route: '/dashboard' },
     attendence: {
-      label: 'Attendence',
-      icon: 'pi pi-clock',
+      label: 'Attendance',
+      icon: 'clock',
       route: '/attendence',
     },
-    employees: { label: 'Employees', icon: 'pi pi-users', route: '/employees' },
+    employees: { label: 'Employees', icon: 'users', route: '/employees' },
     departments: {
       label: 'Departments',
-      icon: 'pi pi-sitemap',
+      icon: 'sitemap',
       route: '/department',
     },
     designations: {
       label: 'Designations',
-      icon: 'pi pi-briefcase',
+      icon: 'briefcase',
       route: '/designations',
     },
-    payroll: { label: 'Payroll', icon: 'pi pi-money-bill', route: '/payroll' },
-    leaves: { label: 'Leaves', icon: 'pi pi-calendar-times', route: '/leaves' },
+    payroll: { label: 'Payroll', icon: 'banknote', route: '/payroll' },
+    leaves: { label: 'Leaves', icon: 'calendar', route: '/leaves' },
     performance: {
       label: 'Performance',
-      icon: 'pi pi-star',
+      icon: 'trend',
       route: '/performance',
     },
     chat: {
       label: 'Chat',
-      icon: 'pi pi-comments',
+      icon: 'chat',
       route: '/chat',
     },
     notifications: {
       label: 'Notifications',
-      icon: 'pi pi-bell',
+      icon: 'bell',
       route: '/notifications',
     },
-    admin: { label: 'Admin', icon: 'pi pi-cog', route: '/admin' },
+    admin: { label: 'Admin', icon: 'shield', route: '/admin' },
   };
 
   constructor(
@@ -121,7 +157,7 @@ export class Layout implements OnInit {
     private spinnerService: SpinnerService,
     private authState: AuthStateService,
     private notificationService: NotificationService,
-    private messageService: MessageService
+    private messageService: MessageService,
   ) {
     this.userInfo = this.authState.userInfo as any;
     this.changePasswordForm = this.fb.group(
@@ -133,7 +169,7 @@ export class Layout implements OnInit {
         ],
         confirmPassword: ['', [Validators.required]],
       },
-      { validators: [this.validationService.matchPasswords] }
+      { validators: [this.validationService.matchPasswords] },
     );
   }
 
@@ -142,6 +178,14 @@ export class Layout implements OnInit {
 
     const permissions = this.userInfo.permissions;
     this.items = this.buildMenu(permissions);
+    this.navGroups = this.navGroupDefs
+      .map((g) => ({
+        label: g.label,
+        items: (this.items ?? []).filter((i) =>
+          g.pages.some((p) => this.pageRouteMap[p] === i),
+        ),
+      }))
+      .filter((g) => g.items.length > 0);
     this.loadDetails();
 
     this.activeRoute = this.router.url;
@@ -154,7 +198,7 @@ export class Layout implements OnInit {
 
   async loadDetails() {
     const details: any = await this.serverApi.get(
-      `/api/users/${this.userInfo.id}`
+      `/api/users/${this.userInfo.id}`,
     );
 
     const parts = details.name?.trim().split(' ');
@@ -195,7 +239,7 @@ export class Layout implements OnInit {
       (i) =>
         i['route'] &&
         (this.activeRoute === i['route'] ||
-          this.activeRoute.startsWith(i['route'] + '/'))
+          this.activeRoute.startsWith(i['route'] + '/')),
     );
     return found?.label || 'PeopleOS';
   }
@@ -211,6 +255,62 @@ export class Layout implements OnInit {
   navigate(item: any) {
     this.router.navigate([item.route]);
     this.sidebarOpen = false;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKey(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.openJump();
+    } else if (event.key === 'Escape') {
+      this.jumpOpen.set(false);
+      this.accountOpen.set(false);
+    }
+  }
+
+  openJump() {
+    this.jumpQuery.set('');
+    this.jumpIndex.set(0);
+    this.jumpOpen.set(true);
+    // Focus once the palette input exists in the DOM
+    afterNextRender(() => document.getElementById('jump-input')?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  onJumpKey(event: KeyboardEvent) {
+    const count = this.jumpResults().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.jumpIndex.set(count ? (this.jumpIndex() + 1) % count : 0);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.jumpIndex.set(count ? (this.jumpIndex() - 1 + count) % count : 0);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      this.jumpTo(this.jumpResults()[this.jumpIndex()]);
+    }
+  }
+
+  onJumpInput(value: string) {
+    this.jumpQuery.set(value);
+    this.jumpIndex.set(0);
+  }
+
+  jumpTo(item?: MenuItem) {
+    if (!item) return;
+    this.jumpOpen.set(false);
+    this.navigate(item);
+  }
+
+  onAccountChangePassword() {
+    this.accountOpen.set(false);
+    this.onChangePasswordClick();
+  }
+
+  onAccountSignOut() {
+    this.accountOpen.set(false);
+    this.onLogoutClick();
   }
 
   async onLogoutClick() {
@@ -239,7 +339,7 @@ export class Layout implements OnInit {
         userId: this.userInfo.id,
         oldPassword,
         newPassword: confirmPassword,
-      }
+      },
     );
 
     this.messageService.add({

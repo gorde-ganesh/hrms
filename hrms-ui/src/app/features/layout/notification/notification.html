@@ -1,12 +1,21 @@
-<div class="notification-bell" (click)="visible = true">
+<button
+  type="button"
+  class="notification-bell"
+  (click)="visible = true"
+  [attr.aria-label]="
+    unreadCount > 0
+      ? 'Open notifications, ' + unreadCount + ' unread'
+      : 'Open notifications'
+  "
+>
   @if (unreadCount > 0) {
     <p-overlaybadge [value]="unreadCount.toString()" severity="danger">
-      <i class="pi pi-bell"></i>
+      <app-icon name="bell" [size]="20" />
     </p-overlaybadge>
   } @else {
-    <i class="pi pi-bell"></i>
+    <app-icon name="bell" [size]="20" />
   }
-</div>
+</button>
 
 <p-drawer
   [(visible)]="visible"
@@ -34,7 +43,7 @@
       </div>
       <div class="notification-message">{{ notification.message }}</div>
       <div class="notification-time">
-        {{ notification.createdAt | date : 'short' }}
+        {{ notification.createdAt | date: "short" }}
       </div>
     </li>
   </ul>

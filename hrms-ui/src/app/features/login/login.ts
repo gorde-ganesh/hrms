@@ -21,6 +21,7 @@ import { DividerModule } from 'primeng/divider';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { AuthStateService } from '../../services/auth-state.service';
+import { Logo } from '../../shared/logo';
 
 @Component({
   selector: 'app-login',
@@ -37,6 +38,7 @@ import { AuthStateService } from '../../services/auth-state.service';
     MessageModule,
     FormErrorDirective,
     DividerModule,
+    Logo,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
