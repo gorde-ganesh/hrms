@@ -1,19 +1,19 @@
 
-<div class="space-y-6">
-  <div class="flex items-start gap-2 justify-between">
+<div class="page space-y-6">
+  <header class="page-header">
     <div>
-      <h1 class="lv-page-title">Leaves</h1>
-      <p class="lv-page-subtitle">Manage your leave requests and balances</p>
+      <h1>Leaves</h1>
+      <p class="page-lede">Your balances, requests, and team time off.</p>
     </div>
     <div class="flex gap-2">
       @if(hasPermission('accrue')) {
-        <p-button label="Accrue Leaves" icon="pi pi-sync" severity="secondary" [outlined]="true" (click)="accrueLeaves()" />
+        <p-button label="Accrue leaves" icon="pi pi-sync" severity="secondary" [outlined]="true" (click)="accrueLeaves()" />
       }
       @if(hasPermission('apply')) {
-        <p-button label="Apply Leave" icon="pi pi-calendar-minus" (click)="onApplyLeave()" />
+        <p-button label="Apply for leave" icon="pi pi-calendar-minus" (click)="onApplyLeave()" />
       }
     </div>
-  </div>
+  </header>
 
   @if(leaveBalances.length > 0) {
     <div class="lv-balance-grid">
@@ -40,9 +40,9 @@
 
   <p-tabs value="0" (valueChange)="onTabChange($event)">
     <p-tablist>
-      <p-tab value="0">My Leaves</p-tab>
+      <p-tab value="0">My leaves</p-tab>
       @if(hasPermission('teams_leave') || hasPermission('approve')) {
-        <p-tab value="1">Team Leaves</p-tab>
+        <p-tab value="1">Team leaves</p-tab>
       }
       <p-tab value="2">Calendar</p-tab>
     </p-tablist>
@@ -75,7 +75,7 @@
           <ng-template #header>
             <tr>
               <th>Applied</th>
-              <th>Leave Type</th>
+              <th>Leave type</th>
               <th>Start</th>
               <th>End</th>
               <th>Days</th>

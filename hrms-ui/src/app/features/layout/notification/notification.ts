@@ -5,10 +5,11 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
+import { Icon } from '../../../shared/icon';
 
 @Component({
   selector: 'app-notification',
-  imports: [CommonModule, ButtonModule, DrawerModule, OverlayBadgeModule],
+  imports: [CommonModule, ButtonModule, DrawerModule, OverlayBadgeModule, Icon],
   templateUrl: './notification.html',
   styleUrl: './notification.css',
 })

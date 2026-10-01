@@ -1,13 +1,20 @@
 <p-confirmpopup />
 
-<div class="space-y-6">
+<div class="page space-y-6">
+  <header class="page-header">
+    <div>
+      <h1>Payroll</h1>
+      <p class="page-lede">Payslips, salary structures, and pay runs.</p>
+    </div>
+  </header>
+
   <p-tabs [(value)]="tabIndex">
     <p-tablist>
       <p-tab value="0">Payslips</p-tab>
       @if (isHR) {
         <p-tab value="1">Generate</p-tab>
-        <p-tab value="2">Salary Structures</p-tab>
-        <p-tab value="3">Bank Transfers</p-tab>
+        <p-tab value="2">Salary structures</p-tab>
+        <p-tab value="3">Bank transfers</p-tab>
         <p-tab value="4">Components</p-tab>
       }
     </p-tablist>
@@ -232,8 +239,8 @@
 
             @if (batchResult) {
               <p-divider />
-              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                <p class="font-semibold text-blue-800">Batch Complete</p>
+              <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 space-y-2">
+                <p class="font-semibold text-teal-900">Batch Complete</p>
                 <div class="flex gap-8 text-sm">
                   <div><span class="text-gray-500">Succeeded</span><br><strong class="text-green-700">{{ batchResult.succeeded }}</strong></div>
                   <div><span class="text-gray-500">Failed</span><br><strong class="text-red-600">{{ batchResult.failed }}</strong></div>

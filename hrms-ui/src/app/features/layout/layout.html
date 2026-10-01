@@ -1,108 +1,183 @@
-<div class="layout-shell flex flex-col lg:flex-row min-h-[100dvh] overflow-hidden" [class.sidebar-open]="sidebarOpen">
+<div class="layout-shell" [class.sidebar-open]="sidebarOpen">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
   <!-- Mobile backdrop -->
-  <div class="sidebar-backdrop" (click)="closeSidebar()" [class.backdrop-visible]="sidebarOpen"></div>
+  <div
+    class="sidebar-backdrop"
+    (click)="closeSidebar()"
+    [class.backdrop-visible]="sidebarOpen"
+  ></div>
 
   <!-- Sidebar -->
-  <aside class="sidebar flex flex-col shrink-0">
-
-    <!-- Brand -->
-    <div class="brand-bar flex items-center gap-3 px-5">
-      <div class="brand-mark flex items-center justify-center w-8 h-8 rounded-lg shrink-0">
-        <i class="pi pi-th-large" style="font-size: 0.8rem; color: white"></i>
-      </div>
-      <div class="brand-stack min-w-0">
-        <span class="brand-name block text-sm font-semibold">PeopleOS</span>
-        <span class="brand-subtitle block">HR command center</span>
-      </div>
+  <aside class="sidebar">
+    <div class="brand-bar">
+      <app-logo />
     </div>
 
-    <!-- Nav -->
-    <nav class="flex-1 overflow-y-auto px-3 py-3" role="navigation" aria-label="Main navigation">
-      <ul class="flex flex-col gap-1.5 list-none m-0 p-0">
-        <li *ngFor="let item of items">
-          <a pRipple
-             class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer select-none"
-             (click)="navigate(item)"
-             [class.nav-link-active]="activeRoute === item['route']"
-             [attr.aria-current]="activeRoute === item['route'] ? 'page' : null">
-            <i [class]="item.icon" class="nav-icon shrink-0"></i>
-            <span class="nav-label text-sm font-medium truncate">{{ item.label }}</span>
-            <p-badge *ngIf="item.badge" class="ml-auto" [value]="item.badge" />
-          </a>
-        </li>
-      </ul>
+    <nav class="nav-scroll" aria-label="Main navigation">
+      @for (group of navGroups; track group.label) {
+        <div class="nav-group">
+          <p class="nav-group-label" [id]="'nav-' + group.label">
+            {{ group.label }}
+          </p>
+          <ul class="nav-list" [attr.aria-labelledby]="'nav-' + group.label">
+            @for (item of group.items; track item.label) {
+              <li>
+                <a
+                  class="nav-link"
+                  [attr.href]="item['route']"
+                  (click)="$event.preventDefault(); navigate(item)"
+                  [class.nav-link-active]="
+                    activeRoute === item['route'] ||
+                    activeRoute.startsWith(item['route'] + '/')
+                  "
+                  [attr.aria-current]="
+                    activeRoute === item['route'] ? 'page' : null
+                  "
+                >
+                  <app-icon class="nav-icon" [name]="$any(item.icon)" />
+                  <span class="nav-label">{{ item.label }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </nav>
 
-    <!-- User -->
-    <div class="user-bar px-4 py-4">
-      <div class="flex items-center gap-3">
-        <div class="user-avatar flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold text-white shrink-0">
-          {{ userDetails().initials }}
+    <!-- Account -->
+    <div class="account">
+      @if (accountOpen()) {
+        <div class="account-scrim" (click)="accountOpen.set(false)"></div>
+        <div class="account-menu" role="menu" aria-label="Account">
+          <button
+            type="button"
+            role="menuitem"
+            class="account-item"
+            (click)="onAccountChangePassword()"
+          >
+            <app-icon name="key" [size]="16" />
+            Change password
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="account-item"
+            (click)="onAccountSignOut()"
+          >
+            <app-icon name="sign-out" [size]="16" />
+            Sign out
+          </button>
         </div>
-        <div class="flex-1 min-w-0">
-          <p class="user-name text-sm font-medium leading-tight truncate">{{ userDetails().name }}</p>
-          <p class="user-role text-xs leading-tight capitalize truncate">{{ userDetails().role }}</p>
-        </div>
-        <button class="sign-out-btn flex items-center justify-center w-7 h-7 rounded-md"
-                (click)="onChangePasswordClick()"
-                title="Change password"
-                aria-label="Change password">
-          <i class="pi pi-key" style="font-size: 0.8rem"></i>
-        </button>
-        <button class="sign-out-btn flex items-center justify-center w-7 h-7 rounded-md"
-                (click)="onLogoutClick()"
-                title="Sign out"
-                aria-label="Sign out">
-          <i class="pi pi-sign-out" style="font-size: 0.8rem"></i>
-        </button>
-      </div>
+      }
+      <button
+        type="button"
+        class="account-trigger"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="accountOpen()"
+        (click)="accountOpen.set(!accountOpen())"
+      >
+        <span class="avatar" aria-hidden="true">{{
+          userDetails().initials
+        }}</span>
+        <span class="account-text">
+          <span class="account-name">{{ userDetails().name }}</span>
+          <span class="account-role">{{ userInfo.role.toLowerCase() }}</span>
+        </span>
+        <app-icon class="account-caret" name="chevron-up" [size]="16" />
+      </button>
     </div>
-
   </aside>
 
   <!-- Main -->
-  <div class="main-column flex-1 flex flex-col min-w-0 overflow-hidden">
-
-    <!-- Topbar -->
-    <header class="topbar flex items-center justify-between px-4 lg:px-7">
-      <div class="flex items-center gap-3">
-        <button class="menu-btn flex items-center justify-center w-8 h-8 rounded-md"
-                (click)="toggleSidebar()"
-                aria-label="Open navigation">
-          <i class="pi pi-bars" style="font-size: 0.9rem"></i>
+  <div class="main-column">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button
+          type="button"
+          class="icon-btn menu-btn"
+          (click)="toggleSidebar()"
+          aria-label="Open navigation"
+        >
+          <app-icon name="menu" [size]="20" />
         </button>
-        <div class="topbar-title-block">
-          <span class="topbar-page-label">{{ activePageLabel }}</span>
-          <span class="topbar-context">Live workforce view</span>
-        </div>
+        <span class="topbar-title">{{ activePageLabel }}</span>
       </div>
-      <div class="flex items-center gap-2">
-        <app-notification></app-notification>
-        <button class="avatar-btn flex items-center justify-center overflow-hidden" title="Profile" aria-label="User profile">
-          <span>{{ userDetails().initials || 'PO' }}</span>
+
+      <div class="topbar-right">
+        <button type="button" class="jump-btn" (click)="openJump()">
+          <app-icon name="search" [size]="16" />
+          <span class="jump-text">Go to page</span>
+          <kbd class="jump-kbd">Ctrl K</kbd>
         </button>
+        <app-notification></app-notification>
       </div>
     </header>
 
-    <!-- Content -->
-    <main class="main-content flex-1 overflow-auto">
+    <main id="main-content" class="main-content" tabindex="-1">
       <router-outlet></router-outlet>
     </main>
-
   </div>
-
 </div>
 
-<!-- Change Password Dialog -->
+<!-- Quick jump -->
+@if (jumpOpen()) {
+  <div class="jump-scrim" (click)="jumpOpen.set(false)"></div>
+  <div
+    class="jump-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Go to page"
+  >
+    <div class="jump-field">
+      <app-icon name="search" [size]="16" />
+      <input
+        id="jump-input"
+        type="text"
+        autocomplete="off"
+        placeholder="Go to a page"
+        aria-label="Search pages"
+        role="combobox"
+        aria-controls="jump-list"
+        aria-expanded="true"
+        [attr.aria-activedescendant]="'jump-opt-' + jumpIndex()"
+        [value]="jumpQuery()"
+        (input)="onJumpInput($any($event.target).value)"
+        (keydown)="onJumpKey($event)"
+      />
+    </div>
+    <ul id="jump-list" class="jump-list" role="listbox">
+      @for (item of jumpResults(); track item.label; let i = $index) {
+        <li
+          role="option"
+          [id]="'jump-opt-' + i"
+          class="jump-option"
+          [class.jump-option-active]="i === jumpIndex()"
+          [attr.aria-selected]="i === jumpIndex()"
+          (mouseenter)="jumpIndex.set(i)"
+          (click)="jumpTo(item)"
+        >
+          <app-icon [name]="$any(item.icon)" />
+          {{ item.label }}
+        </li>
+      } @empty {
+        <li class="jump-empty">No page matches “{{ jumpQuery() }}”.</li>
+      }
+    </ul>
+  </div>
+}
+
+<!-- Change password dialog -->
 <p-dialog
-  header="Change Password"
+  header="Change password"
   [modal]="true"
   [(visible)]="changePasswordDialog"
   [style]="{ width: '30rem' }"
   [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
 >
-  <span class="text-sm text-muted-color block mb-6">Update your account password.</span>
+  <span class="text-sm text-muted-color block mb-6"
+    >Update your account password.</span
+  >
   <form
     class="flex flex-col items-stretch justify-stretch gap-5"
     [formGroup]="changePasswordForm"
@@ -130,7 +205,9 @@
         >
           <ng-template #footer>
             <p-divider />
-            <ul class="pl-2 my-0 text-sm text-muted-color leading-relaxed list-none">
+            <ul
+              class="pl-2 my-0 text-sm text-muted-color leading-relaxed list-none"
+            >
               <li>At least one lowercase letter</li>
               <li>At least one uppercase letter</li>
               <li>At least one number</li>

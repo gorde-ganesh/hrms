@@ -1,13 +1,13 @@
-<div class="space-y-6">
-  <div class="flex items-center justify-between">
+<div class="page space-y-6">
+  <header class="page-header">
     <div>
-      <h1 class="text-3xl text-gray-900">Attendance</h1>
-      <p class="text-gray-600 mt-1">Track and manage attendance records</p>
+      <h1>Attendance</h1>
+      <p class="page-lede">Clock in, review your hours, and manage records.</p>
     </div>
     <div class="flex gap-2">
       @if (showAllEmployeesTab) {
         <p-button
-          label="Auto-close Open"
+          label="Close open records"
           icon="pi pi-lock"
           severity="secondary"
           [outlined]="true"
@@ -15,120 +15,73 @@
         />
       }
       <p-button
-        label="Export Report"
+        label="Export report"
         icon="pi pi-download"
+        severity="secondary"
+        [outlined]="true"
         (click)="exportReport()"
       />
     </div>
-  </div>
+  </header>
 
-  <p-card class="bg-blue-50 border border-blue-200">
-    <div class="flex items-center justify-between">
-      <div>
-        <h3 class="text-lg text-gray-900">Today's Attendance</h3>
-        <div class="flex items-center gap-2 mt-2">
-          <i class="pi pi-clock"></i>
-          <span class="text-gray-700">
-            {{ todayStatus === 'PRESENT' ? 'Checked in at ' + todayCheckInTime :
-            todayStatus }}
-          </span>
-        </div>
-        <p class="text-sm text-gray-600 mt-1">
-          Working hours: {{ todayWorkHours }}
-        </p>
-      </div>
-      <p-button
-        [label]="
-          attendenceSummary?.today?.isCheckedIn
-            ? 'Check Out'
-            : attendenceSummary?.today?.checkInTime
-            ? 'Completed'
-            : 'Clock In'
-        "
-        [disabled]="
-          !!attendenceSummary?.today?.checkInTime &&
-          !attendenceSummary?.today?.isCheckedIn
-        "
-        icon="pi pi-clock"
-        (click)="clockInOut()"
-      >
-      </p-button>
+  <section class="section today" aria-label="Today">
+    <div>
+      <h2 class="section-title">Today</h2>
+      <p class="today-line">
+        {{ todayStatus === 'PRESENT' ? 'Clocked in at ' + todayCheckInTime : todayStatus && todayStatus !== '-' ? todayStatus : 'Not clocked in yet' }}
+      </p>
+      <p class="section-note">Hours worked: {{ todayWorkHours }}</p>
     </div>
-  </p-card>
+    <p-button
+      [label]="
+        attendenceSummary?.today?.isCheckedIn
+          ? 'Clock out'
+          : attendenceSummary?.today?.checkInTime
+            ? 'Done for today'
+            : 'Clock in'
+      "
+      [disabled]="
+        !!attendenceSummary?.today?.checkInTime &&
+        !attendenceSummary?.today?.isCheckedIn
+      "
+      icon="pi pi-clock"
+      (click)="clockInOut()"
+    >
+    </p-button>
+  </section>
 
-  <!-- Metrics Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <!-- Card 1 -->
-    <p-card>
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-600">This Month</p>
-          <p class="text-2xl text-gray-900 mt-2">
-            {{ attendenceSummary.workingDays }}
-          </p>
-          <p class="text-sm text-gray-600 mt-1">Working days</p>
-        </div>
-        <i class="h-8 w-8 text-blue-600 pi pi-calendar card-icons"></i>
-      </div>
-    </p-card>
-
-    <!-- Card 2 -->
-    <p-card>
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-600">Present</p>
-          <p class="text-2xl text-gray-900 mt-1">
-            {{ attendenceSummary?.presentDays }} days
-          </p>
-          <p class="text-sm text-green-600 mt-1">
-            {{ getPercentage( attendenceSummary?.presentDays,
-            attendenceSummary?.workingDays ) }}%
-          </p>
-        </div>
-        <span
-          class="h-8 w-8 text-green-600 pi pi-check-circle card-icons"
-        ></span>
-      </div>
-    </p-card>
-
-    <!-- Card 3 -->
-    <p-card>
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-600">Absent</p>
-          <p class="text-2xl text-gray-900 mt-1">
-            {{ attendenceSummary?.absentDays }} days
-          </p>
-          <p class="text-sm text-red-600 mt-1">
-            {{ getPercentage( attendenceSummary?.absentDays,
-            attendenceSummary?.workingDays ) }}%
-          </p>
-        </div>
-        <span class="h-8 w-8 text-red-600 pi pi-times-circle card-icons"></span>
-      </div>
-    </p-card>
-
-    <!-- Card 4 -->
-    <p-card>
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-600">Avg Hours/Day</p>
-          <p class="text-2xl text-gray-900 mt-1">
-            {{ attendenceSummary?.avgHours }}h
-          </p>
-          <p class="text-sm text-gray-600 mt-1">Target: 8h</p>
-        </div>
-        <span class="h-8 w-8 text-emerald-700 pi pi-clock card-icons"></span>
-      </div>
-    </p-card>
-  </div>
+  <section class="section ledger" aria-label="This month">
+    <div class="ledger-cell">
+      <p class="ledger-label">Working days this month</p>
+      <p class="ledger-value">{{ attendenceSummary.workingDays }}</p>
+    </div>
+    <div class="ledger-cell">
+      <p class="ledger-label">Present</p>
+      <p class="ledger-value">{{ attendenceSummary?.presentDays }}</p>
+      <p class="ledger-note">
+        {{ getPercentage(attendenceSummary?.presentDays, attendenceSummary?.workingDays) }}% of working days
+      </p>
+    </div>
+    <div class="ledger-cell">
+      <p class="ledger-label">Absent</p>
+      <p class="ledger-value">{{ attendenceSummary?.absentDays }}</p>
+      <p class="ledger-note">
+        {{ getPercentage(attendenceSummary?.absentDays, attendenceSummary?.workingDays) }}% of working days
+      </p>
+    </div>
+    <div class="ledger-cell">
+      <p class="ledger-label">Average hours per day</p>
+      <p class="ledger-value">{{ attendenceSummary?.avgHours }}h</p>
+      <p class="ledger-note">Target: 8h</p>
+    </div>
+  </section>
 
   <p-tabs value="0">
     <p-tablist>
-      <p-tab value="0">My Attendence</p-tab>
-      <p-tab value="1" *ngIf="showTeamTab">Team Attendence</p-tab>
+      <p-tab value="0">My attendance</p-tab>
+      <p-tab value="1" *ngIf="showTeamTab">Team attendance</p-tab>
       <p-tab [value]="showTeamTab ? '2' : '1'" *ngIf="showAllEmployeesTab"
-        >All Employees</p-tab
+        >All employees</p-tab
       >
     </p-tablist>
     <p-tabpanels>

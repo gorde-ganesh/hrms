@@ -21,6 +21,7 @@ import { DividerModule } from 'primeng/divider';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { AuthStateService } from '../../services/auth-state.service';
+import { Logo } from '../../shared/logo';
 
 @Component({
   selector: 'app-login',
@@ -37,6 +38,7 @@ import { AuthStateService } from '../../services/auth-state.service';
     MessageModule,
     FormErrorDirective,
     DividerModule,
+    Logo,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -50,6 +52,11 @@ export class Login implements OnInit {
   forgotPasswordForm!: FormGroup;
   changePasswordForm!: FormGroup;
   isLoading: boolean = false;
+
+  /** Decorative month grid: 0 = weekend, 1-3 = how full the day was. */
+  readonly days = Array.from({ length: 35 }, (_, i) =>
+    i % 7 > 4 ? 0 : [3, 3, 2, 3, 3, 1, 3, 2, 3][i % 9]
+  );
 
   private messageService = inject(MessageService);
 
