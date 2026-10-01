@@ -53,6 +53,11 @@ export class Login implements OnInit {
   changePasswordForm!: FormGroup;
   isLoading: boolean = false;
 
+  /** Decorative month grid: 0 = weekend, 1-3 = how full the day was. */
+  readonly days = Array.from({ length: 35 }, (_, i) =>
+    i % 7 > 4 ? 0 : [3, 3, 2, 3, 3, 1, 3, 2, 3][i % 9]
+  );
+
   private messageService = inject(MessageService);
 
   constructor(

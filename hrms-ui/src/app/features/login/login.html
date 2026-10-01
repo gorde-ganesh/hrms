@@ -1,5 +1,6 @@
 <div class="auth-shell">
 
+  <div class="auth-main">
   <div class="auth-brand">
     <app-logo [size]="32" />
   </div>
@@ -214,5 +215,22 @@
 
     </div>
   </main>
+  </div>
+
+  <!-- Decorative: one month of attendance, filling in once on load -->
+  <aside class="auth-aside" aria-hidden="true">
+    <div class="aside-inner">
+      <div class="month">
+        @for (d of days; track $index) {
+          <span
+            class="day"
+            [attr.data-level]="d"
+            [style.animation-delay.ms]="$index * 28"
+          ></span>
+        }
+      </div>
+      <p class="aside-line">Attendance, leave and payroll in one calm place.</p>
+    </div>
+  </aside>
 
 </div>
